@@ -1,0 +1,11 @@
+return {
+  summary = "ROXIE is in Kanto putting a band together for one big show, and you are her manager. Recruit the members, promote the gig, then survive the night PIERS crashes it.",
+  author = "Mister Miracle",
+  tags = { "quest", "music", "trainers" },
+  differences = {
+    "v0.1.0 is a scaffold: the mod loads, announces its version and reports the Quest System API it will build on; it adds no questline content yet",
+  },
+  credits = { "pret/pokered research", "gen1recomp engine",
+              "ROXIE and PIERS are Game Freak characters, used as fan tribute" },
+  compat = "No vanilla maps, NPCs, scripts or trainers are modified.",
+}

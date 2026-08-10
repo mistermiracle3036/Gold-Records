@@ -1,0 +1,10 @@
+# test_build.sh staging dir and the zips it produces
+.build/
+*.zip
+
+# never commit ROM-derived content -- these are engine build products,
+# not mod assets, and modkit pack refuses them
+assets/generated/
+
+.DS_Store
+Thumbs.db

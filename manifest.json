@@ -1,0 +1,21 @@
+{
+  "id": "kanto_rocks",
+  "name": "Kanto Rocks",
+  "version": "0.1.0",
+  "api": 2,
+  "entry": "main.lua",
+  "profile": "content",
+  "category": "QUEST",
+  "game_version": ">=0.1.75 <2.0.0",
+  "priority": 100,
+  "affects_link": false,
+  "permissions": [
+    "engine_internals"
+  ],
+  "dependencies": [
+    "quest_system"
+  ],
+  "optional_dependencies": [],
+  "conflicts": [],
+  "description": "ROXIE is in Kanto trying to get a band together and play one big show, and you are her manager. Recruit the members, promote the gig, then find out what happens when PIERS turns up to crash the encore. v0.1.0 is a scaffold: the mod loads, announces its version and reports the Quest System API it will build on. No questline content yet."
+}
