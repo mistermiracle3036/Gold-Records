@@ -12,6 +12,32 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.1.2
+
+Quest System is no longer required.
+
+### Changed
+- **Kanto Rocks no longer needs Quest System installed to run.** It was
+  declared a hard dependency from the very first version, which means the
+  mod refused to load without it -- and Quest System is distributed as a
+  loose zip committed to someone else's repository, with no GitHub
+  releases behind it, so the launcher cannot fetch or update it and you
+  have to go and find the right file by hand. Kanto Rocks was making you
+  do that for a mod it did not yet use a single line of.
+- It is now an *optional* dependency, which is the honest description:
+  install it and the questline will also keep a journal entry; skip it
+  and everything else works exactly the same. The engine still guarantees
+  Quest System loads first when it is present, so nothing about the
+  integration gets harder.
+
+### Notes
+- No gameplay change. ROXIE, her placement and her dialogue are byte-for
+  byte what 0.1.1 shipped.
+- This also unblocks `modkit validate --strict`, which could never pass
+  while the hard dependency stood: the validator mounts exactly one mod
+  and cannot see a sibling on disk, so it reported a missing dependency
+  every run regardless of what was installed.
+
 ## 0.1.1
 
 ROXIE turns up.
@@ -23,7 +49,7 @@ ROXIE turns up.
   broken by Yellow's per-map object renames, and cannot collide with any
   other mod's takeovers in that city. Under four badges she simply is not
   there yet.
-- She has one thing to say for now. The quest itself registers in 0.1.2.
+- She has one thing to say for now. The quest itself registers in 0.1.3.
 - Her sprite: the mod uses a stand-in until `assets/roxie.png` exists,
   then switches to it automatically with no code change. The art is
   16x96 -- six 16x16 frames, stand down/up/left then walk down/up/left --
@@ -73,7 +99,7 @@ Scaffold slice. Registers no content on purpose.
 
 Each line is one shipped version, one testable change.
 
-- **0.1.2** -- the quest registers and starts in the journal, and ROXIE's
+- **0.1.3** -- the quest registers and starts in the journal, and ROXIE's
   dialogue branches on whether you have taken the job.
 - **0.2.x** -- the recruitment beats, one per build: the drummer's
   battle, the bassist's missing instrument, the backup singer.

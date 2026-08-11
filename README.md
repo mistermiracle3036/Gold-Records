@@ -7,14 +7,20 @@ out what happens when PIERS turns up to crash the encore.
 A quest mod for [gen1recomp](https://github.com/bryanthaboi/gen1recomp),
 mod API 2, engine 0.1.75+.
 
-**Status: v0.1.1, early.** ROXIE turns up in Vermilion City once you have
+**Status: v0.1.2, early.** ROXIE turns up in Vermilion City once you have
 four badges, and has one thing to say. The quest itself registers in
-0.1.2.
+0.1.3.
 
 ## Requirements
 
 - gen1recomp 0.1.75 or newer
-- **Quest System** (hard dependency -- the journal this quest lives in)
+
+**Quest System is optional.** Install it and the questline also keeps an
+entry in the journal; without it everything else behaves identically.
+It is deliberately not a hard requirement: Quest System ships as a loose
+zip committed to another repository with no GitHub releases behind it, so
+the launcher cannot install or update it for you, and making you hunt
+that file down by hand is not a fair price for a journal line.
 
 ## Design decisions worth knowing
 
