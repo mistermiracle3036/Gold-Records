@@ -1,11 +1,12 @@
 return {
-  summary = "ROXIE is in Kanto putting a band together for one big show, and you are her manager. Recruit the members, promote the gig, then survive the night PIERS crashes it.",
+  summary = "ROXIE came to JOHTO for a music scene and found temple bells and a sleeping WOOPER. So she is starting a band, and you are her manager.",
   author = "Mister Miracle",
-  tags = { "quest", "music", "trainers" },
+  tags = { "quest", "music", "johto", "gen2" },
   differences = {
-    "v0.1.0 is a scaffold: the mod loads, announces its version and reports the Quest System API it will build on; it adds no questline content yet",
+    "v0.2.0 moves the mod to Pokemon Gold: ROXIE turns up in VIOLET CITY once you have a badge, and has opinions about how quiet it is",
+    "the band, the gig and PIERS are still to come",
   },
-  credits = { "pret/pokered research", "gen1recomp engine",
+  credits = { "pret/pokecrystal and pokered research", "gen1recomp engine",
               "ROXIE and PIERS are Game Freak characters, used as fan tribute" },
-  compat = "No vanilla maps, NPCs, scripts or trainers are modified.",
+  compat = "Gold only. No vanilla maps, NPCs, scripts or trainers are modified; ROXIE is a runtime object and is never written to your save.",
 }

@@ -1,12 +1,15 @@
 {
   "id": "kanto_rocks",
   "name": "Kanto Rocks",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
   "category": "QUEST",
-  "game_version": ">=0.1.75 <2.0.0",
+  "games": [
+    "gen2"
+  ],
+  "game_version": ">=0.1.78 <2.0.0",
   "priority": 100,
   "affects_link": false,
   "permissions": [
@@ -17,5 +20,5 @@
     "quest_system"
   ],
   "conflicts": [],
-  "description": "ROXIE is in Kanto trying to get a band together and play one big show, and you are her manager. Recruit the members, promote the gig, then find out what happens when PIERS turns up to crash the encore. Early days: v0.1.x introduces ROXIE herself, in Vermilion City, once you have four badges. Quest System is optional -- with it installed the questline also keeps a journal entry."
+  "description": "ROXIE came to JOHTO looking for a scene and found temple bells and a sleeping WOOPER. So she is starting a band, and you are her manager. Recruit the members, promote the gig, then find out what happens when PIERS turns up to crash the encore. Early days: v0.2.x introduces ROXIE herself, in VIOLET CITY, once you have a badge. Quest System is optional -- with it installed the questline also keeps a journal entry."
 }

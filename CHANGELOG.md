@@ -12,6 +12,58 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.2.0
+
+**Kanto Rocks moves to Gold.** ROXIE is in JOHTO now, and this version
+targets Gen 2 only.
+
+### Changed
+- **ROXIE has moved to VIOLET CITY**, and she is not impressed. She came
+  looking for a music scene and found temple bells, monks and somebody's
+  sleeping WOOPER. So she is starting a band out of spite.
+- **The gate is now one badge, not four.** Violet City is Gold's second
+  town and the Zephyr Badge is earned in it; a four-badge gate would have
+  left ROXIE waiting in a town the player had long since walked out of.
+  One badge puts her there the moment the gym goes quiet, which is the
+  joke.
+- **This version runs on Gold only** (`games: ["gen2"]`). The Red
+  implementation is not carried forward. Nothing was published for Gen 1,
+  so no existing player loses anything; if it should come back it is
+  recoverable from git history rather than being rewritten.
+- Minimum engine is now **0.1.78**, the release Gen 2 shipped in. This
+  mod genuinely cannot run below it -- the entire Gen 2 mod surface
+  arrives in that version -- which is the only reason the floor moved.
+
+### Notes -- why this was a rewrite and not a location swap
+Gen 2 is a *parallel* engine rather than an extension: a Gold boot never
+loads the Gen 1 overworld, game or battle modules at all, so Gen 1
+patterns do not degrade, they simply do nothing. Four pieces had to be
+replaced outright.
+
+- **Dialogue.** The `map_scripts` registry has no Gen 2 home -- Gold's
+  script pool is the cart's own bytecode keyed by ROM pointer, and a Lua
+  row list is not something its VM can run. ROXIE's lines are now driven
+  from the `world.interacted` event: an A press that matches nothing
+  reports the faced cell, the mod recognises hers, and the text is queued
+  through the Gen 2 script API.
+- **Badges.** Gold keeps them in `save.player.badges` and
+  `save.player.kantoBadges`, and the Gen 1 badge module is not served by
+  the compatibility adapter at all -- it would have read zero forever,
+  leaving the gate permanently shut with no error anywhere.
+- **NPC movement** is a number on Gen 2, not the Gen 1 `"STAY"` string.
+- **On-screen reporting** now goes to the mod manager's `[ERRS]` screen.
+  The Gen 1 text-box module is not served either, and on a Gold boot the
+  engine's own adapter warnings are log-only -- invisible on a phone.
+
+### Added
+- `LICENSE` (MIT) and `THIRD_PARTY_NOTICES.md`, so redistribution rights
+  and the trademark position are stated rather than assumed.
+
+### Still to prove
+- Nothing in this ecosystem has yet given a mod-spawned NPC a voice on
+  Gold. The `world.interacted` fall-through is verified in engine source
+  but **not on a real Gold boot** -- that is what this build is for.
+
 ## 0.1.2
 
 Quest System is no longer required.
