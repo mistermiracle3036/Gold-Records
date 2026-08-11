@@ -1,10 +1,18 @@
 # Changelog
 
-All notable changes to Kanto Rocks are documented here.
-This project follows [Keep a Changelog](https://keepachangelog.com/) and
-[Semantic Versioning](https://semver.org/).
+All notable changes to Kanto Rocks are documented here, newest first,
+following [Semantic Versioning](https://semver.org/).
 
-## [0.1.1] - 2026-08-10
+<!-- Version headings MUST be bare: "## 0.1.1", no brackets and no date.
+     .github/workflows/release.yml builds the GitHub release body with
+     `awk -v v="## $VERSION" '$0 == v {...}'`, an EXACT line match. A
+     Keep-a-Changelog style "## [0.1.1] - 2026-08-10" heading still passes
+     the workflow's version-agreement check (that one strips brackets and
+     takes the first word), so the release publishes happily with a
+     COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
+
+
+## 0.1.1
 
 ROXIE turns up.
 
@@ -39,7 +47,7 @@ ROXIE turns up.
   build, since the wrong one is a table-vs-string test that never matches
   and would have silently spawned nobody, anywhere, forever.
 
-## [0.1.0] - 2026-08-10
+## 0.1.0
 
 Scaffold slice. Registers no content on purpose.
 

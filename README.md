@@ -7,9 +7,9 @@ out what happens when PIERS turns up to crash the encore.
 A quest mod for [gen1recomp](https://github.com/bryanthaboi/gen1recomp),
 mod API 2, engine 0.1.75+.
 
-**Status: v0.1.0, scaffold.** The mod loads, names its own version and
-reports the Quest System API it will build on. There is no questline in
-it yet.
+**Status: v0.1.1, early.** ROXIE turns up in Vermilion City once you have
+four badges, and has one thing to say. The quest itself registers in
+0.1.2.
 
 ## Requirements
 
@@ -74,16 +74,22 @@ trading.
 
 | Option | Default | What it does |
 |---|---|---|
-| Show load banner | on | Shows the version and Quest System probe once per session, on the first map you enter. |
+| Show load banner | on | Announces the running version once per session, and reports where ROXIE was placed in Vermilion. A development aid; it will go once the questline is stable. |
 
 ## Compatibility
 
-v0.1.0 registers nothing at all, so it cannot conflict with anything.
+The mod's footprint is entirely additive: its own NPC object, its own
+`TEXT_KR_*` constants, its own sprite, and later its own items, trainers,
+maps and tilesets. No vanilla record is overridden and no vanilla
+dialogue is displaced, so two mods touching Vermilion City cannot
+silently clobber each other here.
 
-From v0.1.1 the mod's footprint stays additive: its own NPC objects, its
-own `TEXT_KR_*` constants, its own items, trainers, maps and tilesets.
-No vanilla record is overridden. Ownership is published at runtime in
-`mod.exports.owns`.
+ROXIE is a runtime object, which is never serialized, so she never enters
+the map-data merge and nothing is written to your save on her account.
+
+Ownership is published at runtime in `mod.exports.owns`, including the
+two mon fields this mod reserves for its rewards -- `mon.krHeadliner` and
+`mon.krPiersGift`. Read them freely; do not write them.
 
 ## Open questions (TODO/CONFIRM ledger)
 
@@ -128,7 +134,7 @@ Still open:
   device. v0.1.1 reports the cell it chose.
 - **kanto_contests scarf reward.** The scarves are a *planned* slice in
   that mod's NOTES.md ("five worn items setting `mon.kcScarf`, +20 intro
-  points"); no scarf item exists in kanto_contests 0.8.0 yet. Nothing to
+  points"); no scarf item exists in kanto_contests 0.9.0 yet. Nothing to
   award until it ships, so this reward waits.
 - **Every `TEXT_` constant for the promotion phase NPCs** (v0.3.x), per
   game version, until harvested with `npc_inspector`. Those really are
