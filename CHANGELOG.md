@@ -4,6 +4,41 @@ All notable changes to Kanto Rocks are documented here.
 This project follows [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-08-10
+
+ROXIE turns up.
+
+### Added
+- **ROXIE, in Vermilion City**, once you have four badges. She is a real
+  new NPC of this mod's own -- not a vanilla character with her dialogue
+  hijacked -- so she carries her own `TEXT_KR_ROXIE` line, cannot be
+  broken by Yellow's per-map object renames, and cannot collide with any
+  other mod's takeovers in that city. Under four badges she simply is not
+  there yet.
+- She has one thing to say for now. The quest itself registers in 0.1.2.
+- Her sprite: the mod uses a stand-in until `assets/roxie.png` exists,
+  then switches to it automatically with no code change. The art is
+  16x96 -- six 16x16 frames, stand down/up/left then walk down/up/left --
+  in the four GB greys 255/170/85/0, where 255 is transparent. It borrows
+  SPRITE_DAISY's OBJ palette group (BLUE), so in the RED++ colour modes
+  the 85 grey reads as blue hair and the 170 grey as skin.
+- A placement report on the Vermilion banner, naming the cell she landed
+  on and which sailor she anchored to -- or why she did not appear.
+
+### Notes
+- Her position is resolved at runtime rather than hard-coded: the mod
+  finds a vanilla NPC to anchor on, then takes the first neighbouring
+  cell the map itself reports as in-bounds, walkable and unoccupied.
+  Vermilion's real coordinates only exist on the device, so hard-coding
+  them from the repo would have been a guess.
+- Nothing is written to the save. Runtime objects are not serialized.
+
+### Fixed
+- Nothing yet shipped to fix. The `map.entered` payload names the map id
+  as `mapId`, not `map` (`map` is the map object) -- caught before the
+  build, since the wrong one is a table-vs-string test that never matches
+  and would have silently spawned nobody, anywhere, forever.
+
 ## [0.1.0] - 2026-08-10
 
 Scaffold slice. Registers no content on purpose.
@@ -30,9 +65,8 @@ Scaffold slice. Registers no content on purpose.
 
 Each line is one shipped version, one testable change.
 
-- **0.1.1** -- ROXIE appears in Vermilion City behind the 4-badge gate,
-  as a real new NPC (see README, "Roxie is not a takeover"), and the
-  quest registers into the journal.
+- **0.1.2** -- the quest registers and starts in the journal, and ROXIE's
+  dialogue branches on whether you have taken the job.
 - **0.2.x** -- the recruitment beats, one per build: the drummer's
   battle, the bassist's missing instrument, the backup singer.
 - **0.3.x** -- promotion: the FLYER item and the NPCs who take one.

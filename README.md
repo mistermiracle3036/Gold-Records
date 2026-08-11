@@ -103,14 +103,29 @@ Closed by reading source in this working tree:
 - ~~The badge gate~~ -- `Badges.count(data, save)` from
   `src/inventory/Badges.lua`, called with the game's data and save.
 
+- ~~Quest System export signatures~~ -- device-confirmed in v0.1.0:
+  `register()`, `start()`, `advance()`, `complete()` and `track()` are
+  all real functions on its exports table. `markers` is additionally a
+  field of the `register()` table, which is the form Pokemon-Snag ships
+  and the form this mod will use.
+- ~~Whether a runtime-spawned NPC's dialogue dispatches~~ -- yes. The
+  interact path passes the object def's `text` straight to
+  `showMapText`, which resolves it with
+  `mapScripts.talkScript(mapId, textConst)` and does not care where the
+  object came from.
+- ~~Overworld sprite colour~~ -- there is no true-colour path.
+  `SpriteRenderer` buckets every pixel into the four GB greys
+  (255/170/85/0, 255 keyed to transparent) and never reads `trueColor`.
+  Colour comes from one of four GBC OBJ palette groups -- ORANGE, BLUE,
+  GREEN, BROWN -- selected with `paletteSource`, and only in the RED++
+  colour modes.
+
 Still open:
 
-- **Quest System export signatures.** Confirmed in use by Pokemon-Snag:
-  `register(def)`, `advance(id, n)`, `complete(id)`, with `markers`,
-  `status` and `objective` as fields of the `register` table. `start`
-  and `track` are unverified -- v0.1.0's banner probe answers this on
-  device.
 - **`spawnNpc` on a vanilla map, on device.** v0.1.1 tests it.
+- **Where exactly ROXIE lands.** Her cell is resolved at runtime from a
+  vanilla anchor NPC, because Vermilion's coordinates only exist on the
+  device. v0.1.1 reports the cell it chose.
 - **kanto_contests scarf reward.** The scarves are a *planned* slice in
   that mod's NOTES.md ("five worn items setting `mon.kcScarf`, +20 intro
   points"); no scarf item exists in kanto_contests 0.8.0 yet. Nothing to

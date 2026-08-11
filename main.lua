@@ -4,57 +4,54 @@
 -- the members, promote the gig, then find out what happens when PIERS
 -- (Spikemuth, Pokemon Sword) turns up to crash the encore.
 --
--- v0.1.0 IS A SCAFFOLD SLICE. It deliberately registers NO content: no
--- maps, no items, no trainers, no NPCs, no dialogue, no quest. Its only
--- jobs are to load cleanly on the phone, name its own version on screen,
--- and report what Quest System's exports actually look like at runtime.
--- That way, when v0.1.1 puts ROXIE in Vermilion, a load failure can only
--- be ROXIE's fault. Same opening move indigo_conference v0.1.0 used.
+-- v0.1.1 puts ROXIE in Vermilion City behind the four-badge gate. She is a
+-- REAL NEW NPC, not a dialogue takeover -- see README, "Roxie is not a
+-- takeover". She says one line and nothing else yet; the quest itself
+-- registers in v0.1.2, so that a failure here can only be the spawn.
 --
--- Everything here is written against source read in this working tree --
--- engine/src/mods/Loader.lua and Schemas.lua, engine/src/render/TextBox.lua,
--- engine/src/world/WorldAPI.lua -- or against shipped mods beside it
--- (Pokemon-Snag 0.14.0, Kanto-Contests 0.8.0, Indigo-Plateau-Conference
--- 0.1.0). Anything still unverified is marked TODO/CONFIRM.
+-- Everything is written against source read in this working tree --
+-- src/world/WorldAPI.lua, src/world/OverworldController.lua,
+-- src/world/Collision.lua, src/world/NPC.lua, src/render/SpriteRenderer.lua,
+-- src/mods/Schemas.lua -- or against shipped mods beside it. Anything not
+-- yet confirmed on device is marked TODO/CONFIRM.
 
 return function(mod)
-  local VERSION = "0.1.0"
+  local VERSION = "0.1.1"
   mod.exports.version = VERSION
 
+  local Badges = require("src.inventory.Badges")
+  local Collision = require("src.world.Collision")
+
+  local MAP         = "VERMILION_CITY"
+  local OBJ_NAME    = "KR_ROXIE"
+  local TEXT_ROXIE  = "TEXT_KR_ROXIE"
+  local BADGE_GATE  = 4
+
   ----------------------------------------------------------------------
-  -- Ownership, declared up front even though v0.1.0 registers nothing,
-  -- so another mod (or another agent working this tree) can check at
-  -- runtime instead of reading a handoff note. Ids get reserved here
-  -- first and filled in by the slice that actually registers them.
-  --
-  -- monFields is the one that matters to the ecosystem today.
-  -- kanto_ribbons has NO ribbon-award API: confirmed by reading its
-  -- main.lua, whose exports are only { version, hasRibbon, catalog }.
-  -- Every ribbon it grants comes from a resolver INSIDE that mod reading
-  -- save state -- exactly how it reads snag_quest's mon.snagged and
-  -- kanto_contests' mon.contestWins. So the HEADLINER reward is this mod
-  -- writing mon.krHeadliner and kanto_ribbons learning to read it later.
-  -- Reserved now, first written in v0.5.x. Nothing else may write these.
+  -- Ownership. Reserved ids first, filled in by the slice that registers
+  -- them. monFields matters most to the ecosystem: kanto_ribbons has no
+  -- award API (its exports are only { version, hasRibbon, catalog }), so
+  -- the HEADLINER reward is this mod writing mon.krHeadliner and that mod
+  -- reading it later -- the mon.snagged pattern. Nothing else may write
+  -- these two.
   ----------------------------------------------------------------------
   mod.exports.owns = {
-    maps      = {},   -- v0.4.x: the venue
-    tilesets  = {},   -- v0.4.x: the venue's tiles
-    trainers  = {},   -- v0.2.x: the drummer; v0.5.x: PIERS
-    items     = {},   -- v0.2.x: instruments; v0.3.x: the FLYER
-    commands  = {},   -- v0.1.1 onwards
+    maps      = {},                      -- v0.4.x: the venue
+    tilesets  = {},                      -- v0.4.x
+    trainers  = {},                      -- v0.2.x drummer; v0.5.x PIERS
+    items     = {},                      -- v0.2.x instruments; v0.3.x FLYER
+    sprites   = { "SPRITE_KR_ROXIE" },
+    objects   = { [MAP] = { OBJ_NAME } },
+    texts     = { TEXT_ROXIE },
+    commands  = {},
     monFields = { "krHeadliner", "krPiersGift" },
   }
 
   ----------------------------------------------------------------------
-  -- On-screen diagnostics.
-  --
-  -- mod.log writes to a console that does not exist on iPhone, so
-  -- anything the developer has to READ has to be drawn. A TextBox pushed
-  -- on the game stack is the channel with the most room. Confirmed from
-  -- engine/src/render/TextBox.lua: "\n" is the second line, "\f" is a
-  -- page break (wait for A, clear), and paginate() soft-wraps on glyph
-  -- boundaries by itself -- so short lines here are belt-and-braces, not
-  -- a requirement.
+  -- On-screen diagnostics. mod.log writes to a console that does not
+  -- exist on iPhone, so anything the developer has to READ has to be
+  -- drawn. Confirmed from src/render/TextBox.lua: "\n" is the second
+  -- line, "\f" is a page break, and paginate() soft-wraps by itself.
   ----------------------------------------------------------------------
   local function say(msg)
     local ok = pcall(function()
@@ -66,65 +63,200 @@ return function(mod)
     if not ok then mod.log:warn("say failed: %s", tostring(msg)) end
   end
 
-  -- Fold a space-separated list onto short lines at word boundaries, so
-  -- a long probe result reads as a list instead of one soft-wrapped run.
-  local function wrap(text, width)
-    local lines, line = {}, ""
-    for word in tostring(text):gmatch("%S+") do
-      if line == "" then
-        line = word
-      elseif #line + 1 + #word <= width then
-        line = line .. " " .. word
-      else
-        lines[#lines + 1] = line
-        line = word
-      end
+  ----------------------------------------------------------------------
+  -- ROXIE's sprite.
+  --
+  -- Overworld art is NOT full colour, whatever the schema suggests:
+  -- SpriteRenderer.getObpImage buckets every pixel into the four DMG
+  -- greys (255 / 170 / 85 / 0) and keys 255 to alpha 0, and it never
+  -- reads `trueColor` -- that flag only works for tilesets and battle
+  -- pics. Colour comes from a GBC OBJ palette group instead, and there
+  -- are exactly four: 0 ORANGE, 1 BLUE, 2 GREEN, 3 BROWN.
+  --
+  -- paletteSource borrows a ROM sprite's group by its picture index.
+  -- Index 16 is SPRITE_DAISY, which sits in group 1 (BLUE), so in that
+  -- palette the 170 grey renders as skin orange and the 85 grey renders
+  -- blue -- which is how ROXIE gets her hair. Only visible in the RED++
+  -- / GBC colour modes; every other mode leaves her in DMG greys like
+  -- everyone else.
+  --
+  -- The art is 16x96: six 16x16 frames, stacked stand down / stand up /
+  -- stand left / walk down / walk up / walk left. Right-facing frames are
+  -- horizontal flips of the left ones, generated by the engine.
+  --
+  -- Until assets/roxie.png exists we fall back to a stock sprite, because
+  -- NPC.new HARD ASSERTS on an unknown sprite id (src/world/NPC.lua:28)
+  -- and registering a record whose image is missing would take the whole
+  -- mod down. Drop the PNG in and it swaps over with no code change.
+  ----------------------------------------------------------------------
+  local ROXIE_ART    = "assets/roxie.png"
+  local ROXIE_SPRITE = "SPRITE_COOLTRAINER_F"  -- stand-in
+  do
+    local ok, art = pcall(function() return mod:read(ROXIE_ART) end)
+    if ok and art then
+      mod.content.sprites:register("SPRITE_KR_ROXIE", {
+        id = "SPRITE_KR_ROXIE",
+        image = mod.path .. "/" .. ROXIE_ART,
+        frames = 6,
+        walker = true,
+        paletteSource = "ROM:SpriteSheetPointerTable[16]",
+      })
+      ROXIE_SPRITE = "SPRITE_KR_ROXIE"
     end
-    if line ~= "" then lines[#lines + 1] = line end
-    return table.concat(lines, "\n")
   end
 
   ----------------------------------------------------------------------
-  -- Quest System handshake -- the one open question this mod cannot
-  -- answer by reading, so it asks the running game instead.
-  --
-  -- quest_system's own source is NOT in this working tree. What IS
-  -- confirmed is the subset Pokemon-Snag 0.14.0 calls and ships to
-  -- device: register(def), advance(id, n), complete(id) -- plus
-  -- `markers` as a FIELD of the register() table, NOT a function, and
-  -- `status`/`objective` as functions of `game` inside that same table.
-  -- `start` and `track` are named in the handoff notes and called by
-  -- neither of the mods here, so both are TODO/CONFIRM.
-  --
-  -- This reports which of the six names are actually functions on the
-  -- exports table. One screenshot closes the ledger item, and v0.2.x
-  -- gets to use advance() knowing whether start() was needed first.
+  -- The gate. Badges.count(data, save) counts owned badge items
+  -- (src/inventory/Badges.lua:28). Below four badges ROXIE simply is not
+  -- in Vermilion yet -- which is why none of this needs a base_talk
+  -- fallback: there is no vanilla dialogue being displaced.
   ----------------------------------------------------------------------
-  local PROBE_NAMES = { "register", "start", "advance", "complete",
-                        "track", "markers" }
-
-  local function probeQuestSystem()
-    local handle = mod.find("quest_system")
-    if not handle then return "NOT INSTALLED" end
-    local exports = handle.exports
-    if type(exports) ~= "table" then return "NO EXPORTS TABLE" end
-    local found = {}
-    for _, name in ipairs(PROBE_NAMES) do
-      local kind = type(exports[name])
-      if kind == "function" then
-        found[#found + 1] = name .. "()"
-      elseif kind ~= "nil" then
-        found[#found + 1] = name .. "=" .. kind
-      end
-    end
-    if #found == 0 then return "EXPORTS EMPTY" end
-    return table.concat(found, " ")
+  local function badgeCount(game)
+    local ok, n = pcall(Badges.count, game.data, game.save)
+    return (ok and type(n) == "number") and n or 0
   end
 
   ----------------------------------------------------------------------
-  -- Options. Minimal on purpose (the brief's rule): a player-facing row
-  -- earns its place only once there is a real choice behind it. The dev
-  -- replay toggle arrives with the flags it would clear, in v0.1.1.
+  -- Placement.
+  --
+  -- Vermilion's object coordinates are ROM-extracted and only exist on
+  -- the device, so they cannot be hard-coded from this repo without
+  -- guessing -- and a guess lands ROXIE inside a building or in the sea.
+  -- Instead: anchor on a vanilla object at runtime and take the first
+  -- cell beside it that the map itself says is walkable, unoccupied and
+  -- in bounds (map:isWalkableCell / map:inBounds / Collision.occupied,
+  -- the same three checks Collision.verdict runs for a real step).
+  --
+  -- The sailors are the anchor of choice on purpose: ROXIE's father is a
+  -- sailor, which is why she is in this city at all.
+  ----------------------------------------------------------------------
+  local ANCHORS = {
+    "VERMILIONCITY_SAILOR1", "VERMILIONCITY_SAILOR2",
+    "VERMILIONCITY_GAMBLER1", "VERMILIONCITY_GAMBLER2",
+    "VERMILIONCITY_BEAUTY", "VERMILIONCITY_MACHOP",
+  }
+  -- nearest ring first, so she stands beside her anchor rather than
+  -- across the street from it
+  local OFFSETS = {
+    { 0, 1 }, { -1, 0 }, { 1, 0 }, { 0, -1 },
+    { -1, 1 }, { 1, 1 }, { -1, -1 }, { 1, -1 },
+    { 0, 2 }, { -2, 0 }, { 2, 0 }, { 0, -2 },
+  }
+
+  local function anchorCell(ow)
+    for _, want in ipairs(ANCHORS) do
+      for _, npc in ipairs(ow.npcs or {}) do
+        local def = npc.def
+        if def and def.name == want then
+          return npc.cellX, npc.cellY, want
+        end
+      end
+    end
+    return nil
+  end
+
+  local function freeCellNear(ow, ax, ay)
+    local map = ow.map
+    if not map then return nil end
+    for _, off in ipairs(OFFSETS) do
+      local x, y = ax + off[1], ay + off[2]
+      local okBounds = map.inBounds and map:inBounds(x, y)
+      local okTile   = map.isWalkableCell and map:isWalkableCell(x, y)
+      if okBounds and okTile
+         and not Collision.occupied(ow.entities or {}, x, y, nil) then
+        return x, y
+      end
+    end
+    return nil
+  end
+
+  ----------------------------------------------------------------------
+  -- Spawning.
+  --
+  -- IMPORTANT: OverworldState:addRuntimeObject appends the def to
+  -- Game.data.maps[MAP].objects and that list survives for the whole
+  -- session (src/world/OverworldController.lua:4295). Spawning on every
+  -- map.entered would therefore stack a new ROXIE on every visit. So the
+  -- guard reads the live object list rather than a Lua-side boolean --
+  -- a boolean would also be wrong across a save load, where the data
+  -- tables are rebuilt but the mod chunk is not re-run.
+  --
+  -- Runtime objects are never serialized, so nothing here touches the
+  -- save file and no other mod's maps patch can collide with it.
+  ----------------------------------------------------------------------
+  local function alreadyThere(game)
+    local def = game.data and game.data.maps and game.data.maps[MAP]
+    for _, obj in ipairs(def and def.objects or {}) do
+      if obj.name == OBJ_NAME then return true end
+    end
+    return false
+  end
+
+  -- returns a short status string for the on-screen report
+  local function placeRoxie()
+    local game = mod.world.game
+    if not game then return "no game" end
+    if alreadyThere(game) then return "already here" end
+
+    local badges = badgeCount(game)
+    if badges < BADGE_GATE then
+      return ("gate %d/%d badges"):format(badges, BADGE_GATE)
+    end
+
+    local ow = mod.world:overworld()
+    if not ow then return "no overworld" end
+
+    local ax, ay, anchor = anchorCell(ow)
+    if not ax then return "no anchor NPC" end
+
+    local x, y = freeCellNear(ow, ax, ay)
+    if not x then return ("no free cell by %d,%d"):format(ax, ay) end
+
+    local id, err = mod.world:spawnNpc(MAP, {
+      name = OBJ_NAME,
+      sprite = ROXIE_SPRITE,
+      x = x, y = y,
+      movement = "STAY",
+      range = "DOWN",
+      text = TEXT_ROXIE,
+    })
+    if not id then return "spawn failed: " .. tostring(err) end
+    return ("at %d,%d off %s"):format(x, y, (anchor or ""):gsub("^VERMILIONCITY_", ""))
+  end
+
+  ----------------------------------------------------------------------
+  -- ROXIE's one line for this version. Her voice: blunt, fast, no
+  -- patience for pleasantries, and completely unbothered by whether you
+  -- agree. The quest hook lands in v0.1.2.
+  --
+  -- Registering a talk for TEXT_KR_ROXIE is what makes the spawned NPC
+  -- say anything: the interact path hands the object def's `text` field
+  -- straight to showMapText (OverworldController.lua:2696), which looks
+  -- the constant up with mapScripts.talkScript(self.map.id, textConst)
+  -- and cares about nothing else -- so a RUNTIME-spawned object
+  -- dispatches exactly like a map-data one. The constant is ours on both
+  -- R/B and Yellow, so no npc_inspector harvest and no per-map rename can
+  -- break it.
+  ----------------------------------------------------------------------
+  mod.content.map_scripts:register(MAP, {
+    priority = 500,
+    talk = {
+      [TEXT_ROXIE] = {
+        { "face_player" },
+        { "show_text",
+          "ROXIE: Oi. You've\ngot the look of\nsomeone with\nnothin' on today.\f"
+          .. "I'm puttin' a band\ntogether. Biggest\nnoise KANTO has\never heard.\f"
+          .. "Got the songs. Got\nthe attitude.\fNo band, though.\n"
+          .. "Minor detail.\f"
+          .. "Stick around. I'm\ngonna need hands." },
+      },
+    },
+  })
+
+  ----------------------------------------------------------------------
+  -- Options. Still minimal: a player-facing row earns its place when
+  -- there is a real choice behind it. The dev replay toggle arrives in
+  -- v0.1.2 with the flags it would clear.
   ----------------------------------------------------------------------
   mod.options:define({
     { key = "show_banner", type = "toggle",
@@ -132,24 +264,36 @@ return function(mod)
   })
 
   ----------------------------------------------------------------------
-  -- Load banner.
+  -- Map entry: try to place her, and report what happened.
   --
-  -- NOT on game.ready: Game.lua emits that while nothing is on the stack
-  -- yet and pushes the title screen immediately afterwards, so a TextBox
-  -- there is discarded -- kanto_contests v0.1 lost its banner to exactly
-  -- this and indigo_conference v0.1.0 documents the same trap. The first
-  -- map entry of the session is the first moment a box survives.
+  -- NOT on game.ready -- Game.lua emits that while nothing is on the
+  -- stack yet and pushes the title screen straight after, so a TextBox
+  -- there is discarded (kanto_contests v0.1 lost its banner to exactly
+  -- this).
   ----------------------------------------------------------------------
-  local bannerShown = false
-  mod.events:on("map.entered", function()
+  local bannerShown, reported = false, false
+  mod.events:on("map.entered", function(ev)
     local ok, err = pcall(function()
-      if bannerShown then return end
-      if mod.options:get("show_banner") ~= true then return end
-      bannerShown = true
-      say("KANTO ROCKS\nv" .. VERSION .. " loaded!"
-        .. "\fQUEST SYSTEM\n" .. wrap(probeQuestSystem(), 16))
+      local showing = mod.options:get("show_banner") == true
+      if showing and not bannerShown then
+        bannerShown = true
+        say("KANTO ROCKS\nv" .. VERSION .. " loaded!")
+      end
+
+      -- payload is { mapId, map, fromMapId, via } -- `map` is the map
+      -- OBJECT, `mapId` the string. Comparing the wrong one to MAP is a
+      -- table-vs-string test that never matches and silently never spawns.
+      local here = ev and ev.mapId
+      if here ~= nil and here ~= MAP then return end
+
+      local status = placeRoxie()
+      -- report once per session, and only for a state worth reading
+      if showing and not reported and status ~= "already here" then
+        reported = true
+        say("ROXIE\n" .. status)
+      end
     end)
-    if not ok then mod.log:warn("banner failed: %s", tostring(err)) end
+    if not ok then mod.log:warn("map.entered failed: %s", tostring(err)) end
   end)
 
   mod.log:info("kanto_rocks %s loaded", VERSION)
