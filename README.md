@@ -8,7 +8,7 @@ what happens when PIERS turns up to crash the encore.
 A quest mod for [gen1recomp](https://github.com/bryanthaboi/gen1recomp),
 mod API 2, **Pokemon Gold**.
 
-**Status: v0.4.0 private test.** ROXIE turns up near the VIOLET GYM once you
+**Status: v0.4.1 private test.** ROXIE turns up near the VIOLET GYM once you
 have a badge, challenges you, and appoints you as her manager if you win. Your
 first job is finding the mysterious bassist FEEDBACK in GOLDENROD's
 UNDERGROUND. Bring three badges, win the audition, and discover who has been
@@ -87,8 +87,10 @@ out, and ROXIE remains available for a retry.
 ### The bassist
 
 Once the player becomes ROXIE's manager, FEEDBACK appears in the GOLDENROD
-UNDERGROUND at `(6,33)`, beside the south entrance, using a KIMONO GIRL
-disguise.
+UNDERGROUND beside the south entrance, using a KIMONO GIRL disguise. The
+designed cell is `(6,33)`; on device she actually stands at `(5,33)`, the
+first fallback, because the designed one is not free. The fallback search is
+load-bearing here, not decorative -- do not narrow it without re-testing.
 FEEDBACK will speak to any
 player but only auditions someone carrying three badges. The native battle
 intro supplies the surprise: the opponent is LEADER WHITNEY, with CLEFAIRY,
