@@ -1,7 +1,7 @@
 {
   "id": "kanto_rocks",
   "name": "Kanto Rocks",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
@@ -20,5 +20,6 @@
     "quest_system"
   ],
   "conflicts": [],
-  "description": "Become ROXIE's manager, recruit FEEDBACK in GOLDENROD, then solve a JIGGLYPUFF-interrupted drummer audition in ECRUTEAK. Private test build."
+  "description": "ROXIE came to JOHTO looking for a music scene and found temple bells and a sleeping WOOPER, so she is starting a band out of spite and you are her manager. Beat her in VIOLET CITY, track down the disguised bassist FEEDBACK in GOLDENROD's UNDERGROUND, then work out who kept time through a JIGGLYPUFF-interrupted drum audition in ECRUTEAK. ALPHA: the band is half-assembled -- promotion, the gig and PIERS are still to come. POKEMON GOLD ONLY; this mod does not load on Red, Blue or Yellow.",
+  "github": "mistermiracle3036/Kanto-Rocks"
 }

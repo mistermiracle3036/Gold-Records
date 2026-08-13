@@ -12,6 +12,52 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.4.2
+
+**First public release — this is an ALPHA.** The band is half-assembled.
+
+### Pokemon Gold only
+This mod does **not** load on Red, Blue or Yellow. It is built against
+Gold's engine, which is a separate implementation rather than an add-on,
+so there is no Gen 1 version of it to fall back to. On a Red boot it is
+simply skipped — that is expected, not a fault. Needs gen1recomp
+**0.1.78 or newer**, the release Gold support arrived in.
+
+### What you can play
+ROXIE came to JOHTO looking for a music scene and found temple bells,
+monks and somebody's sleeping WOOPER. So she is starting a band out of
+spite, and you are going to manage it.
+
+- **VIOLET CITY, once you have a badge.** ROXIE is waiting near the Gym
+  with opinions about how quiet the place is, and a battle to see whether
+  you are worth her time. Losing is safe — she will take you again.
+- **GOLDENROD's UNDERGROUND.** Your first job as manager is finding a
+  bassist who plays under the name FEEDBACK and will not audition for
+  anyone carrying fewer than three badges. Beat her and you find out why
+  she has been hiding behind a borrowed kimono.
+- **ECRUTEAK's DANCE THEATER.** Three drummers, three very different
+  ideas of a beat, and a JIGGLYPUFF with the worst possible timing. Work
+  out who kept playing through it. Guessing wrong costs you nothing.
+
+### What is not in yet
+The questline stops after the drummer joins. Promoting the show, the
+venue itself, and PIERS turning up to crash the encore are all still to
+come. Nothing is broken when it ends — you simply reach the end of what
+exists, and ROXIE has nothing new to say.
+
+### Notes
+- Your save is not modified. Every character this mod adds is a runtime
+  actor, rebuilt from the mod's own quest progress each time you enter
+  the map, so uninstalling leaves no trace in the world.
+- No vanilla character, map, script or trainer is changed, so other mods
+  touching Violet City, Goldenrod or Ecruteak will not collide with this
+  one.
+- **Quest System is optional.** Install it and the questline also keeps a
+  journal entry; without it everything else is identical.
+- Development aid: the mod writes actor placement into the mod manager's
+  `[ERRS]` screen. That is deliberate and harmless. It goes away once the
+  questline is finished.
+
 ## 0.4.1
 
 Reconciliation build. No gameplay change from 0.4.0.

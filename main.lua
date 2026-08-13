@@ -1,5 +1,6 @@
 -- Kanto Rocks -- a Gold quest starring ROXIE.
--- Private test build; no release or publishing workflow is involved.
+-- Alpha release. The questline runs as far as recruiting the drummer;
+-- promotion, the venue and PIERS are still to come.
 --
 -- Proven Gold patterns used here:
 --   * owned runtime NPC + world.interacted dialogue (Court of Noctowl)
@@ -9,7 +10,7 @@
 local Runtime = require("src.mods.Runtime")
 
 return function(mod)
-  local VERSION = "0.4.1"
+  local VERSION = "0.4.2"
   local MOD_ID = "kanto_rocks"
   mod.exports.version = VERSION
 

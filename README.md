@@ -8,7 +8,7 @@ what happens when PIERS turns up to crash the encore.
 A quest mod for [gen1recomp](https://github.com/bryanthaboi/gen1recomp),
 mod API 2, **Pokemon Gold**.
 
-**Status: v0.4.1 private test.** ROXIE turns up near the VIOLET GYM once you
+**Status: v0.4.2 — ALPHA.** ROXIE turns up near the VIOLET GYM once you
 have a badge, challenges you, and appoints you as her manager if you win. Your
 first job is finding the mysterious bassist FEEDBACK in GOLDENROD's
 UNDERGROUND. Bring three badges, win the audition, and discover who has been
@@ -19,8 +19,25 @@ Promotion, the gig and PIERS come afterward.
 ## Requirements
 
 - gen1recomp **0.1.78 or newer** — the release Gen 2 support shipped in
-- A Pokemon **Gold** boot. This version is Gen 2 only and is skipped on a
-  Red/Blue/Yellow boot.
+- A Pokemon **Gold** boot. This mod is Gen 2 only and is skipped on a
+  Red/Blue/Yellow boot. That is expected, not a fault.
+
+## Install
+
+Download `kanto_rocks-<version>.zip` from
+[the latest release](../../releases/latest), then in the launcher choose
+**MODS → Import mod .zip** and fully quit and relaunch.
+
+On iOS, delete any older downloaded copy from Files first. To update
+later, the mod's entry shows "vX.Y.Z available" — tap it, choose
+**Update**, then fully quit and relaunch.
+
+## Development preview
+
+This is an alpha and the questline is unfinished — it ends after the
+drummer joins. Bug reports are welcome on
+[GitHub Issues](../../issues); please include the version from the load
+banner and which other mods you had enabled.
 
 **Quest System is optional.** Install it and the questline also keeps an
 entry in the journal; without it everything else behaves identically. It

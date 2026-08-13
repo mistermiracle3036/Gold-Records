@@ -3,11 +3,11 @@ return {
   author = "Mister Miracle",
   tags = { "quest", "music", "johto", "gen2" },
   differences = {
-    "v0.4.1 private test: ROXIE waits near VIOLET GYM, challenges you, then hires you as her manager if you win",
+    "ALPHA: ROXIE waits near VIOLET GYM, challenges you, then hires you as her manager if you win",
     "find the kimono-disguised bassist FEEDBACK in GOLDENROD's UNDERGROUND and bring three badges to earn an audition",
     "the native battle introduction reveals FEEDBACK as LEADER WHITNEY",
     "investigate a JIGGLYPUFF-interrupted drum audition in ECRUTEAK and recruit CASEY by identifying her four-beat chant",
-    "promotion, the gig and PIERS are still to come",
+    "promotion, the gig and PIERS are still to come -- the questline ends once the drummer joins",
   },
   credits = { "pret/pokecrystal and pokered research", "gen1recomp engine",
               "Pokemon characters are used as fan tribute" },
