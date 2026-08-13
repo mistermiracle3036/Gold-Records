@@ -1,4 +1,4 @@
-# Kanto Rocks
+# Gold Records
 
 ROXIE came to JOHTO looking for a music scene and found temple bells, monks
 and somebody's sleeping WOOPER. So she is starting a band out of spite, and
@@ -8,13 +8,16 @@ what happens when PIERS turns up to crash the encore.
 A quest mod for [gen1recomp](https://github.com/bryanthaboi/gen1recomp),
 mod API 2, **Pokemon Gold**.
 
-**Status: v0.4.2 — ALPHA.** ROXIE turns up near the VIOLET GYM once you
-have a badge, challenges you, and appoints you as her manager if you win. Your
-first job is finding the mysterious bassist FEEDBACK in GOLDENROD's
-UNDERGROUND. Bring three badges, win the audition, and discover who has been
-playing in secret. Then visit ECRUTEAK's DANCE THEATER, investigate an
-audition interrupted by JIGGLYPUFF, and identify the drummer who kept time.
-Promotion, the gig and PIERS come afterward.
+> **This is an ALPHA and the band is half-assembled.** ROXIE turns up near
+> the VIOLET GYM once you have a badge, challenges you, and appoints you as
+> her manager whether you agreed or not. From there: find the mysterious
+> bassist FEEDBACK in GOLDENROD's UNDERGROUND, then work out who kept time
+> at a JIGGLYPUFF-interrupted drum audition in ECRUTEAK. Promotion, the gig
+> and PIERS come later.
+>
+> Bug reports and ideas are welcome in [GitHub Issues](../../issues) —
+> please include the version from the load banner and which other mods were
+> enabled.
 
 ## Screenshots
 
@@ -49,20 +52,13 @@ She does not audition you politely.
 
 ## Install
 
-Download `kanto_rocks-<version>.zip` from
+Download `gold_records-<version>.zip` from
 [the latest release](../../releases/latest), then in the launcher choose
 **MODS → Import mod .zip** and fully quit and relaunch.
 
 On iOS, delete any older downloaded copy from Files first. To update
 later, the mod's entry shows "vX.Y.Z available" — tap it, choose
 **Update**, then fully quit and relaunch.
-
-## Development preview
-
-This is an alpha and the questline is unfinished — it ends after the
-drummer joins. Bug reports are welcome on
-[GitHub Issues](../../issues); please include the version from the load
-banner and which other mods you had enabled.
 
 **Quest System is optional.** Install it and the questline also keeps an
 entry in the journal; without it everything else behaves identically. It
@@ -162,8 +158,8 @@ kanto_ribbons has no award API. Its exports are `{ version, hasRibbon,
 catalog }`, and every ribbon it grants comes from a resolver inside that
 mod reading save state — the same way it reads snag_quest's `mon.snagged`.
 
-So Kanto Rocks writes and owns `mon.krHeadliner`, and kanto_ribbons picks
-it up in its own time. `mon.krPiersGift` is reserved the same way, tagging
+So Gold Records writes and owns `mon.grHeadliner`, and kanto_ribbons picks
+it up in its own time. `mon.grPiersGift` is reserved the same way, tagging
 the gift Pokemon's provenance.
 
 ## Options
@@ -180,7 +176,7 @@ actors are never serialized, so they do not enter the map-data merge; the mod
 rebuilds the appropriate cast from its own saved quest beat on map entry.
 
 Ownership is published at runtime in `mod.exports.owns`, including the two
-mon fields reserved for rewards — `mon.krHeadliner` and `mon.krPiersGift`.
+mon fields reserved for rewards — `mon.grHeadliner` and `mon.grPiersGift`.
 Read them freely; do not write them.
 
 ## Open questions (TODO/CONFIRM ledger)

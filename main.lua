@@ -1,4 +1,4 @@
--- Kanto Rocks -- a Gold quest starring ROXIE.
+-- Gold Records -- a Gold quest starring ROXIE.
 -- Alpha release. The questline runs as far as recruiting the drummer;
 -- promotion, the venue and PIERS are still to come.
 --
@@ -11,20 +11,20 @@ local Runtime = require("src.mods.Runtime")
 
 return function(mod)
   local VERSION = "0.4.2"
-  local MOD_ID = "kanto_rocks"
+  local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
   local MAP = "VIOLET_CITY"
-  local OBJ_NAME = "KR_ROXIE"
+  local OBJ_NAME = "GR_ROXIE"
   local BASS_MAP = "GOLDENROD_UNDERGROUND"
-  local FEEDBACK_NAME = "KR_FEEDBACK"
-  local WHITNEY_NAME = "KR_WHITNEY"
+  local FEEDBACK_NAME = "GR_FEEDBACK"
+  local WHITNEY_NAME = "GR_WHITNEY"
   local AUDITION_MAP = "DANCE_THEATER"
-  local AUDITION_ROXIE = "KR_AUDITION_ROXIE"
-  local GENE_NAME = "KR_GENE"
-  local BILLY_NAME = "KR_BILLY"
-  local CASEY_NAME = "KR_CASEY"
-  local JIGGLY_NAME = "KR_JIGGLYPUFF"
+  local AUDITION_ROXIE = "GR_AUDITION_ROXIE"
+  local GENE_NAME = "GR_GENE"
+  local BILLY_NAME = "GR_BILLY"
+  local CASEY_NAME = "GR_CASEY"
+  local JIGGLY_NAME = "GR_JIGGLYPUFF"
   local BADGE_GATE = 1
   local MOVE_STANDING_DOWN = 6
   local MOVE_STANDING_RIGHT = 9
@@ -37,7 +37,7 @@ return function(mod)
   -- FEEDBACK waits just to its right, facing the arrival corridor.
   local BASS_X, BASS_Y = 6, 33
 
-  -- Runtime objects do not consume an index, but this reserves Kanto Rocks'
+  -- Runtime objects do not consume an index, but this reserves Gold Records'
   -- future map-owned object band and documents ownership for other mods.
   mod.exports.owns = {
     maps = {}, trainers = {}, items = {}, sprites = {},
@@ -49,7 +49,7 @@ return function(mod)
       },
       indexBand = { 160, 169 },
     },
-    monFields = { "krHeadliner", "krPiersGift" },
+    monFields = { "grHeadliner", "grPiersGift" },
   }
 
   local function report(fmt, ...)
@@ -94,16 +94,16 @@ return function(mod)
     roxie = {
       map = MAP, npc = OBJ_NAME, class = "JANINE", member = "JANINE1",
       tempName = "ROXIE",
-      seenKey = "KR_ROXIE_SEEN", winKey = "KR_ROXIE_WIN",
-      lossKey = "KR_ROXIE_LOSS",
+      seenKey = "GR_ROXIE_SEEN", winKey = "GR_ROXIE_WIN",
+      lossKey = "GR_ROXIE_LOSS",
       party = { { species = "EKANS", level = 10 },
                 { species = "KOFFING", level = 12 } },
     },
     whitney = {
       map = BASS_MAP, npc = FEEDBACK_NAME,
       class = "WHITNEY", member = "WHITNEY1",
-      seenKey = "KR_FEEDBACK_SEEN", winKey = "KR_FEEDBACK_WIN",
-      lossKey = "KR_FEEDBACK_LOSS",
+      seenKey = "GR_FEEDBACK_SEEN", winKey = "GR_FEEDBACK_WIN",
+      lossKey = "GR_FEEDBACK_LOSS",
       party = { { species = "CLEFAIRY", level = 20 },
                 { species = "SNUBBULL", level = 20 },
                 { species = "MILTANK", level = 22 } },
@@ -144,7 +144,7 @@ return function(mod)
     local def = BATTLES[key]
     local world = mod.world:overworld()
     local ok, why = resolveCarrier(def)
-    if not ok then report("KR CARRIER\n%s", tostring(why)); return false end
+    if not ok then report("GR CARRIER\n%s", tostring(why)); return false end
     local obj = objectNamed(world, def.map, def.npc)
     if not obj then return false end
     obj.trainer = {
@@ -182,7 +182,7 @@ return function(mod)
     local ok, built = pcall(buildParty, def.party)
     pendingBattle, activeBattle = key, nil
     if not ok or not built then
-      report("KR PARTY FAIL\n%s", tostring(built))
+      report("GR PARTY FAIL\n%s", tostring(built))
       return base
     end
     return built
@@ -208,7 +208,7 @@ return function(mod)
         world.scriptVars[VAR_BATTLETYPE] = BATTLETYPE_CANLOSE
       end
     end)
-    if not ok then report("KR ENGAGE\n%s", tostring(err)) end
+    if not ok then report("GR ENGAGE\n%s", tostring(err)) end
   end)
 
   local function healParty()
@@ -231,7 +231,7 @@ return function(mod)
       else setBeat(won and 40 or 32) end
       if not won then healParty() end
     end)
-    if not ok then report("KR BATTLE END\n%s", tostring(err)) end
+    if not ok then report("GR BATTLE END\n%s", tostring(err)) end
   end)
 
   local roxieX, roxieY
@@ -319,7 +319,7 @@ return function(mod)
     setBeat(50)
     local status = placeBassist()
     if status and not status:match("^WHITNEY") then
-      report("KR REVEAL\n%s", tostring(status))
+      report("GR REVEAL\n%s", tostring(status))
     end
   end
 
@@ -420,7 +420,7 @@ return function(mod)
         local existing = objectNamed(world, AUDITION_MAP, actor.name)
         if existing then
           placed[#placed + 1] = ("%s %d,%d"):format(
-            actor.name:gsub("^KR_", ""), existing.x, existing.y)
+            actor.name:gsub("^GR_", ""), existing.x, existing.y)
         else
           local x, y = cellForActor(world, actor)
           if not x then return "no cell for " .. actor.name end
@@ -431,7 +431,7 @@ return function(mod)
           if not id then return "audition spawn " .. tostring(err) end
           auditionSpawnIds[actor.name] = id
           placed[#placed + 1] = ("%s %d,%d"):format(
-            actor.name:gsub("^KR_", ""), x, y)
+            actor.name:gsub("^GR_", ""), x, y)
         end
       end
     end
@@ -446,7 +446,7 @@ return function(mod)
     removeAuditionActor(JIGGLY_NAME)
     local status = placeAudition()
     if status and not status:match("CASEY") then
-      report("KR DRUMMER\n%s", tostring(status))
+      report("GR DRUMMER\n%s", tostring(status))
     end
   end
 
@@ -645,10 +645,10 @@ return function(mod)
       onDone = function()
         if not onDone then return end
         local done, why = pcall(onDone)
-        if not done then report("KR TALK STATE\n%s", tostring(why)) end
+        if not done then report("GR TALK STATE\n%s", tostring(why)) end
       end,
     })
-    if not ok then report("KR TALK FAIL\n%s", tostring(err)) end
+    if not ok then report("GR TALK FAIL\n%s", tostring(err)) end
   end
 
   local function talkRoxie()
@@ -716,7 +716,7 @@ return function(mod)
         setBeat(70)
         local status = placeAudition()
         if status and not status:match("JIGGLYPUFF") then
-          report("KR JIGGLY\n%s", tostring(status))
+          report("GR JIGGLY\n%s", tostring(status))
         end
       end)
     end
@@ -792,7 +792,7 @@ return function(mod)
         end
       end
     end)
-    if not ok then report("KR INTERACT\n%s", tostring(err)) end
+    if not ok then report("GR INTERACT\n%s", tostring(err)) end
   end)
 
   mod.options:define({
@@ -815,11 +815,11 @@ return function(mod)
       if status and not reported[mapId]
           and mod.options:get("show_report") ~= false then
         reported[mapId] = true
-        report("KR %s\n%s\nB%d", VERSION, status, beat())
+        report("GR %s\n%s\nB%d", VERSION, status, beat())
       end
     end)
-    if not ok then report("KR MAP ENTER\n%s", tostring(err)) end
+    if not ok then report("GR MAP ENTER\n%s", tostring(err)) end
   end)
 
-  mod.log:info("kanto_rocks %s loaded (Gold private test)", VERSION)
+  mod.log:info("gold_records %s loaded (gold)", VERSION)
 end

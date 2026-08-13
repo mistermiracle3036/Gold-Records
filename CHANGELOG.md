@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Kanto Rocks are documented here, newest first,
+All notable changes to Gold Records are documented here, newest first,
 following [Semantic Versioning](https://semver.org/).
 
 <!-- Version headings MUST be bare: "## 0.1.1", no brackets and no date.
@@ -13,6 +13,10 @@ following [Semantic Versioning](https://semver.org/).
 
 
 ## 0.4.2
+
+**Formerly "Kanto Rocks".** The name was a leftover: this is a JOHTO story
+and a Pokemon Gold mod, and it never loaded on a Kanto game at all. Renamed
+before the first public release so nobody has to relearn it later.
 
 **First public release — this is an ALPHA.** The band is half-assembled.
 

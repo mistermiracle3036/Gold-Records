@@ -22,7 +22,7 @@
   the questline also registers a journal entry through its public exports;
   no code is shared, and the mod is fully playable without it.
 - **Kanto Ribbons** — planned optional integration. This mod will write
-  `mon.krHeadliner` on a Pokemon that was at the show, for that mod to
+  `mon.grHeadliner` on a Pokemon that was at the show, for that mod to
   read the same way it already reads `mon.snagged` and `mon.contestWins`.
   No code is shared and neither mod requires the other.
 - This mod ships **no binary assets** at present. Should original artwork
