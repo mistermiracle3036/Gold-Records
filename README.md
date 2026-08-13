@@ -16,6 +16,31 @@ playing in secret. Then visit ECRUTEAK's DANCE THEATER, investigate an
 audition interrupted by JIGGLYPUFF, and identify the drummer who kept time.
 Promotion, the gig and PIERS come afterward.
 
+## Screenshots
+
+<table>
+<tr>
+<td width="50%"><img src="docs/01-roxie-violet-city.png" width="320" alt="ROXIE standing beside the player in Violet City, saying: Listen to this place..."></td>
+<td width="50%"><img src="docs/03-roxie-next-quest.png" width="320" alt="ROXIE in Violet City giving the player their next job"></td>
+</tr>
+<tr>
+<td>ROXIE is unimpressed by how quiet VIOLET CITY is.</td>
+<td>Win, and you are her manager whether you agreed or not.</td>
+</tr>
+<tr>
+<td><img src="docs/04-feedback-goldenrod.png" width="320" alt="A kimono-wearing figure in the Goldenrod Underground saying: FEEDBACK: You found me."></td>
+<td><img src="docs/05-drum-audition.png" width="320" alt="The Ecruteak Dance Theater with ROXIE, three drum candidates and a JIGGLYPUFF, ROXIE saying: Welcome to the drum audition"></td>
+</tr>
+<tr>
+<td>The bassist plays GOLDENROD's UNDERGROUND under a false name.</td>
+<td>Three drummers, three ideas of a beat, one JIGGLYPUFF.</td>
+</tr>
+</table>
+
+<img src="docs/02-roxie-battle.png" width="420" alt="Gold battle intro reading: LEADER ROXIE wants to battle!">
+
+She does not audition you politely.
+
 ## Requirements
 
 - gen1recomp **0.1.78 or newer** — the release Gen 2 support shipped in
