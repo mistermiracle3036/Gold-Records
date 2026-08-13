@@ -8,8 +8,13 @@ what happens when PIERS turns up to crash the encore.
 A quest mod for [gen1recomp](https://github.com/bryanthaboi/gen1recomp),
 mod API 2, **Pokemon Gold**.
 
-**Status: v0.2.0, early.** ROXIE turns up in VIOLET CITY once you have a
-badge, and has her say. The band, the gig and PIERS come after.
+**Status: v0.4.0 private test.** ROXIE turns up near the VIOLET GYM once you
+have a badge, challenges you, and appoints you as her manager if you win. Your
+first job is finding the mysterious bassist FEEDBACK in GOLDENROD's
+UNDERGROUND. Bring three badges, win the audition, and discover who has been
+playing in secret. Then visit ECRUTEAK's DANCE THEATER, investigate an
+audition interrupted by JIGGLYPUFF, and identify the drummer who kept time.
+Promotion, the gig and PIERS come afterward.
 
 ## Requirements
 
@@ -55,8 +60,8 @@ faced cell's coordinates. A mod-spawned NPC has no `scriptKey`, so an A
 press aimed at ROXIE falls all the way through to there. The mod
 recognises her cell and queues the text itself.
 
-That is unproven on a real Gold boot — nothing in this ecosystem has given
-a mod-spawned NPC a voice on Gold yet. It is the whole point of v0.2.0.
+Court of Noctowl subsequently proved this route on a real Gold boot. Kanto
+Rocks now uses the same path for every stage of ROXIE's conversation.
 
 ### Roxie is her own NPC, not a takeover
 
@@ -66,11 +71,46 @@ over in a way the engine would run — but it was the right call on Gen 1
 too: it means no per-version text-constant hunt, and no other mod editing
 Violet City can silently clobber her, or be clobbered by her.
 
-Her cell is resolved at runtime rather than hard-coded. Gold's manifest
-carries map dimensions but no per-map object lists, so there is nothing to
-copy even if hard-coding were wise; instead the mod anchors on a vanilla
-NPC already on the map and takes the first neighbouring cell the map
-itself reports as in-bounds, walkable and unoccupied.
+Her current device-adjusted position is fixed at `(22,12)`, four cells right
+and seven cells up from the first Gym-area test position. She initially faces
+right.
+
+### The audition battle
+
+ROXIE's battle uses the native Gold trainer flow proven by Indigo Plateau
+Conference. JANINE supplies the Poison-leader portrait and battle class;
+the trainer is temporarily named ROXIE, and `trainer.party` supplies a
+level 10 EKANS and level 12 KOFFING. JANINE's row is restored immediately
+afterward. The battle is safely losable: defeat does not black the player
+out, and ROXIE remains available for a retry.
+
+### The bassist
+
+Once the player becomes ROXIE's manager, FEEDBACK appears in the GOLDENROD
+UNDERGROUND at `(6,33)`, beside the south entrance, using a KIMONO GIRL
+disguise.
+FEEDBACK will speak to any
+player but only auditions someone carrying three badges. The native battle
+intro supplies the surprise: the opponent is LEADER WHITNEY, with CLEFAIRY,
+SNUBBULL and MILTANK. After victory she admits FEEDBACK is her private stage
+name, explains that the borrowed kimono and cheap wig hide her from Gym
+regulars, agrees to one show and one encore, and changes to her real overworld
+sprite. Loss is safe and repeatable.
+
+### The drummer
+
+After ROXIE learns FEEDBACK's identity, she sends the player to an open
+audition in ECRUTEAK's DANCE THEATER. Three candidates demonstrate distinct
+rhythms: GENE counts in three, BILLY insists on five-four, and Johto anime
+character CASEY uses her four-beat ELECTABUZZ baseball chant.
+
+JIGGLYPUFF interrupts with its recurring anime singing gag and sends the room
+to sleep. On waking, the player learns that one four-beat rhythm continued.
+Gold has no supported mod-facing choice box, so the investigation uses the
+world itself as the choice: question all three candidates, then speak to the
+person you want to select. Wrong answers are safe and repeatable. Selecting
+CASEY recruits her as the band's drummer and clears the other audition actors
+from the room.
 
 ### The HEADLINER ribbon is a field, not a call
 
@@ -86,15 +126,14 @@ the gift Pokemon's provenance.
 
 | Option | Default | What it does |
 |---|---|---|
-| Report ROXIE status | on | Writes where ROXIE was placed — or why she was not — into the mod manager's `[ERRS]` screen. A development aid; it goes once the questline is stable. |
+| Report quest actors | on | Writes actor placement or gating status into the mod manager's `[ERRS]` screen. A development aid; it goes once the questline is stable. |
 
 ## Compatibility
 
-Entirely additive: one NPC object of its own, and later its own items,
-trainers and maps. No vanilla record is overridden and no vanilla dialogue
-is displaced. ROXIE is a runtime object, which is never serialized, so she
-never enters the map-data merge and nothing is written to your save on her
-account.
+Entirely additive: every quest actor is a runtime object owned by this mod.
+No vanilla record is overridden and no vanilla dialogue is displaced. Runtime
+actors are never serialized, so they do not enter the map-data merge; the mod
+rebuilds the appropriate cast from its own saved quest beat on map entry.
 
 Ownership is published at runtime in `mod.exports.owns`, including the two
 mon fields reserved for rewards — `mon.krHeadliner` and `mon.krPiersGift`.
@@ -109,19 +148,19 @@ Closed by reading engine source at v0.1.78:
 - ~~Where Gold keeps badges~~ — `save.player.badges` (Johto) plus
   `save.player.kantoBadges` (Kanto), counted as set flags. Not reachable
   through `getFlag`; that is a different bitfield.
-- ~~Which script verbs a mod can drive on Gold~~ — `text`, `warp`,
-  `setflag`, `clearflag`, and `start_battle` **wild only**. The trainer
-  arm is not served, which matters for the drummer's battle later.
+- ~~Can a mod stage a Gold trainer battle~~ — yes. An owned NPC can be armed
+  with a numeric trainer class/member, and `trainer.party` can substitute a
+  finished custom team. Indigo Plateau Conference proved this on device.
 - ~~Quest System export signatures~~ — device-confirmed:
   `register()`, `start()`, `advance()`, `complete()` and `track()` are all
   real functions on its exports table.
 
 Still open:
 
-- **The `world.interacted` fall-through, on a real Gold boot.** v0.2.0
-  tests exactly this.
-- **Where exactly ROXIE lands** in Violet City. Resolved at runtime and
-  reported to `[ERRS]`.
+- ~~Where exactly ROXIE lands~~ — device-adjusted to `(22,12)`, facing right.
+- **Where the audition cast should stand.** v0.4.0 starts them close to the
+  DANCE THEATER entrance and reports their runtime placement for device
+  adjustment.
 - **Her sprite.** She wears `SPRITE_COOLTRAINER_F` as a stand-in. Gold's
   overworld sprite space is its own 162 ids, and Gen 1's `paletteSource`
   ROM crosswalk does not carry over, so bespoke art needs Gold's palette
@@ -139,8 +178,8 @@ By **Mister Miracle**
   engine and pret/pokecrystal + pokered research.
 - **Quest System** by FAFF0x — optional journal integration.
 - **Kanto Ribbons** — planned optional integration via a mon field.
-- ROXIE (Pokemon Black 2 / White 2) and PIERS (Pokemon Sword) appear as
-  fan tribute; no assets or text from those games are included.
+- ROXIE, WHITNEY, CASEY, JIGGLYPUFF and PIERS appear as fan tribute; no art,
+  text or audio from their source games or anime is included.
 - Pokemon and all related names are trademarks of Nintendo / Creatures
   Inc. / GAME FREAK inc. This mod contains no ROM data and requires your
   own game copy via gen1recomp.

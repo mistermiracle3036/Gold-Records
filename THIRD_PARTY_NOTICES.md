@@ -12,10 +12,12 @@
   `[ERRS]` screen, which is the only diagnostic channel that exists on a
   phone.
 - **ROXIE** is the Virbank City gym leader of Pokemon Black 2 / White 2,
-  and **PIERS** is the Spikemuth gym leader of Pokemon Sword. Both appear
-  here as fan tribute. No art, text, audio or data from those games is
-  included; everything about them in this mod is original writing built on
-  the characters.
+  **WHITNEY** is Goldenrod's gym leader, **CASEY** is a Johto anime character,
+  **JIGGLYPUFF** draws on its recurring early-anime singing gag, and **PIERS**
+  is the Spikemuth gym leader of Pokemon Sword. They appear here as fan
+  tribute. No art, text, audio or data from those works is included;
+  everything about them in this mod is original writing built on the
+  characters.
 - **Quest System** by FAFF0x — optional integration. When it is installed
   the questline also registers a journal entry through its public exports;
   no code is shared, and the mod is fully playable without it.

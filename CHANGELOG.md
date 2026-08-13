@@ -12,6 +12,128 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.4.1
+
+Reconciliation build. No gameplay change from 0.4.0.
+
+### Changed
+- Brings the 0.2.1-0.4.0 work into the repository. Those five versions were
+  written outside git and delivered as a zip, so this is the first commit
+  that carries them; 0.4.0 itself has already left the repo as a private
+  test build, which is why this lands as 0.4.1 rather than reusing it.
+- Adds `docs/` to the release workflow's exclusion list, so screenshots
+  added later cannot end up inside the player's download.
+
+### Notes
+- Recorded here because a manifest field is a poor place to leave a
+  decision: this mod is now **Gold-only**. `games: ["gen2"]` with a
+  `>=0.1.78` floor means it does not load on Red, Blue or Yellow at all.
+  That is deliberate, and it means Gen 1 players never get this mod unless
+  a backfill is chosen as new work later.
+
+## 0.4.0
+
+Private drummer-audition test build.
+
+### Added
+- After recruiting WHITNEY, ROXIE sends the player to an open drum audition
+  in ECRUTEAK's DANCE THEATER.
+- Runtime actors for ROXIE and three candidates: loud three-beat ROCKER GENE,
+  five-four theorist BILLY, and Johto anime character CASEY.
+- The player must speak to all three candidates before the audition begins.
+- JIGGLYPUFF interrupts the audition with its recurring anime singing gag,
+  sending the room to sleep and leaving a four-beat mystery behind.
+- A dialogue-driven investigation which works without a choice-box API: gather
+  all three rhythm clues, then select a candidate by speaking to them.
+- Wrong selections are harmless and repeatable. CASEY's four-beat ELECTABUZZ
+  chant identifies her as the drummer and recruits her into the band.
+- Post-recruitment dialogue for CASEY and ROXIE, plus persistent audition,
+  investigation, selection and completion states.
+
+### Validation
+- Every player-facing dialogue page has at most two lines, with no line longer
+  than 18 visible characters.
+- The full private sequence harness passes both existing battles, loss/retry,
+  WHITNEY's reveal, the complete audition, a wrong choice and CASEY's reveal.
+
+## 0.3.2
+
+Private Feedback disguise test build.
+
+### Changed
+- FEEDBACK now uses the KIMONO GIRL overworld sprite instead of the green-
+  haired male ROCKER sprite.
+- WHITNEY explains after the reveal that the kimono and cheap wig let her Gym
+  regulars walk straight past her without recognizing her.
+- The costume disappears with the existing post-recruitment sprite change,
+  leaving WHITNEY in her real overworld appearance.
+
+## 0.3.1
+
+Private Feedback placement-fix test build.
+
+### Changed
+- Moved FEEDBACK from `(9,18)` to `(6,33)`, beside the south GOLDENROD
+  UNDERGROUND entrance used during normal progression.
+- FEEDBACK faces left toward the entrance corridor.
+- The three-badge requirement still gates only the audition battle; FEEDBACK
+  appears as soon as ROXIE's manager conversation is completed.
+
+## 0.3.0
+
+Private bassist-recruitment test build.
+
+### Added
+- ROXIE now names the bassist FEEDBACK and directs the player to GOLDENROD's
+  UNDERGROUND.
+- FEEDBACK appears as a disguised ROCKER at `(9,18)` once the player has
+  become ROXIE's manager.
+- FEEDBACK refuses to audition until the player has three badges.
+- A safely losable custom battle against CLEFAIRY Lv20, SNUBBULL Lv20 and
+  MILTANK Lv22. The native battle introduction reveals FEEDBACK as LEADER
+  WHITNEY before her post-battle confession.
+- Victory dialogue recruits WHITNEY for one show and one encore. Her disguised
+  NPC is replaced by WHITNEY's real overworld sprite after the reveal.
+- ROXIE reacts to learning the bassist's identity and limits WHITNEY to one
+  band-name suggestion.
+- Persistent loss/retry, post-victory and recruited quest states.
+
+## 0.2.3
+
+Private placement-adjustment test build.
+
+### Changed
+- Moved ROXIE four cells right and seven cells up from the previous test
+  position: `(18,19)` to `(22,12)`.
+- ROXIE now initially faces right.
+
+## 0.2.2
+
+Private placement-fix test build.
+
+### Changed
+- ROXIE now has a fixed, visible position at `(18,19)`, directly south of
+  Violet Gym's exterior door at `(18,17)`. The intervening square remains
+  clear so she does not block the Gym entrance.
+- ROXIE initially faces north toward the Gym.
+
+## 0.2.1
+
+Private quest-opening test build.
+
+### Added
+- ROXIE challenges the player after complaining that VIOLET CITY is too
+  quiet and promising to shake it up.
+- A native, safely losable trainer battle against EKANS and KOFFING.
+- Win, loss and retry state. Only victory advances the quest; a loss keeps
+  ROXIE available and restores HP/status for another attempt.
+- After ROXIE loses, she appoints the player as her manager and sends them to
+  GOLDENROD to find a bassist who only battles trainers with three badges.
+- Persistent quest progress in `mod.save`.
+
+### Testing
+- Private ZIP test build only. No GitHub release or publishing plan.
+
 ## 0.2.0
 
 **Kanto Rocks moves to Gold.** ROXIE is in JOHTO now, and this version
