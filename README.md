@@ -159,8 +159,28 @@ catalog }`, and every ribbon it grants comes from a resolver inside that
 mod reading save state — the same way it reads snag_quest's `mon.snagged`.
 
 So Gold Records writes and owns `mon.grHeadliner`, and kanto_ribbons picks
-it up in its own time. `mon.grPiersGift` is reserved the same way, tagging
-the gift Pokemon's provenance.
+it up in its own time.
+
+**The contract, in full.** Both fields are plain **booleans** — set once,
+never cleared — matching `mon.snagged` rather than the per-category count
+table `mon.contestWins` uses. Neither is written yet; `mod.exports.owns`
+reserves them and the write sites land in v0.5.x.
+
+| Field | Set to `true` | Means |
+|---|---|---|
+| `mon.grHeadliner` | on each party member present when PIERS is beaten | it played the show |
+| `mon.grPiersGift` | on the Pokemon PIERS hands over afterwards | provenance, **not** an award |
+
+`grPiersGift` is deliberately **not** a ribbon. It records where a Pokemon
+came from so later flavour can recognise it, which is closer to what the
+Traveler Ribbon already does than to an achievement of its own — and every
+new ribbon costs a 16×16 cell that has to stay distinct from the ones
+already in the sheet. Read it freely; do not spend an icon on it.
+
+A reader should test `mon.grHeadliner == true` rather than checking
+whether this mod is installed. That way it stays inert until the writer
+ships and applies retroactively the moment it does, with no release-order
+dependency in either direction.
 
 ## Options
 
