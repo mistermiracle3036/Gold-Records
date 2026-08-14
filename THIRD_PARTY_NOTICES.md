@@ -27,6 +27,12 @@
   boolean, set once and never cleared — not the per-category count table
   `mon.contestWins` uses. No code is shared and neither mod requires the
   other.
+- **Kanto Contests** — planned optional integration. That mod reserves
+  contest scarves as rewards for quests across this portfolio, worn items
+  setting `mon.kcScarf`. No scarf item exists in it yet (0.9.0 lists them
+  as a future slice), so there is nothing for this mod to award until it
+  ships; the reward is designed but parked. No code is shared and neither
+  mod requires the other.
 - This mod ships **no binary assets** at present. Should original artwork
   be added, it will be named here along with who made it.
 - Pokemon and all related names are trademarks of Nintendo / Creatures

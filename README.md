@@ -199,35 +199,27 @@ Ownership is published at runtime in `mod.exports.owns`, including the two
 mon fields reserved for rewards — `mon.grHeadliner` and `mon.grPiersGift`.
 Read them freely; do not write them.
 
-## Open questions (TODO/CONFIRM ledger)
+## Known gaps in this alpha
 
-Closed by reading engine source at v0.1.78:
+Things that are deliberate rather than broken, so you don't need to report
+them:
 
-- ~~Does the Gen 1 NPC pattern work on Gold~~ — no. `map_scripts` is
-  gated on a Gold boot; see above.
-- ~~Where Gold keeps badges~~ — `save.player.badges` (Johto) plus
-  `save.player.kantoBadges` (Kanto), counted as set flags. Not reachable
-  through `getFlag`; that is a different bitfield.
-- ~~Can a mod stage a Gold trainer battle~~ — yes. An owned NPC can be armed
-  with a numeric trainer class/member, and `trainer.party` can substitute a
-  finished custom team. Indigo Plateau Conference proved this on device.
-- ~~Quest System export signatures~~ — device-confirmed:
-  `register()`, `start()`, `advance()`, `complete()` and `track()` are all
-  real functions on its exports table.
+- **ROXIE is wearing somebody else's face.** She uses an existing Gold
+  overworld sprite as a stand-in — art of her own is on the list, and it
+  needs some groundwork on how Gold handles palettes first. Everything she
+  *says* and does is hers.
+- **The drum audition cast stand where they stand.** Their positions in the
+  DANCE THEATER are still being nudged into place from real play, so expect
+  them to shuffle a little between versions.
+- **The story stops after the drummer joins.** Promoting the show, the gig
+  itself, and PIERS turning up to crash the encore are all still to come.
+  Nothing breaks when you reach the end — ROXIE simply has nothing new to
+  say.
 
-Still open:
-
-- ~~Where exactly ROXIE lands~~ — device-adjusted to `(22,12)`, facing right.
-- **Where the audition cast should stand.** v0.4.0 starts them close to the
-  DANCE THEATER entrance and reports their runtime placement for device
-  adjustment.
-- **Her sprite.** She wears `SPRITE_COOLTRAINER_F` as a stand-in. Gold's
-  overworld sprite space is its own 162 ids, and Gen 1's `paletteSource`
-  ROM crosswalk does not carry over, so bespoke art needs Gold's palette
-  handling read properly first.
-- **kanto_contests scarf reward.** Still a planned slice in that mod
-  (`mon.kcScarf`); no scarf item exists in kanto_contests 0.9.0, so there
-  is nothing to award yet.
+Anything else that looks wrong is worth an issue. If a character turns to
+face you and nothing happens, that is a swallowed script error rather than
+the end of the quest — please report it with your version from the load
+banner and which other mods were enabled.
 
 ## Credits
 
