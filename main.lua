@@ -1,16 +1,16 @@
 -- Gold Records -- a Gold quest starring ROXIE.
--- Alpha release. The questline runs as far as recruiting the drummer;
--- promotion, the venue and PIERS are still to come.
+-- Alpha release. ROXIE's assembled band plays NATIONAL PARK, where PIERS
+-- arrives uninvited and challenges the manager for the encore.
 --
 -- Proven Gold patterns used here:
 --   * owned runtime NPC + world.interacted dialogue (Court of Noctowl)
---   * native trainer arm + trainer.party substitution (Indigo Conference)
+--   * owned trainer carrier + trainer.party substitution (ROXIE/WHITNEY)
 --   * mod.save quest state, so loading an earlier save rewinds the quest
 
 local Runtime = require("src.mods.Runtime")
 
 return function(mod)
-  local VERSION = "0.4.2"
+  local VERSION = "0.5.0"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -25,7 +25,13 @@ return function(mod)
   local BILLY_NAME = "GR_BILLY"
   local CASEY_NAME = "GR_CASEY"
   local JIGGLY_NAME = "GR_JIGGLYPUFF"
+  local SHOW_MAP = "NATIONAL_PARK"
+  local SHOW_ROXIE = "GR_SHOW_ROXIE"
+  local SHOW_WHITNEY = "GR_SHOW_WHITNEY"
+  local SHOW_CASEY = "GR_SHOW_CASEY"
+  local PIERS_NAME = "GR_PIERS"
   local BADGE_GATE = 1
+  local SHOW_BADGE_GATE = 4
   local MOVE_STANDING_DOWN = 6
   local MOVE_STANDING_RIGHT = 9
   local MOVE_STANDING_LEFT = 8
@@ -47,6 +53,7 @@ return function(mod)
       [AUDITION_MAP] = {
         AUDITION_ROXIE, GENE_NAME, BILLY_NAME, CASEY_NAME, JIGGLY_NAME,
       },
+      [SHOW_MAP] = { SHOW_ROXIE, SHOW_WHITNEY, SHOW_CASEY, PIERS_NAME },
       indexBand = { 160, 169 },
     },
     monFields = { "grHeadliner", "grPiersGift" },
@@ -62,6 +69,8 @@ return function(mod)
   --   31 Feedback challenge armed; 32 lost; 40 Whitney beaten; 50 recruited
   --   60 drummer audition assigned; 70 Jigglypuff interruption happened
   --   71 candidate selection open; 80 Casey recruited
+  --   90 show assigned; 100 Piers arrived; 101 Piers battle armed
+  --   102 Piers loss/retry; 110 Piers beaten
   local function beat() return tonumber(mod.save:get("beat", 0)) or 0 end
   local function setBeat(n) mod.save:set("beat", n) end
 
@@ -108,6 +117,17 @@ return function(mod)
                 { species = "SNUBBULL", level = 20 },
                 { species = "MILTANK", level = 22 } },
     },
+    piers = {
+      map = SHOW_MAP, npc = PIERS_NAME,
+      class = "KAREN", member = "KAREN1", tempName = "PIERS",
+      seenKey = "GR_PIERS_SEEN", winKey = "GR_PIERS_WIN",
+      lossKey = "GR_PIERS_LOSS",
+      party = { { species = "MURKROW", level = 33 },
+                { species = "SNEASEL", level = 33 },
+                { species = "WEEZING", level = 34 },
+                { species = "CROBAT", level = 34 },
+                { species = "HOUNDOOM", level = 35 } },
+    },
   }
 
   mod.content.text:register(BATTLES.roxie.seenKey,
@@ -122,6 +142,12 @@ return function(mod)
     "WHITNEY: Hey!\fYou never missed\nthe beat!")
   mod.content.text:register(BATTLES.whitney.lossKey,
     "FEEDBACK: You lost\nthe rhythm.\fFind it and\ncome back.")
+  mod.content.text:register(BATTLES.piers.seenKey,
+    "PIERS: Show me\nwhat you've built.\fNo holding back.")
+  mod.content.text:register(BATTLES.piers.winKey,
+    "PIERS: Ha!\fNow that's a show.")
+  mod.content.text:register(BATTLES.piers.lossKey,
+    "PIERS: Good noise.\fNeeds a sharper\nedge.")
 
   local activeBattle, pendingBattle
 
@@ -195,7 +221,8 @@ return function(mod)
       local npc = ev and ev.npc
       local name = npc and npc.def and npc.def.name
       local key = name == OBJ_NAME and "roxie"
-               or name == FEEDBACK_NAME and "whitney" or nil
+               or name == FEEDBACK_NAME and "whitney"
+               or name == PIERS_NAME and "piers" or nil
       if not key then return end
       local def = BATTLES[key]
       -- Arm the party hook only at the owned NPC engagement seam. Merely
@@ -228,7 +255,8 @@ return function(mod)
       defangBattle(key)
       local won = ev and ev.result == "win"
       if key == "roxie" then setBeat(won and 20 or 11)
-      else setBeat(won and 40 or 32) end
+      elseif key == "whitney" then setBeat(won and 40 or 32)
+      else setBeat(won and 110 or 102) end
       if not won then healParty() end
     end)
     if not ok then report("GR BATTLE END\n%s", tostring(err)) end
@@ -451,6 +479,87 @@ return function(mod)
   end
 
   --------------------------------------------------------------------------
+  -- NATIONAL PARK show. The three band actors arrive at beat 90; PIERS is
+  -- added only after the opening set, so his interruption is a real arrival.
+  --------------------------------------------------------------------------
+  local showSpawnIds = {}
+  local SHOW_ACTORS = {
+    { name = SHOW_ROXIE, sprite = ROXIE_SPRITE, x = 10, y = 44,
+      label = "ROXIE" },
+    { name = SHOW_WHITNEY, sprite = "SPRITE_WHITNEY", x = 12, y = 44,
+      label = "WHITNEY" },
+    { name = SHOW_CASEY, sprite = "SPRITE_LASS", x = 15, y = 44,
+      label = "CASEY" },
+    { name = PIERS_NAME, sprite = "SPRITE_ROCKER", x = 12, y = 42,
+      label = "PIERS" },
+  }
+
+  local function removeShowActor(name)
+    local id = showSpawnIds[name]
+    if not id then
+      local world = mod.world:overworld()
+      local obj = objectNamed(world, SHOW_MAP, name)
+      if obj and obj.runtime and obj.index then
+        id = SHOW_MAP .. "_obj_" .. obj.index
+      end
+    end
+    if id then pcall(function() mod.world:removeNpc(id) end) end
+    showSpawnIds[name] = nil
+  end
+
+  local function clearShowActors()
+    for _, actor in ipairs(SHOW_ACTORS) do removeShowActor(actor.name) end
+  end
+
+  local function placeShow()
+    local world = mod.world and mod.world:overworld()
+    if not world then return "no overworld" end
+    local b = beat()
+    if b < 90 then
+      clearShowActors()
+      return nil
+    end
+    local badges = badgeCount(mod.world.game)
+    if badges < SHOW_BADGE_GATE then
+      clearShowActors()
+      return ("SHOW gate %d/%d"):format(badges, SHOW_BADGE_GATE)
+    end
+
+    local wanted = {
+      [SHOW_ROXIE] = true, [SHOW_WHITNEY] = true, [SHOW_CASEY] = true,
+    }
+    if b >= 100 then wanted[PIERS_NAME] = true end
+    for _, actor in ipairs(SHOW_ACTORS) do
+      if not wanted[actor.name] then removeShowActor(actor.name) end
+    end
+
+    local placed = {}
+    for _, actor in ipairs(SHOW_ACTORS) do
+      if wanted[actor.name] then
+        local existing = objectNamed(world, SHOW_MAP, actor.name)
+        if existing then
+          placed[#placed + 1] = ("%s %d,%d"):format(
+            actor.label, existing.x, existing.y)
+        else
+          local x, y = cellForActor(world, actor)
+          if not x then return "no show cell for " .. actor.label end
+          local id, err = mod.world:spawnNpc(SHOW_MAP, {
+            name = actor.name, sprite = actor.sprite,
+            x = x, y = y, movement = MOVE_STANDING_DOWN,
+          })
+          if not id then return "show spawn " .. tostring(err) end
+          showSpawnIds[actor.name] = id
+          placed[#placed + 1] = ("%s %d,%d"):format(actor.label, x, y)
+          if mod.options:get("show_report") ~= false then
+            report("GR SHOW\n%s %d,%d\nB%d", actor.label, x, y, b)
+          end
+        end
+      end
+    end
+    return table.concat(placed, " ")
+  end
+
+  --------------------------------------------------------------------------
   -- Dialogue. Gold has no mod-facing choice box, so Roxie's manager offer
   -- becomes an in-character fait accompli.
   --------------------------------------------------------------------------
@@ -504,6 +613,24 @@ return function(mod)
   local DRUMMER_FOUND = {
     "ROXIE: CASEY keeps\ntime in her sleep.",
     "Our drummer. Done.\fNext: spread word.",
+  }
+
+  local SHOW_ASSIGNMENT = {
+    "ROXIE: CASEY keeps\ntime in her sleep.",
+    "Our drummer. Done.",
+    "I booked a show.\fNATIONAL PARK.",
+    "Bring 4 BADGES.",
+    "We play when our\nmanager arrives.",
+  }
+
+  local SHOW_OBJECTIVE = {
+    "ROXIE: First show.\fNATIONAL PARK.",
+    "Bring 4 BADGES.\fThen bring noise.",
+  }
+
+  local PIERS_BEAT_VIOLET = {
+    "ROXIE: PIERS tried\nto steal our show.",
+    "He got an encore.\fJust not his.",
   }
 
   local FEEDBACK_LOCKED = {
@@ -630,6 +757,39 @@ return function(mod)
     },
   }
 
+  local SHOW_OPENING = {
+    "ROXIE: Manager's\nhere.",
+    "WHITNEY: Crowd's\nready!",
+    "CASEY: Count us!",
+    "One! Two! Three!\fFour!",
+    "The band hits\nthe first song.",
+    "A voice cuts in\nfrom the path.",
+    "PIERS: Not bad.",
+    "Mind if I crash\nthe encore?",
+    "ROXIE: Who asked\nyou?",
+    "PIERS: Nobody.\fThat's the fun.",
+  }
+
+  local PIERS_INTRO = {
+    "PIERS: Finally.",
+    "Something in JOHTO\nworth crashing.",
+    "You lot got nerve.\fAnd volume.",
+    "ROXIE: We have a\nheadliner already.",
+    "PIERS: Yeah?\fLet's see who gets\nthe encore.",
+    "No hard feelings.\fI wanna hear your\nbest.",
+  }
+
+  local PIERS_RETRY = {
+    "PIERS: Still game?\fGood.",
+    "Catch your breath.\fThen bring it.",
+  }
+
+  local PIERS_BEAT = {
+    "PIERS: You earned\nthe stage.",
+    "Came to crash it.\fYou made me stay.",
+    "That was a proper\nshow.",
+  }
+
   local function facePlayer(mapId, name)
     local here = mod.world:current()
     local opposite = { up = "down", down = "up", left = "right", right = "left" }
@@ -677,8 +837,12 @@ return function(mod)
       say(ROXIE_RECRUITED, function() setBeat(60) end)
     elseif b < 80 then
       say(DRUM_OBJECTIVE)
+    elseif b == 80 then
+      say(SHOW_ASSIGNMENT, function() setBeat(90) end)
+    elseif b < 110 then
+      say(SHOW_OBJECTIVE)
     else
-      say(DRUMMER_FOUND)
+      say(PIERS_BEAT_VIOLET)
     end
   end
 
@@ -763,6 +927,66 @@ return function(mod)
     })
   end
 
+  local function talkShowRoxie()
+    facePlayer(SHOW_MAP, SHOW_ROXIE)
+    local b = beat()
+    if b == 90 then
+      return say(SHOW_OPENING, function()
+        setBeat(100)
+        local status = placeShow()
+        if status and not status:match("PIERS") then
+          report("GR PIERS ARRIVE\n%s", tostring(status))
+        end
+      end)
+    end
+    if b == 102 then
+      return say({ "ROXIE: Breathe.\fThen take it back." })
+    end
+    if b >= 110 then return say({ "ROXIE: Our show.\fOur encore." }) end
+    say({ "ROXIE: PIERS wants\nour encore." })
+  end
+
+  local function talkShowMember(name)
+    facePlayer(SHOW_MAP, name)
+    local b = beat()
+    if name == SHOW_WHITNEY then
+      if b == 90 then
+        return say({ "WHITNEY: A real\ncrowd!", "Don't tell my\ntrainers." })
+      elseif b >= 110 then
+        return say({ "WHITNEY: We kept\nthe encore!" })
+      end
+      return say({ "WHITNEY: He wants\nour encore!" })
+    end
+    if b == 90 then return say({ "CASEY: Four beats.\fNo speeding up." }) end
+    if b >= 110 then
+      return say({ "CASEY: E-LEC-\nTA-BUZZ!", "We held the beat!" })
+    end
+    say({ "CASEY: He won't\ncount us out!" })
+  end
+
+  local function talkPiers()
+    facePlayer(SHOW_MAP, PIERS_NAME)
+    local b = beat()
+    if b == 100 then
+      return say(PIERS_INTRO, function()
+        setBeat(101)
+        armBattle("piers")
+      end)
+    end
+    if b == 101 then
+      return say({ "PIERS: Ready?\fWake the park." }, function()
+        armBattle("piers")
+      end)
+    end
+    if b == 102 then
+      return say(PIERS_RETRY, function()
+        setBeat(101)
+        armBattle("piers")
+      end)
+    end
+    say(PIERS_BEAT)
+  end
+
   mod.events:on("world.interacted", function(ev)
     local ok, err = pcall(function()
       if not ev or ev.kind ~= "none" then return end
@@ -790,6 +1014,18 @@ return function(mod)
             return
           end
         end
+      elseif ev.mapId == SHOW_MAP then
+        for _, name in ipairs({
+          SHOW_ROXIE, SHOW_WHITNEY, SHOW_CASEY, PIERS_NAME,
+        }) do
+          local obj = objectNamed(world, SHOW_MAP, name)
+          if obj and obj.x == ev.x and obj.y == ev.y then
+            if name == SHOW_ROXIE then talkShowRoxie()
+            elseif name == PIERS_NAME then talkPiers()
+            else talkShowMember(name) end
+            return
+          end
+        end
       end
     end)
     if not ok then report("GR INTERACT\n%s", tostring(err)) end
@@ -804,14 +1040,21 @@ return function(mod)
   mod.events:on("map.entered", function(ev)
     local ok, err = pcall(function()
       local mapId = ev and ev.mapId
-      if mapId ~= MAP and mapId ~= BASS_MAP and mapId ~= AUDITION_MAP then return end
-      local status = mapId == MAP and placeRoxie()
-                  or mapId == BASS_MAP and placeBassist()
-                  or placeAudition()
+      if mapId ~= MAP and mapId ~= BASS_MAP and mapId ~= AUDITION_MAP
+          and mapId ~= SHOW_MAP then return end
+      local status
+      if mapId == MAP then status = placeRoxie()
+      elseif mapId == BASS_MAP then status = placeBassist()
+      elseif mapId == AUDITION_MAP then status = placeAudition()
+      else status = placeShow() end
       local world = mod.world:overworld()
       if world and mapId == MAP and beat() == 10 then armBattle("roxie") end
       if world and mapId == BASS_MAP and beat() == 31
           and badgeCount(mod.world.game) >= 3 then armBattle("whitney") end
+      if world and mapId == SHOW_MAP and beat() == 101
+          and badgeCount(mod.world.game) >= SHOW_BADGE_GATE then
+        armBattle("piers")
+      end
       if status and not reported[mapId]
           and mod.options:get("show_report") ~= false then
         reported[mapId] = true

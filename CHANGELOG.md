@@ -12,6 +12,29 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.5.0
+
+The band plays its first show, and PIERS has invited himself onto the bill.
+
+### Added
+- After CASEY joins, ROXIE books the assembled band into NATIONAL PARK and
+  sends the player there as manager.
+- The show opens once the player has four badges. Arriving early leaves the
+  park unchanged and reports the closed gate in `[ERRS]`.
+- ROXIE, WHITNEY and CASEY appear together for the opening performance.
+  PIERS arrives only after the first song and is delighted that JOHTO finally
+  has a show worth crashing.
+- A safely losable and repeatable battle against PIERS: MURKROW Lv33,
+  SNEASEL Lv33, WEEZING Lv34, CROBAT Lv34 and HOUNDOOM Lv35.
+- New dialogue for the band before the show, during PIERS's interruption,
+  after a loss and after PIERS is beaten.
+
+### Notes
+- The quest currently ends after PIERS acknowledges the band. Rewards and
+  gift Pokemon are not part of this version.
+- NATIONAL PARK placement is reported in `[ERRS]` while the new stage layout
+  is tested on device.
+
 ## 0.4.2
 
 **Formerly "Kanto Rocks".** The name was a leftover: this is a JOHTO story

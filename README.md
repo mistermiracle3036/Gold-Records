@@ -8,12 +8,13 @@ what happens when PIERS turns up to crash the encore.
 A quest mod for [gen1recomp](https://github.com/bryanthaboi/gen1recomp),
 mod API 2, **Pokemon Gold**.
 
-> **This is an ALPHA and the band is half-assembled.** ROXIE turns up near
+> **This is an ALPHA.** ROXIE turns up near
 > the VIOLET GYM once you have a badge, challenges you, and appoints you as
 > her manager whether you agreed or not. From there: find the mysterious
 > bassist FEEDBACK in GOLDENROD's UNDERGROUND, then work out who kept time
-> at a JIGGLYPUFF-interrupted drum audition in ECRUTEAK. Promotion, the gig
-> and PIERS come later.
+> at a JIGGLYPUFF-interrupted drum audition in ECRUTEAK. Bring four badges
+> to the band's first NATIONAL PARK show, where PIERS arrives uninvited and
+> battles for the encore. The current story ends after that battle.
 >
 > Bug reports and ideas are welcome in [GitHub Issues](../../issues) —
 > please include the version from the load banner and which other mods were
@@ -98,8 +99,8 @@ faced cell's coordinates. A mod-spawned NPC has no `scriptKey`, so an A
 press aimed at ROXIE falls all the way through to there. The mod
 recognises her cell and queues the text itself.
 
-Court of Noctowl subsequently proved this route on a real Gold boot. Kanto
-Rocks now uses the same path for every stage of ROXIE's conversation.
+Court of Noctowl subsequently proved this route on a real Gold boot. Gold
+Records now uses the same path for every stage of ROXIE's conversation.
 
 ### Roxie is her own NPC, not a takeover
 
@@ -115,8 +116,8 @@ right.
 
 ### The audition battle
 
-ROXIE's battle uses the native Gold trainer flow proven by Indigo Plateau
-Conference. JANINE supplies the Poison-leader portrait and battle class;
+ROXIE's battle uses the native Gold trainer flow already proven by this mod.
+JANINE supplies the Poison-leader portrait and battle class;
 the trainer is temporarily named ROXIE, and `trainer.party` supplies a
 level 10 EKANS and level 12 KOFFING. JANINE's row is restored immediately
 afterward. The battle is safely losable: defeat does not black the player
@@ -151,6 +152,19 @@ world itself as the choice: question all three candidates, then speak to the
 person you want to select. Wrong answers are safe and repeatable. Selecting
 CASEY recruits her as the band's drummer and clears the other audition actors
 from the room.
+
+### The first show
+
+After CASEY joins, ROXIE books NATIONAL PARK. The band does not appear until
+the player brings four badges, keeping the show after MORTY and its final
+battle in the intended level range. ROXIE, WHITNEY and CASEY perform the
+opening song before PIERS appears, so his interruption changes the live cast
+rather than placing him at the venue from the start.
+
+PIERS uses Gold's native trainer flow with KAREN as his temporary Dark-type
+carrier. His actual team is MURKROW Lv33, SNEASEL Lv33, WEEZING Lv34, CROBAT
+Lv34 and HOUNDOOM Lv35. Defeat is safe: the party is restored and PIERS offers
+a retry without a blackout. Victory ends the story currently implemented.
 
 ### The HEADLINER ribbon is a field, not a call
 
@@ -211,8 +225,8 @@ them:
 - **The drum audition cast stand where they stand.** Their positions in the
   DANCE THEATER are still being nudged into place from real play, so expect
   them to shuffle a little between versions.
-- **The story stops after the drummer joins.** Promoting the show, the gig
-  itself, and PIERS turning up to crash the encore are all still to come.
+- **The story stops after PIERS is beaten.** The reward and gift-Pokemon
+  follow-up is still to come.
   Nothing breaks when you reach the end — ROXIE simply has nothing new to
   say.
 
