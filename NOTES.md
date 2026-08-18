@@ -140,11 +140,10 @@ second.
 | **Lose to Piers** | The gig nobody came to. Roxie is unbowed and it is the bleakest, funniest ending. | You lost the fight and won the night. Piers says so. |
 | **Beat Piers** | You beat the headliner in front of nine people. | The show. Both. |
 
-**The HEADLINER ribbon should hang on the SHOW, not the battle.** That is
-what `mon.grHeadliner` is for, and it gives promotion a mechanical reason to
-exist rather than being a fetch phase before the real content. It also
-means the ribbon is genuinely missable, which is what makes a ribbon worth
-having.
+**The reward should hang on the SHOW, not the battle.** That gives promotion
+a mechanical reason to exist rather than being a fetch phase before the real
+content, and it makes the reward genuinely missable — which is what makes it
+worth having. See "Rewards" below for what the reward now is.
 
 ---
 
@@ -174,8 +173,106 @@ written.
   park. Good work order.
 - **0.6.x+1 — the proving slice** for the party menu and a custom item.
 - **0.7.x — promotion**, specced against whatever the proof allows.
-- **0.8.x — the rewards.** `mon.grHeadliner` on the show,
-  `mon.grPiersGift`, and the gift Pokemon.
+- **0.8.x — the rewards.** A trophy, a gift Pokemon, and the tour. See
+  below.
+
+---
+
+## Rewards (0.8.x) — revised 2026-08-18
+
+Two rewards, doing different jobs: one **records** that you did it, one
+**changes how you play afterwards**.
+
+### 1. A trophy, not a ribbon — and this changes the shape
+
+Developer's call: the Trophy Case becomes the default reward for finishing a
+quest across the portfolio, replacing a ribbon-for-everything.
+
+**`mon.grHeadliner` is retired.** It was never written and never published,
+so dropping it costs nothing — the same free moment the `kr*` → `gr*` rename
+caught, and the last one this field will get.
+
+The shape genuinely changes, not just the name:
+
+| | Ribbon | Trophy |
+|---|---|---|
+| Lives on | a Pokemon (`mon.ribbons[ID]`) | the save (`save.trophyUnlocks[key]`) |
+| Means | *this Pokemon* was there | *you* did this |
+| Missable per-mon | yes | no — it is a player record |
+
+That is the right home for "the band played a show and it went well". It is
+the player's achievement, not a Pokemon's.
+
+**`mon.grPiersGift` stays exactly as it is** — per-mon provenance for the
+gift Pokemon, unaffected by any of this, and still not a ribbon.
+
+### ⚠ BLOCKING: the trophy contract is not settled yet
+
+Checked rather than assumed. `trophy_case` **0.1.1 exists** — a front door
+and an empty case — and its own handback says it ships "no save, storage,
+map-patch, item, battle, award, catalog, IPC, or Pokemon field changes."
+Its exports are `version` and `owns`. **There is no contract implemented.**
+
+`briefs/ONBOARD_trophy_case_agent.md` lists the field name
+(`save.trophyUnlocks`) and the key convention (lowercase
+`mod_id:achievement_id`) as decisions **1 and 2 that the developer must
+make**, marked "Blocking: it is the contract."
+
+Gold Records is **published**. Anything written here lands in real players'
+saves, and a key renamed afterwards orphans it. So: propose, get it
+approved, then write — exactly how the Ribbons field was handled.
+
+**Proposed, pending approval:**
+
+    save.trophyUnlocks["gold_records:headliner"] = true
+
+One trophy, awarded for the show going well — not for winning the fight.
+Boolean, set once, never cleared, retroactive-friendly by construction.
+
+### 2. The tour — the mechanical reward
+
+The gap a trophy leaves is that it changes nothing about play. This fills it,
+and it answers the brief's "move tutor / happiness / repeatable money" with
+one mechanic instead of three, because for a band there is only one obvious
+answer: **you have a band now, so go and play.**
+
+Repeatable gigs, unlocked when the questline ends. Each show pays and lifts
+the band's spirits.
+
+**Both halves are Gold-native and verified in source:**
+
+- **Money** — `save.player.money` (`src/world/gen2/World.lua:2485,2497`).
+  The manager's cut. A repeatable, non-grindy income that is thematically
+  inevitable rather than bolted on.
+- **Happiness** — `Happiness.change(mon, event)` and
+  `Happiness.changeParty(party, event)` (`src/core/gen2/Happiness.lua:164,190`),
+  with named events in `Happiness.EVENT`. Playing a show makes your Pokemon
+  happy, which is *what happiness is for*. Gen 1 has no happiness at all, so
+  this is a reward that only exists because the mod moved to Gold — a good
+  argument for the Gold-first direction rather than a consolation for it.
+
+**Where the gigs happen is the payoff for Act II:** the venues that turned
+the band down now want them. The Dance Theater, the Radio Tower, the cafe —
+each becomes bookable once you are somebody. That closes the loop the venue
+hunt opens, and it means Act II is not just a joke sequence, it is the
+setlist.
+
+**Guardrails, since this touches the save:**
+
+- Money is *earned*, never taken, and clamps at the engine's cap.
+- Happiness uses the engine's own event deltas rather than writing
+  `mon.happiness` directly, so it obeys the cart's tiering.
+- A gig must not be a money printer. Rate-limit it — one paid show per
+  in-game day, or per Pokemon Center visit — and say which in the order.
+- No EXP, no levels, no battles in the tour loop. A gig is a gig; if that
+  ever changes it goes through `briefs/LEVEL_CURVE.md`.
+
+### Not chosen, and why
+
+A **move tutor** was on the table. Rejected as the primary: it is one-shot
+rather than repeatable, writing `mon.moves` is more invasive than either
+half of the tour, and "Roxie teaches your Pokemon a song" is a better
+flourish *inside* the tour than a reward competing with it.
 
 ### The rewards are outsourced too (developer, 2026-08-18)
 
