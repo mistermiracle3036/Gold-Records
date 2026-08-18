@@ -12,9 +12,11 @@ mod API 2, **Pokemon Gold**.
 > the VIOLET GYM once you have a badge, challenges you, and appoints you as
 > her manager whether you agreed or not. From there: find the mysterious
 > bassist FEEDBACK in GOLDENROD's UNDERGROUND, then work out who kept time
-> at a JIGGLYPUFF-interrupted drum audition in ECRUTEAK. Bring four badges
-> to the band's first NATIONAL PARK show, where PIERS arrives uninvited and
-> battles for the encore. The current story ends after that battle.
+> at a JIGGLYPUFF-interrupted drum audition in ECRUTEAK. Help the assembled
+> band ask four very different venues for a stage and hear four different
+> versions of no. With nobody willing to book them, bring four badges to a
+> public-park show where PIERS arrives uninvited and battles for the encore.
+> The current story ends after that battle.
 >
 > Bug reports and ideas are welcome in [GitHub Issues](../../issues) —
 > please include the version from the load banner and which other mods were

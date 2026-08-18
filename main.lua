@@ -10,7 +10,7 @@
 local Runtime = require("src.mods.Runtime")
 
 return function(mod)
-  local VERSION = "0.5.0"
+  local VERSION = "0.6.0"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -25,6 +25,15 @@ return function(mod)
   local BILLY_NAME = "GR_BILLY"
   local CASEY_NAME = "GR_CASEY"
   local JIGGLY_NAME = "GR_JIGGLYPUFF"
+  local RADIO_MAP = "RADIO_TOWER_1F"
+  local CAFE_MAP = "OLIVINE_CAFE"
+  local DANCE_HOST = "GR_DANCE_HOST"
+  local RADIO_HOST = "GR_RADIO_HOST"
+  local CAFE_HOST = "GR_CAFE_HOST"
+  local VENUE_DANCE_ROXIE = "GR_DANCE_ROXIE"
+  local VENUE_RADIO_ROXIE = "GR_RADIO_ROXIE"
+  local VENUE_CAFE_ROXIE = "GR_CAFE_ROXIE"
+  local VENUE_UNDER_ROXIE = "GR_UNDER_ROXIE"
   local SHOW_MAP = "NATIONAL_PARK"
   local SHOW_ROXIE = "GR_SHOW_ROXIE"
   local SHOW_WHITNEY = "GR_SHOW_WHITNEY"
@@ -49,10 +58,13 @@ return function(mod)
     maps = {}, trainers = {}, items = {}, sprites = {},
     objects = {
       [MAP] = { OBJ_NAME },
-      [BASS_MAP] = { FEEDBACK_NAME, WHITNEY_NAME },
+      [BASS_MAP] = { FEEDBACK_NAME, WHITNEY_NAME, VENUE_UNDER_ROXIE },
       [AUDITION_MAP] = {
         AUDITION_ROXIE, GENE_NAME, BILLY_NAME, CASEY_NAME, JIGGLY_NAME,
+        DANCE_HOST, VENUE_DANCE_ROXIE,
       },
+      [RADIO_MAP] = { RADIO_HOST, VENUE_RADIO_ROXIE },
+      [CAFE_MAP] = { CAFE_HOST, VENUE_CAFE_ROXIE },
       [SHOW_MAP] = { SHOW_ROXIE, SHOW_WHITNEY, SHOW_CASEY, PIERS_NAME },
       indexBand = { 160, 169 },
     },
@@ -68,11 +80,31 @@ return function(mod)
   --   0 not met; 10 Roxie challenge; 11 lost; 20 won; 30 manager
   --   31 Feedback challenge armed; 32 lost; 40 Whitney beaten; 50 recruited
   --   60 drummer audition assigned; 70 Jigglypuff interruption happened
-  --   71 candidate selection open; 80 Casey recruited
+  --   71 candidate selection open; 80 Casey recruited; 81 venue hunt
+  --   82 Radio Tower; 83 Olivine Cafe; 84 Underground
+  --   85 optional Contest lead; 86 optional Court lead
   --   90 show assigned; 100 Piers arrived; 101 Piers battle armed
   --   102 Piers loss/retry; 110 Piers beaten
   local function beat() return tonumber(mod.save:get("beat", 0)) or 0 end
   local function setBeat(n) mod.save:set("beat", n) end
+
+  -- Optional crossovers are presence checks only. They never read another
+  -- mod's state and never make that mod a dependency.
+  local crossovers = {
+    olivineCafe = false,
+    kantoContests = false,
+    courtOfNoctowl = false,
+  }
+
+  mod.events:on("game.ready", function()
+    crossovers.olivineCafe = mod.find("olivine_cafe") ~= nil
+    crossovers.kantoContests = mod.find("kanto_contests") ~= nil
+    crossovers.courtOfNoctowl = mod.find("court_of_noctowl") ~= nil
+    -- A disabled crossover must not strand an optional in-progress stop or
+    -- mention content which is no longer installed.
+    if beat() == 85 and not crossovers.kantoContests then setBeat(83) end
+    if beat() == 86 and not crossovers.courtOfNoctowl then setBeat(84) end
+  end)
 
   local function countFlags(flags)
     local n = 0
@@ -479,6 +511,109 @@ return function(mod)
   end
 
   --------------------------------------------------------------------------
+  -- Act II venue hunt. Each stop lives on a vanilla map. Runtime actors are
+  -- guarded by name and removed when their beat is no longer current, since
+  -- Gold's runtime object list otherwise keeps every spawn for the session.
+  --------------------------------------------------------------------------
+  local venueSpawnIds = {}
+  local VENUE_ACTORS = {
+    [AUDITION_MAP] = {
+      { name = DANCE_HOST, sprite = "SPRITE_KIMONO_GIRL", x = 8, y = 12,
+        movement = MOVE_STANDING_DOWN, label = "KIMONO" },
+      { name = VENUE_DANCE_ROXIE, sprite = ROXIE_SPRITE, x = 8, y = 12,
+        movement = MOVE_STANDING_RIGHT, label = "ROXIE" },
+    },
+    [RADIO_MAP] = {
+      { name = RADIO_HOST, sprite = "SPRITE_RECEPTIONIST", x = 6, y = 4,
+        movement = MOVE_STANDING_DOWN, label = "RADIO" },
+      { name = VENUE_RADIO_ROXIE, sprite = ROXIE_SPRITE, x = 6, y = 4,
+        movement = MOVE_STANDING_LEFT, label = "ROXIE" },
+    },
+    [CAFE_MAP] = {
+      { name = CAFE_HOST, sprite = "SPRITE_FISHER", x = 4, y = 6,
+        movement = MOVE_STANDING_DOWN, label = "CAFE" },
+      { name = VENUE_CAFE_ROXIE, sprite = ROXIE_SPRITE, x = 4, y = 6,
+        movement = MOVE_STANDING_LEFT, label = "ROXIE" },
+    },
+    [BASS_MAP] = {
+      -- NOT BASS_X/BASS_Y. That designed cell (6,33) is a WALL -- verified
+      -- 0x07 against the imported Gold cache -- which is why FEEDBACK has
+      -- always landed on her first fallback at (5,33) on device since 0.3.1.
+      -- Reusing it here would send ROXIE through the same fallback into
+      -- whatever cell WHITNEY happens not to be standing in: a placement
+      -- nobody chose. (4,33) is verified walkable and is the free cell beside
+      -- her, in a corridor only four tiles wide (cols 2-5 walk at this row).
+      { name = VENUE_UNDER_ROXIE, sprite = ROXIE_SPRITE,
+        x = 4, y = 33, movement = MOVE_STANDING_RIGHT,
+        label = "ROXIE" },
+    },
+  }
+
+  local function venueActive(mapId, b)
+    if mapId == AUDITION_MAP then return b == 81 end
+    if mapId == RADIO_MAP then return b == 82 or b == 85 end
+    if mapId == CAFE_MAP then return b == 83 or b == 86 end
+    if mapId == BASS_MAP then return b == 84 end
+    return false
+  end
+
+  local function removeVenueActor(mapId, name)
+    local id = venueSpawnIds[name]
+    if not id then
+      local world = mod.world:overworld()
+      local obj = objectNamed(world, mapId, name)
+      if obj and obj.runtime and obj.index then
+        id = mapId .. "_obj_" .. obj.index
+      end
+    end
+    if id then pcall(function() mod.world:removeNpc(id) end) end
+    venueSpawnIds[name] = nil
+  end
+
+  local function placeVenue(mapId)
+    local actors = VENUE_ACTORS[mapId]
+    if not actors then return nil end
+    local world = mod.world and mod.world:overworld()
+    if not world then return "no overworld" end
+    local b = beat()
+    if not venueActive(mapId, b) then
+      for _, actor in ipairs(actors) do
+        removeVenueActor(mapId, actor.name)
+      end
+      return nil
+    end
+
+    local placed = {}
+    for _, actor in ipairs(actors) do
+      local existing = objectNamed(world, mapId, actor.name)
+      if existing then
+        placed[#placed + 1] = ("%s %d,%d"):format(
+          actor.label, existing.x, existing.y)
+      else
+        local x, y = cellForActor(world, actor)
+        if not x then return "no venue cell for " .. actor.label end
+        local id, err = mod.world:spawnNpc(mapId, {
+          name = actor.name, sprite = actor.sprite,
+          x = x, y = y, movement = actor.movement,
+        })
+        if not id then return "venue spawn " .. tostring(err) end
+        venueSpawnIds[actor.name] = id
+        placed[#placed + 1] = ("%s %d,%d"):format(actor.label, x, y)
+        if mod.options:get("show_report") ~= false then
+          report("GR VENUE\n%s %d,%d\nB%d", actor.label, x, y, b)
+        end
+      end
+    end
+    return table.concat(placed, " ")
+  end
+
+  local function advanceVenue(mapId, nextBeat)
+    setBeat(nextBeat)
+    local status = placeVenue(mapId)
+    if status then report("GR VENUE NEXT\n%s", tostring(status)) end
+  end
+
+  --------------------------------------------------------------------------
   -- NATIONAL PARK show. The three band actors arrive at beat 90; PIERS is
   -- added only after the opening set, so his interruption is a real arrival.
   --------------------------------------------------------------------------
@@ -615,12 +750,84 @@ return function(mod)
     "Our drummer. Done.\fNext: spread word.",
   }
 
-  local SHOW_ASSIGNMENT = {
+  local VENUE_START = {
     "ROXIE: CASEY keeps\ntime in her sleep.",
     "Our drummer. Done.",
-    "I booked a show.\fNATIONAL PARK.",
-    "Bring 4 BADGES.",
-    "We play when our\nmanager arrives.",
+    "Now we need a\nplace to play.",
+    "DANCE THEATER.\fThey let us\naudition there.",
+    "That means they'll\nbook us. Probably.",
+    "Meet me there.",
+  }
+
+  local VENUE_OBJECTIVES = {
+    [81] = { "ROXIE: First stop.\fECRUTEAK's DANCE\nTHEATER." },
+    [82] = { "ROXIE: Next stop.\fGOLDENROD RADIO\nTOWER." },
+    [85] = { "ROXIE: RADIO\nTOWER.", "They made one more\ncall." },
+    [83] = { "ROXIE: Next stop.\fOLIVINE CAFE." },
+    [86] = { "ROXIE: OLIVINE.\fOne more offer." },
+    [84] = { "ROXIE: Obvious\nanswer.", "GOLDENROD\nUNDERGROUND." },
+  }
+
+  local DANCE_REFUSAL = {
+    "KIMONO GIRL:\nYou auditioned",
+    "here.",
+    "That did not make\nit yours.",
+    "Our stage is for\nour dances.",
+    "ROXIE: Polite.\fThat almost hurts.",
+    "RADIO TOWER next.\fThey need music.",
+  }
+
+  local RADIO_REFUSAL = {
+    "STAFF: We\nbroadcast.",
+    "We do not host.",
+    "ROXIE: You have a\nwhole lobby!",
+    "STAFF: We can\noffer a spot on",
+    "the radio.",
+    "After you have a\nvenue.",
+    "ROXIE: Useful.\fAlso backwards.",
+  }
+
+  local CONTEST_REFUSAL = {
+    "STAFF: CONTEST\nHALL called back.",
+    "A contest is a\nperformance.",
+    "Your gig is a\nriot.",
+    "ROXIE: Sounds like\na compliment.",
+    "OLIVINE CAFE next.",
+  }
+
+  local CAFE_REFUSAL = {
+    "OWNER: Forty\nseats.",
+    "People come for\nthe quiet.",
+    "ROXIE: Then they\nneed better taste.",
+    "OWNER: And we\nneed our tables.",
+    "ROXIE: Fine.\fUNDERGROUND next.",
+  }
+
+  local NONNOS_REFUSAL = {
+    "CHEF: NONNO'S has\nopening night.",
+    "Punk at fine\ndining?",
+    "ROXIE: Dinner\nneeds more volume.",
+    "CHEF: Absolutely\nnot.",
+  }
+
+  local COURT_OFFER = {
+    "OWNER: One more\ncall.",
+    "That NOCTOWL group\nfound you a room.",
+    "Strings attached.",
+    "ROXIE: Then it's\nnot our stage.",
+    "We make our own.\fUNDERGROUND next.",
+  }
+
+  local UNDERGROUND_REFUSAL = {
+    "WHITNEY: No way!\fNot down here.",
+    "ROXIE: This is the\nobvious place.",
+    "WHITNEY: If I play\nhere as myself...",
+    "Everybody knows\nFEEDBACK is me.",
+    "ROXIE: So your\nsecret costs gigs.",
+    "WHITNEY: Sorry.",
+    "ROXIE: Fine.\fNATIONAL PARK.",
+    "Nobody owns it.\fNobody can say no.",
+    "Bring 4 BADGES.\fThen we play.",
   }
 
   local SHOW_OBJECTIVE = {
@@ -811,6 +1018,37 @@ return function(mod)
     if not ok then report("GR TALK FAIL\n%s", tostring(err)) end
   end
 
+  local function talkVenueRoxie(mapId, name)
+    facePlayer(mapId, name)
+    local pages = VENUE_OBJECTIVES[beat()]
+    if pages then say(pages) end
+  end
+
+  local function talkVenueHost(mapId, name)
+    facePlayer(mapId, name)
+    local b = beat()
+    if mapId == AUDITION_MAP and b == 81 then
+      return say(DANCE_REFUSAL, function() advanceVenue(mapId, 82) end)
+    end
+    if mapId == RADIO_MAP and b == 82 then
+      return say(RADIO_REFUSAL, function()
+        advanceVenue(mapId, crossovers.kantoContests and 85 or 83)
+      end)
+    end
+    if mapId == RADIO_MAP and b == 85 then
+      return say(CONTEST_REFUSAL, function() advanceVenue(mapId, 83) end)
+    end
+    if mapId == CAFE_MAP and b == 83 then
+      local pages = crossovers.olivineCafe and NONNOS_REFUSAL or CAFE_REFUSAL
+      return say(pages, function()
+        advanceVenue(mapId, crossovers.courtOfNoctowl and 86 or 84)
+      end)
+    end
+    if mapId == CAFE_MAP and b == 86 then
+      return say(COURT_OFFER, function() advanceVenue(mapId, 84) end)
+    end
+  end
+
   local function talkRoxie()
     facePlayer(MAP, OBJ_NAME)
     local b = beat()
@@ -838,7 +1076,9 @@ return function(mod)
     elseif b < 80 then
       say(DRUM_OBJECTIVE)
     elseif b == 80 then
-      say(SHOW_ASSIGNMENT, function() setBeat(90) end)
+      say(VENUE_START, function() setBeat(81) end)
+    elseif b < 90 then
+      say(VENUE_OBJECTIVES[b] or VENUE_OBJECTIVES[81])
     elseif b < 110 then
       say(SHOW_OBJECTIVE)
     else
@@ -849,6 +1089,11 @@ return function(mod)
   local function talkBassist(revealed)
     facePlayer(BASS_MAP, revealed and WHITNEY_NAME or FEEDBACK_NAME)
     local b = beat()
+    if b == 84 then
+      return say(UNDERGROUND_REFUSAL, function()
+        advanceVenue(BASS_MAP, 90)
+      end)
+    end
     if revealed or b >= 50 then return say(WHITNEY_JOINED) end
     if b == 40 then return say(WHITNEY_REVEAL, revealWhitney) end
     if badgeCount(mod.world.game) < 3 then return say(FEEDBACK_LOCKED) end
@@ -997,20 +1242,39 @@ return function(mod)
       elseif ev.mapId == BASS_MAP then
         local feedback = objectNamed(world, BASS_MAP, FEEDBACK_NAME)
         local whitney = objectNamed(world, BASS_MAP, WHITNEY_NAME)
+        local roxie = objectNamed(world, BASS_MAP, VENUE_UNDER_ROXIE)
         if feedback and feedback.x == ev.x and feedback.y == ev.y then
           talkBassist(false)
         elseif whitney and whitney.x == ev.x and whitney.y == ev.y then
           talkBassist(true)
+        elseif roxie and roxie.x == ev.x and roxie.y == ev.y then
+          talkVenueRoxie(BASS_MAP, VENUE_UNDER_ROXIE)
         end
       elseif ev.mapId == AUDITION_MAP then
         for _, name in ipairs({
-          AUDITION_ROXIE, GENE_NAME, BILLY_NAME, CASEY_NAME, JIGGLY_NAME,
+          DANCE_HOST, VENUE_DANCE_ROXIE, AUDITION_ROXIE,
+          GENE_NAME, BILLY_NAME, CASEY_NAME, JIGGLY_NAME,
         }) do
           local obj = objectNamed(world, AUDITION_MAP, name)
           if obj and obj.x == ev.x and obj.y == ev.y then
-            if name == AUDITION_ROXIE then talkAuditionRoxie()
+            if name == DANCE_HOST then talkVenueHost(AUDITION_MAP, name)
+            elseif name == VENUE_DANCE_ROXIE then
+              talkVenueRoxie(AUDITION_MAP, name)
+            elseif name == AUDITION_ROXIE then talkAuditionRoxie()
             elseif name == JIGGLY_NAME then talkJigglypuff()
             else talkCandidate(name) end
+            return
+          end
+        end
+      elseif ev.mapId == RADIO_MAP or ev.mapId == CAFE_MAP then
+        local host = ev.mapId == RADIO_MAP and RADIO_HOST or CAFE_HOST
+        local roxie = ev.mapId == RADIO_MAP
+          and VENUE_RADIO_ROXIE or VENUE_CAFE_ROXIE
+        for _, name in ipairs({ host, roxie }) do
+          local obj = objectNamed(world, ev.mapId, name)
+          if obj and obj.x == ev.x and obj.y == ev.y then
+            if name == host then talkVenueHost(ev.mapId, name)
+            else talkVenueRoxie(ev.mapId, name) end
             return
           end
         end
@@ -1041,12 +1305,26 @@ return function(mod)
     local ok, err = pcall(function()
       local mapId = ev and ev.mapId
       if mapId ~= MAP and mapId ~= BASS_MAP and mapId ~= AUDITION_MAP
+          and mapId ~= RADIO_MAP and mapId ~= CAFE_MAP
           and mapId ~= SHOW_MAP then return end
-      local status
-      if mapId == MAP then status = placeRoxie()
-      elseif mapId == BASS_MAP then status = placeBassist()
-      elseif mapId == AUDITION_MAP then status = placeAudition()
-      else status = placeShow() end
+      local statuses = {}
+      local function addStatus(value)
+        if value and value ~= "" then statuses[#statuses + 1] = value end
+      end
+      if mapId == MAP then
+        addStatus(placeRoxie())
+      elseif mapId == BASS_MAP then
+        addStatus(placeBassist())
+        addStatus(placeVenue(mapId))
+      elseif mapId == AUDITION_MAP then
+        addStatus(placeAudition())
+        addStatus(placeVenue(mapId))
+      elseif mapId == RADIO_MAP or mapId == CAFE_MAP then
+        addStatus(placeVenue(mapId))
+      else
+        addStatus(placeShow())
+      end
+      local status = table.concat(statuses, " ")
       local world = mod.world:overworld()
       if world and mapId == MAP and beat() == 10 then armBattle("roxie") end
       if world and mapId == BASS_MAP and beat() == 31
@@ -1055,7 +1333,7 @@ return function(mod)
           and badgeCount(mod.world.game) >= SHOW_BADGE_GATE then
         armBattle("piers")
       end
-      if status and not reported[mapId]
+      if status ~= "" and not reported[mapId]
           and mod.options:get("show_report") ~= false then
         reported[mapId] = true
         report("GR %s\n%s\nB%d", VERSION, status, beat())

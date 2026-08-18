@@ -12,6 +12,29 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.6.0
+
+The band is ready. JOHTO's venues are not.
+
+### Added
+- A four-stop venue hunt between recruiting CASEY and the NATIONAL PARK
+  show. The ECRUTEAK DANCE THEATER, GOLDENROD RADIO TOWER, OLIVINE CAFE and
+  GOLDENROD UNDERGROUND each turn the band down in their own way.
+- The RADIO TOWER offers a future radio spot, planting a lead for the next
+  part of the quest even while refusing to host the show.
+- Optional dialogue when Big Night in Olivine, Kanto Contests or Court of
+  Noctowl is installed. These are presence-only crossovers: none is required,
+  and disabling one cannot strand the quest.
+- Runtime venue actors with walkable-cell fallback and `[ERRS]` placement
+  reporting for private device testing.
+
+### Changed
+- Beat 90 still means the NATIONAL PARK show is assigned, but ROXIE now earns
+  that answer after every venue refuses: nobody owns the park, so nobody can
+  say no.
+- Existing saves at beat 90 or later skip the venue hunt and keep their exact
+  show and PIERS progression.
+
 ## 0.5.0
 
 The band plays its first show, and PIERS has invited himself onto the bill.
