@@ -96,12 +96,13 @@ uses all three and invents nothing:
 
 1. **Who you walk up to.** The drum audition already resolves a choice this
    way. Each town has a promoter; which ones you bother with is a choice.
-2. **What you show them.** `Screens.push(game, "Gen2PartyMenu", { prompt,
+2. **What you show them.** `mod.ui.push(game, "Gen2PartyMenu", { prompt,
    onChoose, onCancel })` — Snag's merchant mechanic. A promoter asks to
    see a Pokémon, and the poster, the radio spot or the word-of-mouth takes
-   on that Pokémon's character. **UNPROVEN from the overworld** — see
-   "Blocked on proof" below. This is the interesting one and it does not
-   get specced until it boots.
+   on that Pokémon's character. **PROVEN from the overworld, device,
+   2026-08-18** — see "Blocked on proof" below for the evidence. This is
+   the interesting one, and it is now real: an order can spec it directly
+   rather than falling back to option 1 alone.
 3. **A mod option.** Snag's `snag_ball_sources` shape: a `choice` row
    (`{display, stored}` pairs, read positionally) selecting which promotion
    routes are open at all — POSTERS / RADIO / WORD OF MOUTH / ALL. It gates
@@ -149,20 +150,34 @@ worth having. See "Rewards" below for what the reward now is.
 
 ## Blocked on proof — do not spec these until they boot
 
-Both are mine to prove, not a work order's to assume. This is the rule that
+Both were mine to prove, not a work order's to assume. This is the rule that
 kept `map_scripts` from costing a build round.
 
-1. **`Screens.push` → `Gen2PartyMenu` from the overworld.** Every call site
-   in the engine is inside battle code. If it does not work outside a
-   battle, Act III loses its most interesting choice and falls back to
-   "who you walk up to", which still works but is thinner.
-2. **A custom item on a Gold boot.** `items` is absent from `Schemas.GEN2`,
-   which means it keeps the shared `data.items` target — and
-   `src/core/gen2/ItemEffects.lua` says a mod's write "has to end up back
-   on `data.items`", so it should work. Not the same as having seen a FLYER
-   in a Gold bag. The whole flyer conceit rests on it.
+1. ~~`Screens.push` → `Gen2PartyMenu` from the overworld~~ — **PROVEN, device,
+   2026-08-18.** A throwaway probe mod (`pmprobe`, not part of this repo)
+   spawned one NPC in NATIONAL PARK and called
+   `mod.ui.push(mod.game, "Gen2PartyMenu", { prompt="choose", onChoose, onCancel })`
+   on `world.interacted`. On a real Gold boot: `PUSH OK`, then choosing a
+   party member reported `CHOSE #1 SCIZOR` — a real slot index and a real
+   species out of the player's actual party, from the overworld, with no
+   battle running. The mechanic Act III's promoter beat needs is real.
+   Confirming on the same run: the screen closing cleanly on CANCEL (not
+   just CHOOSE), and that the overworld stays fully responsive afterwards —
+   `PartyMenu:update`'s onChoose/onCancel arms do not pop the screen
+   themselves outside a battle submenu, so the calling mod must
+   `game.stack:pop()` or the menu would sit there looking frozen. `pmprobe`
+   does that explicitly; a work order for Act III must too, and should be
+   told so rather than left to notice it the hard way.
+2. **A custom item on a Gold boot.** — **PROVEN, published mod.** Too Many
+   Balls' `kanto_balls` (`games: ["gen1","gen2"]`) registers `BALL_CASE` via
+   `mod.content.items:register` and STATUS.md already marks it
+   "✅ craft balls on device" — a mod item that exists in a Gold bag and
+   opens a screen when used. That is every link the flyer conceit needs;
+   `items` staying off `Schemas.GEN2` was never actually a UI-level block,
+   just a routing detail.
 
-A small proving slice covers both and is worth cutting before either act is
+Both blockers are cleared. Act III can be specced against the real
+mechanism instead of the fallback.
 written.
 
 ---
