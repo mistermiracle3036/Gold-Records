@@ -71,6 +71,30 @@ This follows the cross-mod protocol: no hard dependency, ever.
 their side, it is a data contract and a brief, the way the Ribbons field
 was.
 
+### Act II encores — approved 2026-08-18
+
+The 0.6.0 hunt played as four refusals in a row: a cutscene tour. The fix
+is not more content per stop, it is a **different verb per stop**:
+
+| Stop | Verb | Mechanic | Status |
+|---|---|---|---|
+| Dance Theater | SHOW | party picker, "show us grace", dancer species get a Happiness event | ordered (0.6.1) |
+| Radio Tower | UNLOCK | GOLD RECORDS pirate radio on the Pokegear | **spike first** (`gearprobe`) |
+| Olivine Cafe | PLAY | busking: +300 money, party happiness, **once per in-game day** (decided) — the 0.8.x tour's seed, stays after Act II | ordered (0.6.1) |
+| Underground | FIGHT | optional BASEMENT KING battle (GRIMER 25/KOFFING 26/MUK 28, Morty-anchor band, pending portfolio confirm); winning earns respect, not the venue | ordered (0.6.1) |
+| the road | CALLBACK | the sleeping WOOPER wakes up: wild set piece, Lv18, one-shot | ordered (0.6.1) |
+
+Cross-cutting, pending the same spike: **ROXIE as a Pokegear phone
+contact** (Phone.addContact is a real public API; unused cart slot 8; what
+a mod contact's CALL can say is the open question).
+
+`gearprobe` (working root, junctioned into the PC rig) answers both spike
+questions: mod-authored radio show lines via stash-wraps on the exported
+`Pokegear.Radio` class, and the phone contact add/name/call behaviour.
+Radio finding already made by reading: a registered station is dial-real
+but its SHOW dispatches through a LOCAL jumptable — unknown id is dead
+air, so the wrap is the only authoring seam.
+
 ### What Act II costs
 
 Cheap. Owned NPCs, dialogue, `mod.save` beats and `mod.find` checks — every
