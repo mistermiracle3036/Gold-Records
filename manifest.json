@@ -1,7 +1,7 @@
 {
   "id": "gold_records",
   "name": "Gold Records",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
@@ -20,6 +20,6 @@
     "quest_system"
   ],
   "conflicts": [],
-  "description": "ROXIE came to JOHTO looking for a music scene and found temple bells and a sleeping WOOPER, so she starts a band out of spite and makes you its manager. Recruit FEEDBACK and CASEY, get turned down by four venues, bring four badges to the band's first NATIONAL PARK show, and defend the encore when PIERS arrives uninvited. ALPHA: the quest currently ends after the PIERS battle. POKEMON GOLD ONLY; this mod does not load on Red, Blue or Yellow.",
+  "description": "ROXIE came to JOHTO looking for a music scene and found temple bells and a sleeping WOOPER, so she starts a band out of spite and makes you its manager. Recruit FEEDBACK and CASEY, showcase a Pokemon, busk for the Olivine crowd, earn the Underground's respect, wake that WOOPER, and defend the NATIONAL PARK encore when PIERS arrives. ALPHA: the quest currently ends after the PIERS battle. POKEMON GOLD ONLY; this mod does not load on Red, Blue or Yellow.",
   "github": "mistermiracle3036/Gold-Records"
 }

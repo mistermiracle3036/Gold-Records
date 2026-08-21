@@ -12,6 +12,7 @@ return {
     "ALPHA: the questline currently ends after PIERS is beaten",
   },
   credits = { "pret/pokecrystal and pokered research", "gen1recomp engine",
+              "Piers sprite art commissioned from Yogurcomics",
               "Pokemon characters are used as fan tribute" },
   compat = "Gold only. No vanilla maps, NPCs, scripts or trainers are modified; ROXIE is a runtime object and is never written to your save.",
 }

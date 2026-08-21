@@ -33,8 +33,9 @@
   as a future slice), so there is nothing for this mod to award until it
   ships; the reward is designed but parked. No code is shared and neither
   mod requires the other.
-- This mod ships **no binary assets** at present. Should original artwork
-  be added, it will be named here along with who made it.
+- **Piers sprite art** — the overworld and battle portrait for PIERS were
+  commissioned from **Yogurcomics** for this project's use. Both files are
+  in `assets/`.
 - Pokemon and all related names are trademarks of Nintendo / Creatures
   Inc. / GAME FREAK inc. This mod contains no ROM data or copyrighted
   assets; it is a fan-made script mod and requires the user's own game

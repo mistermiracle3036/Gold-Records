@@ -12,6 +12,38 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.6.1
+
+Every stop in the venue hunt now gives the manager something to do.
+
+### Added
+- After the DANCE THEATER refusal, choose a party Pokemon to demonstrate some
+  grace. BELLOSSOM, the Eevee family, the POLIWHIRL family and HITMONTOP earn
+  special praise and a small friendship boost.
+- A SAILOR outside OLIVINE CAFE invites the whole band to busk. The first set
+  each in-game day earns $300 and a party-wide friendship boost; later sets
+  wait until tomorrow.
+- The self-appointed BASEMENT KING offers an optional, safely losable battle
+  in GOLDENROD UNDERGROUND. Beat his GRIMER Lv25, KOFFING Lv26 and MUK Lv28
+  to earn the room's respect—even though WHITNEY still refuses the booking.
+- The sleeping WOOPER from ROXIE's opening complaint finally appears on the
+  road in ECRUTEAK. Waking it starts a one-shot wild encounter at level 18.
+- PIERS now has a commissioned overworld sprite and battle portrait by
+  Yogurcomics, replacing the vanilla ROCKER and KAREN stand-ins.
+- Placement reports for the SAILOR, BASEMENT KING and sleeping WOOPER during
+  private device testing.
+
+### Fixed
+- CASEY's NATIONAL PARK placement corrected from a wall tile to a walkable
+  cell (regression from the 0.6.0 delivery).
+
+### Notes
+- Busking remains available after Act II and is limited by Gold's in-game
+  clock rather than real-time elapsed minutes.
+- The RADIO TOWER remains a dialogue-only refusal in this version.
+- Existing saves at beat 90 or later skip every new Act II encounter except
+  the persistent OLIVINE busking spot.
+
 ## 0.6.0
 
 The band is ready. JOHTO's venues are not.
