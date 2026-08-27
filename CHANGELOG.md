@@ -12,6 +12,23 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.6.2
+
+**Updating from 0.4.2?** Since the last release the band has gained a
+four-stop venue hunt (0.5.0–0.6.0), interactive encounters at every venue
+stop (0.6.1), a commissioned PIERS sprite by Yogurcomics, and now optional
+Trainer Journey integration.
+
+### Added
+- Optional **Trainer Journey** integration. When Trainer Journey is
+  installed, eight quest beats award APPEAL, MOXIE and HEART stats and
+  advance a new **ROCK STAR** profession (ROADIE → OPENER → HEADLINER →
+  LEGEND). High stats add extra flavour dialogue at four moments: ROXIE's
+  first meeting, the BASEMENT KING, the DANCE THEATER repeat visit, and
+  PIERS' arrival. The DANCE THEATER showcase mildly leans Tradition; the
+  NATIONAL PARK show mildly leans Innovation.
+- `trainer_journey` added to `optional_dependencies`.
+
 ## 0.6.1
 
 Every stop in the venue hunt now gives the manager something to do.

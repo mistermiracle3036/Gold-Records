@@ -12,7 +12,7 @@ local Happiness = require("src.core.gen2.Happiness")
 local Clock = require("src.core.gen2.Clock")
 
 return function(mod)
-  local VERSION = "0.6.1"
+  local VERSION = "0.6.2"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -118,12 +118,56 @@ return function(mod)
     olivineCafe = false,
     kantoContests = false,
     courtOfNoctowl = false,
+    trainerJourney = false,
   }
+
+  local tj
+  local function tjInit()
+    local handle = mod.find("trainer_journey")
+    local api = handle and handle.exports and handle.exports.trainer_journey
+    if not (api and api.api_version == 1) then tj = nil; return end
+    tj = api
+    tj.registerProfession({
+      id = "rock_star",
+      name = "ROCK STAR",
+      owner = MOD_ID,
+      summary = "managing a punk band across JOHTO",
+      thresholds = { 1, 3, 6, 10 },
+      rankNames = { "ROADIE", "OPENER", "HEADLINER", "LEGEND" },
+    })
+  end
+
+  local function tjAward(stat, points, tag)
+    if not tj then return end
+    pcall(tj.awardOnce, stat, points, MOD_ID .. ":" .. tag)
+  end
+
+  local function tjProfession(points, tag)
+    if not tj then return end
+    pcall(tj.awardProfessionOnce, "rock_star", points, MOD_ID .. ":" .. tag)
+  end
+
+  local function tjEthos(direction, weight, tag)
+    if not tj then return end
+    local fn = direction == "tradition" and tj.leanTradition or tj.leanInnovation
+    pcall(fn, weight, MOD_ID .. ":" .. tag)
+  end
+
+  local function tjRank(stat)
+    if not tj then return 0 end
+    local ok, info = pcall(tj.getStat, stat)
+    return ok and type(info) == "table" and tonumber(info.rank) or 0
+  end
 
   mod.events:on("game.ready", function()
     crossovers.olivineCafe = mod.find("olivine_cafe") ~= nil
     crossovers.kantoContests = mod.find("kanto_contests") ~= nil
     crossovers.courtOfNoctowl = mod.find("court_of_noctowl") ~= nil
+    crossovers.trainerJourney = mod.find("trainer_journey") ~= nil
+    if crossovers.trainerJourney then
+      local ok, err = pcall(tjInit)
+      if not ok then report("GR TJ INIT\n%s", tostring(err)) end
+    end
     -- A disabled crossover must not strand an optional in-progress stop or
     -- mention content which is no longer installed.
     if beat() == 85 and not crossovers.kantoContests then setBeat(83) end
@@ -354,13 +398,24 @@ return function(mod)
       local won = ev and ev.result == "win"
       if key == "roxie" then
         setBeat(won and 20 or 11)
+        if won then
+          tjAward("MOXIE", 1, "roxie_battle")
+          tjProfession(1, "roxie_battle")
+        end
       elseif key == "whitney" then
         setBeat(won and 40 or 32)
       elseif key == "piers" then
         setBeat(won and 110 or 102)
+        if won then
+          tjAward("MOXIE", 1, "piers_battle")
+          tjProfession(1, "piers_battle")
+          tjEthos("innovation", 1, "park_show")
+        end
       elseif won then
         mod.save:set("basement_respect", true)
         mod.save:set("basement_armed", false)
+        tjAward("MOXIE", 1, "basement_king")
+        tjProfession(1, "basement_king")
       else
         mod.save:set("basement_loss", true)
         mod.save:set("basement_armed", false)
@@ -453,6 +508,8 @@ return function(mod)
       bassSpawnId = nil
     end
     setBeat(50)
+    tjAward("APPEAL", 1, "feedback_recruited")
+    tjProfession(1, "feedback_recruited")
     local status = placeBassist()
     if status and not status:match("^WHITNEY") then
       report("GR REVEAL\n%s", tostring(status))
@@ -576,6 +633,8 @@ return function(mod)
 
   local function finishDrummer()
     setBeat(80)
+    tjAward("APPEAL", 1, "casey_recruited")
+    tjProfession(1, "casey_recruited")
     removeAuditionActor(AUDITION_ROXIE)
     removeAuditionActor(GENE_NAME)
     removeAuditionActor(BILLY_NAME)
@@ -1190,6 +1249,16 @@ return function(mod)
     "No hard feelings.\fI wanna hear your\nbest.",
   }
 
+  local PIERS_INTRO_FAME = {
+    "PIERS: Finally.",
+    "Heard you from\nthree towns over.",
+    "Had to come see\nfor myself.",
+    "You lot got nerve.\fAnd volume.",
+    "ROXIE: We have a\nheadliner already.",
+    "PIERS: Yeah?\fLet's see who gets\nthe encore.",
+    "No hard feelings.\fI wanna hear your\nbest.",
+  }
+
   local PIERS_RETRY = {
     "PIERS: Still game?\fGood.",
     "Catch your breath.\fThen bring it.",
@@ -1230,9 +1299,13 @@ return function(mod)
     HITMONTOP = true,
   }
 
-  local function finishDanceShow(pages, advance)
-    say(pages, advance and function() advanceVenue(AUDITION_MAP, 82) end
-      or nil)
+  local function finishDanceShow(pages, advance, graceful)
+    say(pages, advance and function()
+      tjAward("HEART", 1, "dance_showcase")
+      tjProfession(1, "dance_showcase")
+      if graceful then tjEthos("tradition", 1, "dance_showcase") end
+      advanceVenue(AUDITION_MAP, 82)
+    end or nil)
   end
 
   local function openDanceShow(advance)
@@ -1244,27 +1317,35 @@ return function(mod)
           local species = mon and mon.species
           if species and DANCERS[species] then
             Happiness.change(mon, "GYMBATTLE")
-            finishDanceShow(DANCE_DELIGHT, advance)
+            finishDanceShow(DANCE_DELIGHT, advance, true)
           else
-            finishDanceShow(DANCE_POLITE, advance)
+            finishDanceShow(DANCE_POLITE, advance, false)
           end
         end,
         onCancel = function()
           mod.game.stack:pop()
-          finishDanceShow(DANCE_CANCEL, advance)
+          finishDanceShow(DANCE_CANCEL, advance, false)
         end,
       })
     end)
     if not ok then
       report("GR PARTY PICK\n%s", tostring(err))
-      finishDanceShow(DANCE_CANCEL, advance)
+      finishDanceShow(DANCE_CANCEL, advance, false)
     end
   end
 
   local function talkBasementKing()
     facePlayer(BASS_MAP, BASEMENT_KING)
     if questFlag("basement_respect") then return say(KING_RESPECT) end
-    local pages = questFlag("basement_loss") and KING_RETRY or KING_INTRO
+    local pages
+    if questFlag("basement_loss") then
+      pages = KING_RETRY
+    elseif tjRank("MOXIE") >= 2 then
+      pages = { "KING: I heard\nabout you.", "You still earn\nthis room." }
+      for _, p in ipairs(KING_INTRO) do pages[#pages + 1] = p end
+    else
+      pages = KING_INTRO
+    end
     say(pages, function()
       mod.save:set("basement_armed", true)
       armBattle("basement")
@@ -1290,7 +1371,12 @@ return function(mod)
       world:setMoney(0, math.max(0, math.min(999999, money + 300)))
       local save = mod.game and mod.game.save
       Happiness.changeParty(save and save.party or {}, "GYMBATTLE")
+      local firstBusk = not mod.save:get("busk", nil)
       mod.save:set("busk", { day = day, done = true })
+      if firstBusk then
+        tjAward("APPEAL", 1, "first_busk")
+        tjProfession(1, "first_busk")
+      end
       say(BUSK_PAID)
     end)
   end
@@ -1325,7 +1411,10 @@ return function(mod)
       return say(DANCE_REFUSAL, function() openDanceShow(true) end)
     end
     if mapId == AUDITION_MAP and b >= 82 and b <= 86 then
-      return say(DANCE_REPEAT, function() openDanceShow(false) end)
+      local warmth = tjRank("HEART") >= 2
+        and { "KIMONO GIRL:\nWelcome back.", "Show us grace." }
+        or DANCE_REPEAT
+      return say(warmth, function() openDanceShow(false) end)
     end
     if mapId == RADIO_MAP and b == 82 then
       return say(RADIO_REFUSAL, function()
@@ -1350,7 +1439,12 @@ return function(mod)
     facePlayer(MAP, OBJ_NAME)
     local b = beat()
     if b == 0 then
-      say(INTRO, function()
+      local pages = {}
+      if tjRank("APPEAL") >= 2 then
+        pages[#pages + 1] = "ROXIE: You're the\none they talk\fabout, right?"
+      end
+      for _, p in ipairs(INTRO) do pages[#pages + 1] = p end
+      say(pages, function()
         setBeat(10)
         armBattle("roxie")
       end)
@@ -1475,6 +1569,8 @@ return function(mod)
     if b == 90 then
       return say(SHOW_OPENING, function()
         setBeat(100)
+        tjAward("APPEAL", 1, "park_show")
+        tjProfession(1, "park_show")
         local status = placeShow()
         if status and not status:match("PIERS") then
           report("GR PIERS ARRIVE\n%s", tostring(status))
@@ -1510,7 +1606,8 @@ return function(mod)
     facePlayer(SHOW_MAP, PIERS_NAME)
     local b = beat()
     if b == 100 then
-      return say(PIERS_INTRO, function()
+      local intro = tjRank("APPEAL") >= 3 and PIERS_INTRO_FAME or PIERS_INTRO
+      return say(intro, function()
         setBeat(101)
         armBattle("piers")
       end)

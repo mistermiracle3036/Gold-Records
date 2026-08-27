@@ -21,6 +21,11 @@
 - **Quest System** by FAFF0x — optional integration. When it is installed
   the questline also registers a journal entry through its public exports;
   no code is shared, and the mod is fully playable without it.
+- **Trainer Journey** — optional integration. When it is installed, quest
+  beats award APPEAL, MOXIE and HEART stats, advance the ROCK STAR
+  profession, and mildly lean the ethos axis. High stats also add extra
+  flavour dialogue at four moments. No code is shared and the mod is fully
+  playable without it.
 - **Kanto Ribbons** — planned optional integration. This mod will write
   `mon.grHeadliner = true` on the Pokemon that were at the show, for that
   mod to read the same way it already reads `mon.snagged`. A plain
