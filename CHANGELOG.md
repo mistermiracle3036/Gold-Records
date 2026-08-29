@@ -12,14 +12,17 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
-## 0.6.2
+## 0.6.3
 
 **Updating from 0.4.2?** Since the last release the band has gained a
 four-stop venue hunt (0.5.0–0.6.0), interactive encounters at every venue
-stop (0.6.1), a commissioned PIERS sprite by Yogurcomics, and now optional
-Trainer Journey integration.
+stop (0.6.1), commissioned character sprites, optional Trainer Journey
+integration, and ROXIE now has her own overworld and battle portrait.
 
 ### Added
+- ROXIE now has a commissioned overworld sprite and battle portrait by
+  tharkka, replacing the vanilla COOLTRAINER_F stand-in. Her battle
+  against the player shows the custom portrait instead of JANINE's.
 - Optional **Trainer Journey** integration. When Trainer Journey is
   installed, eight quest beats award APPEAL, MOXIE and HEART stats and
   advance a new **ROCK STAR** profession (ROADIE → OPENER → HEADLINER →

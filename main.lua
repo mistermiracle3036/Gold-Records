@@ -12,7 +12,7 @@ local Happiness = require("src.core.gen2.Happiness")
 local Clock = require("src.core.gen2.Clock")
 
 return function(mod)
-  local VERSION = "0.6.2"
+  local VERSION = "0.6.3"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -51,7 +51,7 @@ return function(mod)
   local MOVE_STANDING_DOWN = 6
   local MOVE_STANDING_RIGHT = 9
   local MOVE_STANDING_LEFT = 8
-  local ROXIE_SPRITE = "SPRITE_COOLTRAINER_F"
+  local ROXIE_SPRITE = "SPRITE_GR_ROXIE"
   local PIERS_SPRITE = "SPRITE_GR_PIERS"
   -- Device-tested adjustment from the previous (18,19) placement:
   -- four cells right and seven cells up, facing right.
@@ -83,6 +83,16 @@ return function(mod)
     monFields = { "grHeadliner", "grPiersGift" },
   }
 
+  mod.content.sprites:register(ROXIE_SPRITE, {
+    id = ROXIE_SPRITE,
+    image = mod.path .. "/assets/roxie.png",
+    frames = 6,
+    walker = true,
+    spriteType = "WALKING_SPRITE",
+    palette = "PAL_OW_PINK",
+    paletteId = 4,
+  })
+
   mod.content.sprites:register(PIERS_SPRITE, {
     id = PIERS_SPRITE,
     image = mod.path .. "/assets/piers.png",
@@ -93,6 +103,7 @@ return function(mod)
     paletteId = 3,
   })
 
+  local ROXIE_FRONT_PATH = mod.path .. "/assets/roxie_front.png"
   local PIERS_FRONT_PATH = mod.path .. "/assets/piers_front.png"
 
   local function report(fmt, ...)
@@ -277,11 +288,14 @@ return function(mod)
       local orig = BattleState._grOriginals.new
       BattleState.new = function(game, opts)
         local state = orig(game, opts)
-        if state and activeBattle == "piers" then
-          local loaded, image = pcall(Assets.image, PIERS_FRONT_PATH)
+        local frontPath = activeBattle == "piers" and PIERS_FRONT_PATH
+                       or activeBattle == "roxie" and ROXIE_FRONT_PATH
+                       or nil
+        if state and frontPath then
+          local loaded, image = pcall(Assets.image, frontPath)
           if loaded and image then
             state.enemyTrainerImage = image
-            state.enemyTrainerPath = PIERS_FRONT_PATH
+            state.enemyTrainerPath = frontPath
             state.enemyTrainerTrueColor = true
             state.showEnemyTrainer = true
           end

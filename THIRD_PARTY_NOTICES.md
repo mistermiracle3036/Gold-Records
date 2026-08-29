@@ -38,6 +38,9 @@
   as a future slice), so there is nothing for this mod to award until it
   ships; the reward is designed but parked. No code is shared and neither
   mod requires the other.
+- **Roxie sprite art** — the overworld and battle portrait for ROXIE were
+  commissioned from **tharkka** (via Fiverr) for this project's use. Both
+  files are in `assets/`.
 - **Piers sprite art** — the overworld and battle portrait for PIERS were
   commissioned from **Yogurcomics** for this project's use. Both files are
   in `assets/`.
