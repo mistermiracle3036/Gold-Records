@@ -12,7 +12,7 @@ local Happiness = require("src.core.gen2.Happiness")
 local Clock = require("src.core.gen2.Clock")
 
 return function(mod)
-  local VERSION = "0.6.3"
+  local VERSION = "0.6.4"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -288,8 +288,9 @@ return function(mod)
       local orig = BattleState._grOriginals.new
       BattleState.new = function(game, opts)
         local state = orig(game, opts)
-        local frontPath = activeBattle == "piers" and PIERS_FRONT_PATH
-                       or activeBattle == "roxie" and ROXIE_FRONT_PATH
+        local who = activeBattle or pendingBattle
+        local frontPath = who == "piers" and PIERS_FRONT_PATH
+                       or who == "roxie" and ROXIE_FRONT_PATH
                        or nil
         if state and frontPath then
           local loaded, image = pcall(Assets.image, frontPath)

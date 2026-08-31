@@ -12,12 +12,18 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
-## 0.6.3
+## 0.6.4
 
 **Updating from 0.4.2?** Since the last release the band has gained a
 four-stop venue hunt (0.5.0–0.6.0), interactive encounters at every venue
 stop (0.6.1), commissioned character sprites, optional Trainer Journey
 integration, and ROXIE now has her own overworld and battle portrait.
+
+### Fixed
+- Custom battle portraits (ROXIE and PIERS) now display correctly. The
+  portrait swap was racing the party hook: the party hook cleared the
+  battle key before `BattleState.new` read it. Now falls back to the
+  pending key so the portrait shows regardless of hook ordering.
 
 ### Added
 - ROXIE now has a commissioned overworld sprite and battle portrait by
