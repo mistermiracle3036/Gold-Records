@@ -12,6 +12,10 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.4.3
+
+Updating from v0.4.2? NPCs answer again on the current engine; nothing else changed.
+
 ## 0.4.2
 
 **Formerly "Kanto Rocks".** The name was a leftover: this is a JOHTO story

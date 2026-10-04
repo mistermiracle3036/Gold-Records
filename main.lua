@@ -10,7 +10,7 @@
 local Runtime = require("src.mods.Runtime")
 
 return function(mod)
-  local VERSION = "0.4.2"
+  local VERSION = "0.4.3"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -765,17 +765,34 @@ return function(mod)
 
   mod.events:on("world.interacted", function(ev)
     local ok, err = pcall(function()
-      if not ev or ev.kind ~= "none" then return end
+      if not ev or (ev.kind ~= "none" and ev.kind ~= "npc") then return end
       local world = mod.world:overworld()
+      -- Engine 0.3.50+ emits "npc" for an unscripted runtime actor with
+      -- ev.target = the live object; older engines emit "none" with only
+      -- the faced cell. "npc" matches by target identity, and only for this
+      -- mod's own runtime object with no scriptKey, so a native script never
+      -- gets a second conversation (JQP 0.23.2 matchesInteractedActor).
+      -- trainer is NOT rejected: the engine reaches its "npc" arm for a
+      -- trainer only once it is refused (beaten) and starts nothing there;
+      -- armed battles still go through the engine's own trainer arm.
+      local function hit(obj)
+        if not obj then return false end
+        if ev.kind == "npc" then
+          return ev.target ~= nil and ev.target.def == obj
+            and obj.runtime == true and obj.owner == mod.id
+            and not obj.scriptKey
+        end
+        return obj.x == ev.x and obj.y == ev.y
+      end
       if ev.mapId == MAP then
         local obj = objectNamed(world, MAP, OBJ_NAME)
-        if obj and obj.x == ev.x and obj.y == ev.y then talkRoxie() end
+        if hit(obj) then talkRoxie() end
       elseif ev.mapId == BASS_MAP then
         local feedback = objectNamed(world, BASS_MAP, FEEDBACK_NAME)
         local whitney = objectNamed(world, BASS_MAP, WHITNEY_NAME)
-        if feedback and feedback.x == ev.x and feedback.y == ev.y then
+        if hit(feedback) then
           talkBassist(false)
-        elseif whitney and whitney.x == ev.x and whitney.y == ev.y then
+        elseif hit(whitney) then
           talkBassist(true)
         end
       elseif ev.mapId == AUDITION_MAP then
@@ -783,7 +800,7 @@ return function(mod)
           AUDITION_ROXIE, GENE_NAME, BILLY_NAME, CASEY_NAME, JIGGLY_NAME,
         }) do
           local obj = objectNamed(world, AUDITION_MAP, name)
-          if obj and obj.x == ev.x and obj.y == ev.y then
+          if hit(obj) then
             if name == AUDITION_ROXIE then talkAuditionRoxie()
             elseif name == JIGGLY_NAME then talkJigglypuff()
             else talkCandidate(name) end
