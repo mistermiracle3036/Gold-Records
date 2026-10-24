@@ -80,7 +80,7 @@ function world:npcAt(x, y)
 end
 
 local screens, registeredSprites = {}, {}
-local mod = {path = root,
+local mod = {path = root, id = "gold_records",
   exports = {},
   game = { save = {
              player = { badges = { ZEPHYR = true }, kantoBadges = {}, money = 1000 },
@@ -239,6 +239,17 @@ local function finishSet(rough,entrance)
   top:draw();press("a")
  end
 end
+
+-- Engine 0.3.50+ sends kind="npc" with the live object for an unscripted
+-- runtime actor (0.4.3 hotfix). Match by identity, never by another object.
+enter("VIOLET_CITY");lastScript=nil
+local npcRoxie=actor("VIOLET_CITY","GR_ROXIE")
+emit("world.interacted",{kind="npc",mapId="VIOLET_CITY",x=npcRoxie.x,y=npcRoxie.y,
+  target={def={name="SOMEONE_ELSE",runtime=true,owner="other_mod"}}})
+check("npc kind ignores another object",lastScript==nil)
+emit("world.interacted",{kind="npc",mapId="VIOLET_CITY",x=-9,y=-9,target={def=npcRoxie}})
+check("npc kind reaches ROXIE",lastScript~=nil)
+lastScript.extra.onDone(false);lastScript=nil
 
 -- Dialogue completion, save switch, late/repeated callbacks.
 enter("VIOLET_CITY");sayTo("VIOLET_CITY","GR_ROXIE")

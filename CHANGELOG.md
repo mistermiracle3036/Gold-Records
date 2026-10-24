@@ -12,6 +12,21 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.7.2
+
+**Updating from 0.4.3?** The band now gets a full story past the drummer:
+four venues turn ROXIE down, the band plays its first show in NATIONAL PARK,
+and PIERS crashes the encore for a battle. Along the way you can show off a
+graceful Pokemon at the DANCE THEATER, busk in OLIVINE, earn the BASEMENT
+KING's respect and finally wake that WOOPER. ROXIE and PIERS have their own
+commissioned sprites, the first show has a Band Book, manager cues and a
+playable encore, and Trainer Journey players earn the ROCK STAR profession.
+
+### Fixed
+- Every Gold Records character answers again on the current engine. The 0.4.3
+  fix now covers the whole cast, including the venue hosts, the BASEMENT
+  KING, the busking SAILOR, the sleeping WOOPER and the park band.
+
 ## 0.7.1
 
 Private paired-performance prototype, based on the supplied 0.7.0 build.
@@ -166,6 +181,10 @@ The band plays its first show, and PIERS has invited himself onto the bill.
   gift Pokemon are not part of this version.
 - NATIONAL PARK placement is reported in `[ERRS]` while the new stage layout
   is tested on device.
+
+## 0.4.3
+
+Updating from v0.4.2? NPCs answer again on the current engine; nothing else changed.
 
 ## 0.4.2
 

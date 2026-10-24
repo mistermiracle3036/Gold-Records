@@ -12,7 +12,7 @@ local Happiness = require("src.core.gen2.Happiness")
 local BugContest = require("src.core.gen2.BugContest")
 
 return function(mod)
-  local VERSION = "0.7.1"
+  local VERSION = "0.7.2"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -1765,23 +1765,41 @@ return function(mod)
 
   mod.events:on("world.interacted", function(ev)
     local ok, err = pcall(function()
-      if not compatibleSave() or not ev or ev.kind ~= "none" then return end
+      if not compatibleSave() or not ev
+          or (ev.kind ~= "none" and ev.kind ~= "npc") then return end
       local world = mod.world:overworld()
+      -- Engine 0.3.50+ emits "npc" for an unscripted runtime actor with
+      -- ev.target = the live object; older engines emit "none" with only
+      -- the faced cell. "npc" matches by target identity, and only for this
+      -- mod's own runtime object with no scriptKey, so a native script never
+      -- gets a second conversation (JQP 0.23.2 matchesInteractedActor).
+      -- trainer is NOT rejected: the engine reaches its "npc" arm for a
+      -- trainer only once it is refused (beaten) and starts nothing there;
+      -- armed battles still go through the engine's own trainer arm.
+      local function hit(obj)
+        if not obj then return false end
+        if ev.kind == "npc" then
+          return ev.target ~= nil and ev.target.def == obj
+            and obj.runtime == true and obj.owner == mod.id
+            and not obj.scriptKey
+        end
+        return obj.x == ev.x and obj.y == ev.y
+      end
       if ev.mapId == MAP then
         local obj = objectNamed(world, MAP, OBJ_NAME)
-        if obj and obj.x == ev.x and obj.y == ev.y then talkRoxie() end
+        if hit(obj) then talkRoxie() end
       elseif ev.mapId == BASS_MAP then
         local feedback = objectNamed(world, BASS_MAP, FEEDBACK_NAME)
         local whitney = objectNamed(world, BASS_MAP, WHITNEY_NAME)
         local roxie = objectNamed(world, BASS_MAP, VENUE_UNDER_ROXIE)
         local king = objectNamed(world, BASS_MAP, BASEMENT_KING)
-        if feedback and feedback.x == ev.x and feedback.y == ev.y then
+        if hit(feedback) then
           talkBassist(false)
-        elseif whitney and whitney.x == ev.x and whitney.y == ev.y then
+        elseif hit(whitney) then
           talkBassist(true)
-        elseif king and king.x == ev.x and king.y == ev.y then
+        elseif hit(king) then
           talkBasementKing()
-        elseif roxie and roxie.x == ev.x and roxie.y == ev.y then
+        elseif hit(roxie) then
           talkVenueRoxie(BASS_MAP, VENUE_UNDER_ROXIE)
         end
       elseif ev.mapId == AUDITION_MAP then
@@ -1790,7 +1808,7 @@ return function(mod)
           GENE_NAME, BILLY_NAME, CASEY_NAME, JIGGLY_NAME,
         }) do
           local obj = objectNamed(world, AUDITION_MAP, name)
-          if obj and obj.x == ev.x and obj.y == ev.y then
+          if hit(obj) then
             if name == DANCE_HOST then talkVenueHost(AUDITION_MAP, name)
             elseif name == VENUE_DANCE_ROXIE then
               talkVenueRoxie(AUDITION_MAP, name)
@@ -1806,7 +1824,7 @@ return function(mod)
           and VENUE_RADIO_ROXIE or VENUE_CAFE_ROXIE
         for _, name in ipairs({ host, roxie }) do
           local obj = objectNamed(world, ev.mapId, name)
-          if obj and obj.x == ev.x and obj.y == ev.y then
+          if hit(obj) then
             if name == host then talkVenueHost(ev.mapId, name)
             else talkVenueRoxie(ev.mapId, name) end
             return
@@ -1814,12 +1832,12 @@ return function(mod)
         end
       elseif ev.mapId == ECRUTEAK_MAP then
         local wooper = objectNamed(world, ECRUTEAK_MAP, SLEEPING_WOOPER)
-        if wooper and wooper.x == ev.x and wooper.y == ev.y then
+        if hit(wooper) then
           talkWooper()
         end
       elseif ev.mapId == OLIVINE_MAP then
         local sailor = objectNamed(world, OLIVINE_MAP, BUSKER_SAILOR)
-        if sailor and sailor.x == ev.x and sailor.y == ev.y then
+        if hit(sailor) then
           talkBusker()
         end
       elseif ev.mapId == SHOW_MAP then
@@ -1827,7 +1845,7 @@ return function(mod)
           SHOW_ROXIE, SHOW_WHITNEY, SHOW_CASEY, PIERS_NAME,
         }) do
           local obj = objectNamed(world, SHOW_MAP, name)
-          if obj and obj.x == ev.x and obj.y == ev.y then
+          if hit(obj) then
             if name == SHOW_ROXIE then talkShowRoxie()
             elseif name == PIERS_NAME then talkPiers()
             else talkShowMember(name) end
