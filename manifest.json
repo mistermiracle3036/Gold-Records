@@ -1,7 +1,7 @@
 {
   "id": "gold_records",
   "name": "Gold Records",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
@@ -18,7 +18,8 @@
   "dependencies": [],
   "optional_dependencies": [
     "trainer_journey",
-    "crystal_cutscene"
+    "crystal_cutscene",
+    "johto_expanded"
   ],
   "conflicts": [],
   "description": "A standalone Johto band adventure: recruit FEEDBACK and CASEY, find a venue, manage a native National Park show, face Piers, play an encore and keep your First Show card. Private alpha targeting Gold, Silver and Crystal; device validation is pending. No other mod is required.",

@@ -384,4 +384,56 @@ state.beat=86;emit("game.ready",{});check("missing Court recovery",state.beat==8
 state.beat=90;state.first_show=nil;enter("NATIONAL_PARK");sayTo("NATIONAL_PARK","GR_SHOW_ROXIE");select("SOUNDCHECK")
 local abandoned=mod.game.stack:top();emit("game.ready",{})
 check("save reload releases owned scene",mod.game.stack:top()~=abandoned and not state.first_show.soundcheck)
+-- ROUTE 36 venue: Johto Expanded's two maps now exist. Fresh first show.
+local VE,VM="JOHTO_EXPANDED_VENUE_ENTRANCE","JOHTO_EXPANDED_MUSIC_VENUE"
+mapObjects[VE],mapObjects[VM]={},{}
+world.maps[VE]={objects=mapObjects[VE]};world.maps[VM]={objects=mapObjects[VM]}
+local warped
+function mod.world:warpTo(mapId,x,y,facing) warped={mapId,x,y,facing};return true end
+local function queued() return lastScript and lastScript.rows[1][2] or "" end
+for _,k in ipairs({"first_show","busk","show_stage","venue_dragged","venue_met"}) do state[k]=nil end
+mod.game.save.player.badges={a=true,b=true,c=true,d=true}
+state.beat=84;enter("GOLDENROD_UNDERGROUND");sayTo("GOLDENROD_UNDERGROUND","GR_WHITNEY")
+check("unbusked hook sends you to busk",queued():find("busk in\nOLIVINE first",1,true)~=nil)
+done();check("hook still assigns the show",state.beat==90)
+enter(VE)
+check("packed line, no ROXIE before a busk",not findObj(VE,"GR_VENUE_PHONE_ROXIE")
+  and findObj(VE,"GR_VENUE_DOOR_R") and #mapObjects[VE]==25)
+enter("NATIONAL_PARK");check("park stays empty for a venue show",not findObj("NATIONAL_PARK","GR_SHOW_ROXIE"))
+enter("OLIVINE_CITY");sayTo("OLIVINE_CITY","GR_BUSKER_SAILOR");done()
+check("first busk plays the ROUTE 36 hook",queued():find("There's a stage on",1,true)~=nil);done()
+enter(VE)
+local phone=actor(VE,"GR_VENUE_PHONE_ROXIE")
+check("ROXIE at the phone",phone.x==8 and phone.y==7)
+sayTo(VE,"GR_VENUE_PHONE_ROXIE");check("phone call plays",queued():find("He's here now",1,true)~=nil)
+done()
+check("ROXIE pulls you to the front",warped and warped[1]==VM and warped[2]==11 and warped[3]==9
+  and state.show_stage=="ROUTE 36")
+enter(VM)
+check("band in the triangle",actor(VM,"GR_SHOW_CASEY").y==2 and actor(VM,"GR_SHOW_ROXIE").x==8
+  and actor(VM,"GR_SHOW_WHITNEY").x==12 and actor(VM,"GR_PIERS").y==8)
+check("PIERS greets on arrival",queued():find("the manager",1,true)~=nil)
+done();check("met PIERS",state.venue_met==true)
+enter(VE)
+check("lane opens for the manager",not findObj(VE,"GR_VENUE_DOOR_R") and findObj(VE,"GR_VENUE_DOOR_L")
+  and not findObj(VE,"GR_VENUE_PHONE_ROXIE") and not world:npcAt(5,3))
+enter(VM);sayTo(VM,"GR_PIERS");check("PIERS waits for the encore",queued():find("Save me a",1,true)~=nil);done()
+sayTo(VM,"GR_SHOW_ROXIE");select("SOUNDCHECK");finishSet(false,false);done()
+sayTo(VM,"GR_SHOW_ROXIE");select("OPENING SET");finishSet(false,true)
+check("no 'who asked you' at his own venue",queued():find("Still not",1,true)~=nil);done()
+check("venue opening advances",state.beat==100 and state.first_show.first.venue=="ROUTE 36")
+sayTo(VM,"GR_PIERS");check("encore ask",queued():find("Told you",1,true)~=nil);done()
+party,battle=engage(actor(VM,"GR_PIERS"),"KAREN")
+check("PIERS armed at the venue",#party==5)
+emit("battle.ended",{result="win",battle=battle});world.battleActive=false
+check("venue win",state.beat==110)
+sayTo(VM,"GR_SHOW_ROXIE");select("PLAY ENCORE");finishSet(false,false);done()
+sayTo(VM,"GR_SHOW_ROXIE");select("BAND DEBRIEF");done()
+check("card names ROUTE 36",mod.game.stack:top() and state.first_show.keepsake);mod.game.stack:top():draw();press("b")
+check("band leaves, crowd stays",not findObj(VM,"GR_SHOW_ROXIE") and findObj(VM,"GR_VENUE_BARTENDER"))
+
+-- A show that opened in the park stays there even with Johto Expanded.
+for _,k in ipairs({"first_show","show_stage","venue_dragged","venue_met"}) do state[k]=nil end
+state.beat=100;enter("NATIONAL_PARK")
+check("park-opened show stays in the park",findObj("NATIONAL_PARK","GR_PIERS") ~= nil)
 print("ALL MOCKED REGRESSIONS PASSED")

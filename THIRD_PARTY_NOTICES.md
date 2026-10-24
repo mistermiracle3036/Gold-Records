@@ -23,6 +23,10 @@ third-party commissioned art, game data, or Nintendo/Creatures/GAME FREAK rights
   dialogue; reference packages were not modified.
 - **Crystal Cutscene:** optional livePerformance v1 presentation. Its source and
   graphics are not bundled here. Gold Records retains ownership of all progress.
+- **Johto Expanded:** optional. When its ROUTE 36 music venue maps exist, the
+  first show is staged there on that mod's named spots; Gold Records places
+  its own cast and bundles none of its maps or graphics. Without it the show
+  stays in NATIONAL PARK.
 - **Quest System, Pokémon Channel, Kanto Ribbons:** no implemented
   adapters in this build. Reserved Gold Records mon fields remain unwritten.
 - Roxie, Whitney, Casey, Jigglypuff and Piers appear as fan tribute. Writing is

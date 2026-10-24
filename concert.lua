@@ -105,8 +105,11 @@ return function(mod, C)
     local b, r = C.beat(), record()
     if not r then return {"Newer save schema.", "Use newer build."} end
     if r.debrief then return {"FIRST SHOW SAVED", "Rehearse any time."} end
-    if b >= 110 then return {r.encore and "Debrief with band." or "Play the encore.", "NATIONAL PARK"} end
-    if b >= 100 then return {"Prepare for PIERS.", "NATIONAL PARK"} end
+    local early = C.objective and C.objective()
+    if early then return early end
+    local place = C.place and C.place() or "NATIONAL PARK"
+    if b >= 110 then return {r.encore and "Debrief with band." or "Play the encore.", place} end
+    if b >= 100 then return {"Prepare for PIERS.", place} end
     return {"Soundcheck, then", "the opening set."}
   end
 
@@ -146,7 +149,8 @@ return function(mod, C)
       rect(14,29,132,53,gold)
       rect(16,31,128,49,cream)
       text("GOLD RECORDS",32,34)
-      text("NATIONAL PARK",28,48)
+      local place=opts.first.venue or "NATIONAL PARK"
+      text(place,math.floor((160-Font.width(place))/2),48)
       text("ROXIE / FEEDBACK",16,62)
       text("CASEY ON DRUMS",24,72)
       text(opts.first.outcome or "EARLIER SHOW",16,91)
@@ -199,7 +203,7 @@ return function(mod, C)
   register("GRConcert", function(game,opts)
     local state={game=game,kind="stage",isOpaque=true,valid=opts.valid,
       mode=opts.mode,prep=opts.prep,step=1,choice=1,phase="cue",t=0,
-      rough=0,paused=false,sprites=makeSprites(game)}
+      rough=0,paused=false,sprites=makeSprites(game),venue=opts.venue}
     function state:exit() leave(self) end
     function state:finish()
       if not current(self) then pop(self); return end
@@ -281,6 +285,9 @@ return function(mod, C)
       rect(0,92,160,52,cream);rect(0,92,160,1,ink)
       if self.paused then
         text("PAUSED",8,97);text("A: RESUME",8,112);text("B: LEAVE SET",8,128)
+      elseif self.phase=="entrance" and self.venue then
+        -- ROUTE 36: he was in the crowd all along and steps up for the encore.
+        text("PIERS: Told you.",8,98);text("I want the encore.",8,111);text("A",144,128)
       elseif self.phase=="entrance" then
         text("PIERS: Not bad.",8,98);text("Mind if I crash",8,111);text("the encore?  A",8,128)
       elseif self.phase=="response" then
@@ -317,6 +324,7 @@ return function(mod, C)
     if not r then return end
     local prep=prepared()
     local valid=C.guard()
+    local venue=C.atVenue and C.atVenue() or false
     local function done(result)
       if not valid() or not permitted() then return end
       local latest=record()
@@ -325,16 +333,24 @@ return function(mod, C)
         latest.practice=result.outcome;latest.soundcheck=true;write(latest)
         C.say({"CASEY: Four beats.","Same cues on stage.","ROXIE: Now we can\nhear the bass."})
       elseif mode=="opening" and C.beat()==90 and not latest.opening then
+        result.venue=C.place and C.place() or nil
         latest.opening=true;latest.first=result;write(latest)
         C.setBeat(100);C.refresh();C.opened()
-        C.say({"ROXIE: Who asked\nyou?","PIERS: Nobody.\nThat's the fun.","Prepare your team.\nThen talk to me."})
+        if venue then
+          -- NEW lines (2026-10-24 build): PIERS invited them, so no "who asked".
+          C.say({"ROXIE: Still not\na chance.","PIERS: Then win\nit off me.","Prepare your team.\nThen talk to me."})
+        else
+          C.say({"ROXIE: Who asked\nyou?","PIERS: Nobody.\nThat's the fun.","Prepare your team.\nThen talk to me."})
+        end
       elseif mode=="encore" and C.beat()>=110 and not latest.encore then
         latest.encore=true;latest.victory=true;write(latest)
         C.say({"The last chord\nrings out.","Speak to ROXIE\nfor the debrief."})
       end
     end
-    if bridge.start(mode,prep,valid,done) then return end
-    push("GRConcert",{mode=mode,prep=prep,valid=valid,done=done})
+    -- Crystal Cutscene's livePerformance v1 stages national_park and
+    -- olivine_harbor only, so a ROUTE 36 set always uses the native stage.
+    if not venue and bridge.start(mode,prep,valid,done) then return end
+    push("GRConcert",{mode=mode,prep=prep,valid=valid,done=done,venue=venue})
   end
   local function debrief()
     C.say({"ROXIE: We made\nour own stage.","WHITNEY: FEEDBACK\non the poster!","One name that's\njust for music.","CASEY: My chant!\nOn a real stage!","PIERS: Your band.\nKeep that sound.","You keep the\nFIRST SHOW card.","We pack the amps.\nThe path is clear.","Visit VIOLET for\nyour BAND BOOK."},function()

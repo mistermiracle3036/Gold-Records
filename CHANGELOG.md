@@ -12,6 +12,37 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.7.3
+
+**Updating from 0.4.3?** The band now gets a full story past the drummer:
+four venues turn ROXIE down, the band plays its first show and PIERS
+challenges you for the encore. With Johto Expanded installed that show is at
+a packed music venue on ROUTE 36; without it, in NATIONAL PARK. Along the way
+you can show off a graceful Pokemon at the DANCE THEATER, busk in OLIVINE,
+earn the BASEMENT KING's respect and finally wake that WOOPER. ROXIE and
+PIERS have their own commissioned sprites, the first show has a Band Book,
+manager cues and a playable encore, and Trainer Journey players earn the
+ROCK STAR profession. Every character answers on the current engine again.
+
+### Added
+- **The ROUTE 36 music venue** (needs Johto Expanded 0.3.11 or later).
+  Someone heard the band busking, and there is a stage for them on ROUTE 36.
+  The stage opens once you have busked in OLIVINE at least once and carry
+  4 BADGES. The entrance is packed wall to wall; ROXIE is on the phone by the
+  door, and she pulls you through the crowd to the front, where PIERS is
+  waiting: it's his crowd, and he wants the encore. The soundcheck, opening
+  set, encore battle, debrief and FIRST SHOW card all play there.
+- The Band Book's NEXT OBJECTIVE points the way to ROUTE 36 until you find
+  ROXIE there.
+
+### Notes
+- Without Johto Expanded nothing changes: the show is in NATIONAL PARK.
+- A show that already opened in NATIONAL PARK finishes there, even after
+  installing Johto Expanded. A save waiting at the park before the opening
+  set moves to ROUTE 36.
+- The ROUTE 36 set always uses the built-in stage: Crystal Cutscene's
+  presentation stages only NATIONAL PARK and the OLIVINE harbour so far.
+
 ## 0.7.2
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer:

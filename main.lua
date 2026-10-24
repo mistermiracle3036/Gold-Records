@@ -12,7 +12,7 @@ local Happiness = require("src.core.gen2.Happiness")
 local BugContest = require("src.core.gen2.BugContest")
 
 return function(mod)
-  local VERSION = "0.7.2"
+  local VERSION = "0.7.3"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -917,6 +917,7 @@ return function(mod)
   -- NATIONAL PARK show. The three band actors arrive at beat 90; PIERS is
   -- added only after the opening set, so his interruption is a real arrival.
   --------------------------------------------------------------------------
+  local V = {} -- the ROUTE 36 venue state; its section below fills it
   local showSpawnIds = {}
   local SHOW_ACTORS = {
     { name = SHOW_ROXIE, sprite = ROXIE_SPRITE, x = 10, y = 44,
@@ -950,7 +951,8 @@ return function(mod)
     local world = mod.world and mod.world:overworld()
     if not world then return "no overworld" end
     local b = beat()
-    if b < 90 or (concert and concert.departed()) or BugContest.isActive(mod.game.save) then
+    if b < 90 or (concert and concert.departed()) or BugContest.isActive(mod.game.save)
+        or V.here() then
       clearShowActors()
       return nil
     end
@@ -992,6 +994,203 @@ return function(mod)
       end
     end
     return table.concat(placed, " ")
+  end
+
+  --------------------------------------------------------------------------
+  -- ROUTE 36 music venue (Johto Expanded 0.3.11+, REQUESTS 209/211). Read
+  -- only when both maps exist: without Johto Expanded the show stays in
+  -- NATIONAL PARK exactly as before. "show_stage" anchors a show once it
+  -- starts, so a show that opened in the park finishes there and PIERS is
+  -- never met twice. Spots are Johto Expanded's named cells (README "The
+  -- music venue"); it spawns nobody there, so this mod places everyone.
+  --------------------------------------------------------------------------
+  V.ENT = "JOHTO_EXPANDED_VENUE_ENTRANCE"
+  V.MAP = "JOHTO_EXPANDED_MUSIC_VENUE"
+  V.PLACE, V.PARK = "ROUTE 36", "NATIONAL PARK"
+  V.PHONE_ROXIE = "GR_VENUE_PHONE_ROXIE"
+  V.UP = 7
+  -- Where ROXIE pulls the manager to: the paved aisle just behind PIERS.
+  V.FRONT_X, V.FRONT_Y = 11, 9
+
+  function V.ready()
+    local world = mod.world and mod.world:overworld()
+    local maps = world and world.maps
+    return maps ~= nil and maps[V.ENT] ~= nil and maps[V.MAP] ~= nil
+  end
+
+  function V.here()
+    if not V.ready() then return false end
+    local anchor = mod.save:get("show_stage", nil)
+    if anchor ~= nil then return anchor == V.PLACE end
+    return beat() <= 90
+  end
+
+  function V.place() return V.here() and V.PLACE or V.PARK end
+  function V.mapId() return V.here() and V.MAP or SHOW_MAP end
+
+  function V.busked()
+    local b = mod.save:get("busk", nil)
+    return type(b) == "table" and b.done == true
+  end
+
+  -- The Map Maker's crowd order and each sprite's vanilla object palette
+  -- (sprites/VANILLA_OBJ_PALETTES.json "recommended").
+  V.LINE_SPRITES = {
+    { "SPRITE_YOUNGSTER", 9 }, { "SPRITE_LASS", 10 }, { "SPRITE_ROCKER", 10 },
+    { "SPRITE_POKEFAN_M", 11 }, { "SPRITE_COOLTRAINER_F", 8 },
+    { "SPRITE_SUPER_NERD", 9 }, { "SPRITE_BEAUTY", 9 },
+    { "SPRITE_COOLTRAINER_M", 8 }, { "SPRITE_TWIN", 8 }, { "SPRITE_BIKER", 11 },
+  }
+  V.LINE_CELLS = {
+    { 3, 1 }, { 6, 1 }, { 7, 1 }, { 2, 2 }, { 3, 2 }, { 4, 2 }, { 5, 2 },
+    { 6, 2 }, { 7, 2 }, { 2, 3 }, { 3, 3 }, { 5, 3 }, { 6, 3 }, { 7, 3 },
+    { 2, 4 }, { 4, 4 }, { 5, 4 }, { 7, 4 }, { 3, 5 }, { 4, 5 }, { 6, 5 },
+    { 7, 5 },
+  }
+  -- Once the manager is known, these three step aside with the right-hand
+  -- DOOR guard: a lane from the mat (5,7) straight up to the door (5,0).
+  V.LANE = { ["5,2"] = true, ["5,3"] = true, ["5,4"] = true }
+
+  V.ENTRANCE = {
+    { name = "GR_VENUE_DOOR_L", sprite = "SPRITE_OFFICER", palette = 9,
+      x = 4, y = 1, label = "DOOR" },
+    { name = "GR_VENUE_DOOR_R", sprite = "SPRITE_OFFICER", palette = 9,
+      x = 5, y = 1, label = "DOOR", lane = true },
+    { name = "GR_VENUE_TICKETS", sprite = "SPRITE_OFFICER", palette = 9,
+      x = 0, y = 4, movement = MOVE_STANDING_RIGHT, label = "TICKETS" },
+    { name = V.PHONE_ROXIE, sprite = ROXIE_SPRITE, x = 8, y = 7,
+      movement = MOVE_STANDING_RIGHT, label = "ROXIE", phone = true },
+  }
+  for i, cell in ipairs(V.LINE_CELLS) do
+    local s = V.LINE_SPRITES[(i - 1) % #V.LINE_SPRITES + 1]
+    V.ENTRANCE[#V.ENTRANCE + 1] = {
+      name = "GR_VENUE_LINE_" .. i, sprite = s[1], palette = s[2],
+      x = cell[1], y = cell[2], movement = V.UP, label = "LINE",
+      lane = V.LANE[cell[1] .. "," .. cell[2]],
+    }
+  end
+
+  -- The band reuses the park actors' names (objectNamed is per map), so
+  -- the PIERS trainer arm and every talk handler work on either stage.
+  V.STAGE = {
+    { name = SHOW_CASEY, sprite = "SPRITE_LASS", x = 10, y = 2,
+      label = "CASEY", band = true },
+    { name = SHOW_ROXIE, sprite = ROXIE_SPRITE, x = 8, y = 4,
+      label = "ROXIE", band = true },
+    { name = SHOW_WHITNEY, sprite = "SPRITE_WHITNEY", x = 12, y = 4,
+      label = "WHITNEY", band = true },
+    { name = PIERS_NAME, sprite = PIERS_SPRITE, x = 11, y = 8,
+      movement = V.UP, label = "PIERS", band = true },
+    { name = "GR_VENUE_BARTENDER", sprite = "SPRITE_POKEFAN_M", palette = 11,
+      x = 16, y = 8, label = "BAR" },
+    { name = "GR_VENUE_FAN_1", sprite = "SPRITE_LASS", palette = 10,
+      x = 8, y = 7, movement = V.UP, label = "FAN" },
+    { name = "GR_VENUE_FAN_2", sprite = "SPRITE_YOUNGSTER", palette = 9,
+      x = 10, y = 7, movement = V.UP, label = "FAN" },
+    { name = "GR_VENUE_FAN_3", sprite = "SPRITE_COOLTRAINER_M", palette = 8,
+      x = 9, y = 9, movement = V.UP, label = "FAN" },
+    { name = "GR_VENUE_FAN_4", sprite = "SPRITE_TWIN", palette = 8,
+      x = 10, y = 10, movement = V.UP, label = "FAN" },
+    { name = "GR_VENUE_TABLE_1", sprite = "SPRITE_GENTLEMAN", palette = 9,
+      x = 2, y = 9, movement = MOVE_STANDING_RIGHT, label = "FAN" },
+    { name = "GR_VENUE_TABLE_2", sprite = "SPRITE_POKEFAN_F", palette = 11,
+      x = 5, y = 12, movement = V.UP, label = "FAN" },
+    { name = "GR_VENUE_BAR_1", sprite = "SPRITE_FISHER", palette = 10,
+      x = 14, y = 9, movement = MOVE_STANDING_RIGHT, label = "FAN" },
+  }
+
+  for mapId, actors in pairs({ [V.ENT] = V.ENTRANCE, [V.MAP] = V.STAGE }) do
+    local names = {}
+    for _, a in ipairs(actors) do names[#names + 1] = a.name end
+    mod.exports.owns.objects[mapId] = names
+  end
+
+  -- One spawn table for both venue maps, keyed "<map>/<name>".
+  V.spawnIds = {}
+  function V.remove(mapId, name)
+    local key = mapId .. "/" .. name
+    local id = V.spawnIds[key]
+    if not id then
+      local obj = objectNamed(mod.world:overworld(), mapId, name)
+      if obj and obj.runtime and obj.index then
+        id = mapId .. "_obj_" .. obj.index
+      end
+    end
+    if id then pcall(function() mod.world:removeNpc(id) end) end
+    V.spawnIds[key] = nil
+  end
+
+  -- Exact designed cells, no walkable fallback: a missing spot is a map
+  -- change worth reporting, not something to paper over.
+  function V.placeSet(mapId, actors, wanted)
+    local world = mod.world and mod.world:overworld()
+    if not world then return "no overworld" end
+    local placed, failed = 0, {}
+    for _, a in ipairs(actors) do
+      if not wanted(a) then
+        V.remove(mapId, a.name)
+      elseif not objectNamed(world, mapId, a.name) then
+        local id, err = mod.world:spawnNpc(mapId, {
+          name = a.name, sprite = a.sprite, x = a.x, y = a.y,
+          movement = a.movement or MOVE_STANDING_DOWN, palette = a.palette,
+        })
+        if id then
+          V.spawnIds[mapId .. "/" .. a.name] = id
+          placed = placed + 1
+        else
+          failed[#failed + 1] = a.label .. " " .. tostring(err)
+        end
+      end
+    end
+    if #failed > 0 then return "venue spawn " .. table.concat(failed, " ") end
+    if placed == 0 then return nil end
+    return ("VENUE %s +%d"):format(mapId == V.MAP and "STAGE" or "LINE", placed)
+  end
+
+  function V.placeEntrance()
+    if not V.ready() then return nil end
+    local known = questFlag("venue_met")
+    local phone = V.here() and beat() == 90 and V.busked() and not known
+      and badgeCount(mod.world.game) >= SHOW_BADGE_GATE
+    return V.placeSet(V.ENT, V.ENTRANCE, function(a)
+      if a.phone then return phone end
+      if a.lane then return not known end
+      return true
+    end)
+  end
+
+  function V.placeStage()
+    if not V.ready() then return nil end
+    local band = V.here() and beat() >= 90
+      and not (concert and concert.departed())
+      and (questFlag("venue_met") or questFlag("venue_dragged"))
+    return V.placeSet(V.MAP, V.STAGE, function(a)
+      return not a.band or band
+    end)
+  end
+
+  function V.clearBand()
+    for _, a in ipairs(V.STAGE) do
+      if a.band then V.remove(V.MAP, a.name) end
+    end
+  end
+
+  -- Whichever stage the show is on; the park side keeps its own rules.
+  function V.refresh()
+    local here = mod.world:current()
+    local mapId = here and here.mapId
+    if mapId == V.MAP then return V.placeStage() end
+    return placeShow()
+  end
+
+  function V.clear()
+    clearShowActors()
+    V.clearBand()
+  end
+
+  function V.armPiers()
+    BATTLES.piers.map = V.mapId()
+    return armBattle("piers")
   end
 
   --------------------------------------------------------------------------
@@ -1369,6 +1568,56 @@ return function(mod)
     "That was a proper\nshow.",
   }
 
+  -- ROUTE 36 venue (developer-approved 2026-10-24, except where marked NEW:
+  -- those are connective lines written for this build, not yet reviewed).
+  V.HOOK = {
+    "ROXIE: Fine.",
+    "Someone heard us\nbusk in OLIVINE.",
+    "There's a stage on\nROUTE 36.",
+    "Bring 4 BADGES.\fThen we play.",
+  }
+
+  V.HOOK_UNBUSKED = { -- NEW: the stage waits for one busk
+    "ROXIE: Fine.",
+    "Nobody's heard us\nplay yet.",
+    "Let's go busk in\nOLIVINE first.",
+  }
+
+  V.HOOK_AFTER_BUSK = {
+    "ROXIE: Hey!", -- NEW opener; the rest is the approved hook
+    "Someone heard us\nbusk in OLIVINE.",
+    "There's a stage on\nROUTE 36.",
+    "Bring 4 BADGES.\fThen we play.",
+  }
+
+  V.PHONE = {
+    "ROXIE: ...yeah.\nHe's here now.",
+    "Gotta go. Bye!",
+    "ROXIE: Manager!\fYou made it.",
+    "Packed, right?\fCome on.",
+  }
+
+  V.PIERS_MEET = {
+    "PIERS: So you're\nthe manager.",
+    "Heard your band\nbusking.",
+    "Rough. Loud.\fI liked it.",
+    "ROXIE: So you got\nus in?",
+    "PIERS: My crowd.\fYour stage, then.",
+    "Save me a spot.\fI want the encore.",
+    "ROXIE: Not a\nchance.",
+  }
+
+  V.PIERS_WAIT = { "PIERS: Save me a\nspot.", "I want the encore." }
+  V.PIERS_ENCORE = { "PIERS: Told you.\fI want the encore." }
+  V.PIERS_BEAT = { "PIERS: You earned\nthe stage.", "That was a proper\nshow." }
+
+  V.DOOR_SHUT = { "DOOR: Sold out.\fNo way through." } -- NEW
+  V.DOOR_OPEN = { "DOOR: Manager?\fGo on in." } -- NEW
+  V.TICKETS_LINE = { "TICKETS: Sold out\ntonight." } -- NEW
+  V.LINE_TALK = { "Can't move!\fIt's packed!" } -- NEW
+  V.BAR_TALK = { "BARTENDER: What'll\nit be?" } -- NEW
+  V.FAN_TALK = { "FAN: Turn it up!" } -- NEW
+
   local function facePlayer(mapId, name)
     local here = mod.world:current()
     local opposite = { up = "down", down = "up", left = "right", right = "left" }
@@ -1503,6 +1752,14 @@ return function(mod)
       if not (state and state.done) then
         tjAward("APPEAL", 1, "first_busk")
         tjProfession(1, "first_busk")
+        -- Busked only after the UNDERGROUND sent them here: this set is
+        -- the one somebody heard, so the ROUTE 36 hook plays now.
+        if beat() == 90 and V.here() and not questFlag("venue_met") then
+          local pages = {}
+          for _, p in ipairs(BUSK_PAID) do pages[#pages + 1] = p end
+          for _, p in ipairs(V.HOOK_AFTER_BUSK) do pages[#pages + 1] = p end
+          return say(pages)
+        end
       end
       say(BUSK_PAID)
     end)
@@ -1616,7 +1873,16 @@ return function(mod)
     facePlayer(BASS_MAP, revealed and WHITNEY_NAME or FEEDBACK_NAME)
     local b = beat()
     if b == 84 then
-      return say(UNDERGROUND_REFUSAL, function()
+      local pages = UNDERGROUND_REFUSAL
+      if V.here() then
+        -- Same refusal; the last three park pages become the ROUTE 36 hook.
+        pages = {}
+        for i = 1, #UNDERGROUND_REFUSAL - 3 do pages[i] = UNDERGROUND_REFUSAL[i] end
+        for _, p in ipairs(V.busked() and V.HOOK or V.HOOK_UNBUSKED) do
+          pages[#pages + 1] = p
+        end
+      end
+      return say(pages, function()
         advanceVenue(BASS_MAP, 90)
       end)
     end
@@ -1717,12 +1983,12 @@ return function(mod)
   end
 
   local function talkShowRoxie()
-    facePlayer(SHOW_MAP, SHOW_ROXIE)
+    facePlayer(V.mapId(), SHOW_ROXIE)
     if showBook then showBook(true) end
   end
 
   local function talkShowMember(name)
-    facePlayer(SHOW_MAP, name)
+    facePlayer(V.mapId(), name)
     local b = beat()
     if name == SHOW_WHITNEY then
       if b == 90 then
@@ -1739,28 +2005,69 @@ return function(mod)
     say({ "CASEY: He won't\ncount us out!" })
   end
 
+  function V.meetPiers()
+    facePlayer(V.MAP, PIERS_NAME)
+    return say(V.PIERS_MEET, function() setQuestFlag("venue_met") end)
+  end
+
   local function talkPiers()
-    facePlayer(SHOW_MAP, PIERS_NAME)
+    local venue = V.here()
+    facePlayer(V.mapId(), PIERS_NAME)
     local b = beat()
+    if venue and b == 90 then
+      if not questFlag("venue_met") then return V.meetPiers() end
+      return say(V.PIERS_WAIT)
+    end
     if b == 100 then
-      local intro = tjRank("APPEAL") >= 3 and PIERS_INTRO_FAME or PIERS_INTRO
+      local intro = venue and V.PIERS_ENCORE
+        or tjRank("APPEAL") >= 3 and PIERS_INTRO_FAME or PIERS_INTRO
       return say(intro, function()
         setBeat(101)
-        armBattle("piers")
+        V.armPiers()
       end)
     end
     if b == 101 then
-      return say({ "PIERS: Ready?\fWake the park." }, function()
-        armBattle("piers")
-      end)
+      return say(venue and V.PIERS_ENCORE or { "PIERS: Ready?\fWake the park." },
+        function() V.armPiers() end)
     end
     if b == 102 then
       return say(PIERS_RETRY, function()
         setBeat(101)
-        armBattle("piers")
+        V.armPiers()
       end)
     end
-    say(PIERS_BEAT)
+    say(venue and V.PIERS_BEAT or PIERS_BEAT)
+  end
+
+  -- ROXIE on the phone by the entrance. Her walk through the packed line is
+  -- a warp to the front of the venue; PIERS greets the manager on arrival.
+  function V.talkPhoneRoxie()
+    facePlayer(V.ENT, V.PHONE_ROXIE)
+    say(V.PHONE, function()
+      mod.save:set("show_stage", V.PLACE)
+      setQuestFlag("venue_dragged")
+      local ok, err = mod.world:warpTo(V.MAP, V.FRONT_X, V.FRONT_Y, "up")
+      if not ok then report("GR VENUE WARP\n%s", tostring(err)) end
+    end)
+  end
+
+  function V.talkEntrance(actor)
+    facePlayer(V.ENT, actor.name)
+    if actor.label == "DOOR" then
+      return say(questFlag("venue_met") and V.DOOR_OPEN or V.DOOR_SHUT)
+    end
+    if actor.label == "TICKETS" then return say(V.TICKETS_LINE) end
+    say(V.LINE_TALK)
+  end
+
+  function V.talkStage(actor)
+    if actor.name == SHOW_ROXIE then return talkShowRoxie() end
+    if actor.name == PIERS_NAME then return talkPiers() end
+    if actor.name == SHOW_WHITNEY or actor.name == SHOW_CASEY then
+      return talkShowMember(actor.name)
+    end
+    facePlayer(V.MAP, actor.name)
+    say(actor.label == "BAR" and V.BAR_TALK or V.FAN_TALK)
   end
 
   mod.events:on("world.interacted", function(ev)
@@ -1852,6 +2159,20 @@ return function(mod)
             return
           end
         end
+      elseif ev.mapId == V.ENT then
+        for _, a in ipairs(V.ENTRANCE) do
+          if hit(objectNamed(world, V.ENT, a.name)) then
+            if a.phone then V.talkPhoneRoxie() else V.talkEntrance(a) end
+            return
+          end
+        end
+      elseif ev.mapId == V.MAP then
+        for _, a in ipairs(V.STAGE) do
+          if hit(objectNamed(world, V.MAP, a.name)) then
+            V.talkStage(a)
+            return
+          end
+        end
       end
     end)
     if not ok then report("GR INTERACT\n%s", tostring(err)) end
@@ -1872,7 +2193,8 @@ return function(mod)
       if mapId ~= MAP and mapId ~= BASS_MAP and mapId ~= AUDITION_MAP
           and mapId ~= RADIO_MAP and mapId ~= CAFE_MAP
           and mapId ~= ECRUTEAK_MAP and mapId ~= OLIVINE_MAP
-          and mapId ~= SHOW_MAP then return end
+          and mapId ~= SHOW_MAP and mapId ~= V.ENT
+          and mapId ~= V.MAP then return end
       local statuses = {}
       local function addStatus(value)
         if value and value ~= "" then statuses[#statuses + 1] = value end
@@ -1891,6 +2213,16 @@ return function(mod)
         addStatus(placeWooper())
       elseif mapId == OLIVINE_MAP then
         addStatus(placeBusker())
+      elseif mapId == V.ENT then
+        addStatus(V.placeEntrance())
+      elseif mapId == V.MAP then
+        addStatus(V.placeStage())
+        -- Pulled through the line by ROXIE: PIERS is waiting at the front.
+        -- If this greeting cannot queue, talking to him plays it instead.
+        if questFlag("venue_dragged") and not questFlag("venue_met")
+            and V.here() and beat() == 90 then
+          V.meetPiers()
+        end
       else
         addStatus(placeShow())
       end
@@ -1904,9 +2236,9 @@ return function(mod)
           and not questFlag("basement_respect") then
         armBattle("basement")
       end
-      if world and mapId == SHOW_MAP and beat() == 101
+      if world and mapId == V.mapId() and beat() == 101
           and badgeCount(mod.world.game) >= SHOW_BADGE_GATE then
-        armBattle("piers")
+        V.armPiers()
       end
       if status ~= "" and not reported[mapId]
           and mod.options:get("show_report") == true then
@@ -1921,8 +2253,22 @@ return function(mod)
   if not factory then error(loadError) end
   concert = factory()(mod, {
     beat = beat, setBeat = setBeat, guard = guard, say = say, report = report,
-    refresh = placeShow, clear = clearShowActors,
+    refresh = V.refresh, clear = V.clear,
+    place = V.place, atVenue = V.here,
+    -- Before ROXIE is found at ROUTE 36, the Band Book points the way there.
+    objective = function()
+      if not V.here() or beat() ~= 90 or questFlag("venue_met") then return nil end
+      if not V.busked() then return { "Busk in OLIVINE", "first." } end
+      if badgeCount(mod.world.game) < SHOW_BADGE_GATE then
+        return { "Bring 4 BADGES", "to ROUTE 36." }
+      end
+      return { "Find ROXIE on", "ROUTE 36." }
+    end,
     opened = function()
+      -- The show now belongs to the stage it opened on.
+      if mod.save:get("show_stage", nil) == nil then
+        mod.save:set("show_stage", V.place())
+      end
       tjAward("APPEAL", 1, "park_show")
       tjProfession(1, "park_show")
     end,
