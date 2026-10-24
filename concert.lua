@@ -1,4 +1,4 @@
--- Native 160x144 concert and Band Book. No renderer/reference-mod dependency.
+-- Native 160x144 concert/Book with an optional Crystal Cutscene presentation.
 -- Original code-drawn props; commissioned sheets are used unchanged.
 local Font = require("src.render.Font")
 local BugContest = require("src.core.gen2.BugContest")
@@ -6,6 +6,7 @@ return function(mod, C)
   local API = {}
   local KEY, SCHEMA = "first_show", 1
   local active
+  local bridge
   local function record()
     local r = mod.save:get(KEY, nil)
     if type(r) == "table" and (tonumber(r.schema) or 0) > SCHEMA then return nil end
@@ -66,10 +67,17 @@ return function(mod, C)
     return state.valid() and (state.kind == "book" or permitted())
   end
   local function cancelOld()
+    if bridge then bridge.cancel("owner_context_changed") end
     if active and active.game.stack:top() == active then pop(active) end
   end
   mod.events:on("game.ready", cancelOld)
   mod.events:on("map.entered", cancelOld)
+  mod.events:on("checkpoint.restored", cancelOld)
+
+  bridge = assert(load(assert(mod:read("performance_bridge.lua")),
+    "@gold_records/performance_bridge.lua"))()(mod, {
+      permitted=permitted, say=C.say, report=C.report,
+    })
 
   local function register(id, factory)
     mod.content.screens:register(id, {new = function(game, opts)
@@ -120,7 +128,7 @@ return function(mod, C)
     function state:draw()
       panel("BAND BOOK")
       for n,row in ipairs(self.rows) do
-        text((n==self.cursor and ">" or " ")..row[1],12,30+(n-1)*16)
+        text((n==self.cursor and "▶" or " ")..row[1],12,30+(n-1)*16)
       end
       text("A: READ   B: BACK",16,126)
     end
@@ -162,6 +170,7 @@ return function(mod, C)
     local out = {}
     for _,row in ipairs({{"roxie","SPRITE_GR_ROXIE"},{"bass","SPRITE_WHITNEY"},
       {"casey","SPRITE_LASS"},{"piers","SPRITE_GR_PIERS"},
+      {"larry","SPRITE_GR_LARRY"},
       {"fan","SPRITE_POKEFAN_M"},{"sailor","SPRITE_SAILOR"}}) do
       local def = defs[row[2]]
       if def then
@@ -262,7 +271,9 @@ return function(mod, C)
       rect(40,57,10,9,cream);rect(75,57,10,9,cream);rect(109,57,10,9,cream)
       text("R",41,58);text("C",76,58);text("F",110,58)
       for _,x in ipairs({20,50,80,110}) do
-        actor(self,self.prep.sailors and (x==20 or x==110) and "sailor" or "fan",x,77,blue,-bob)
+        local who=x==80 and "larry"
+          or self.prep.sailors and (x==20 or x==110) and "sailor" or "fan"
+        actor(self,who,x,77,blue,who=="larry" and 0 or -bob)
       end
       if self.phase=="entrance" then
         actor(self,"piers",math.floor(160-math.min(self.t/1.5,1)*25),73,ink,0)
@@ -279,16 +290,16 @@ return function(mod, C)
         text("A: NEXT  B: PAUSE",8,128)
       else
         text(step[1],8,96);text(step[2],8,107)
-        text((self.choice==1 and ">" or " ")..step[3],8,119)
-        text((self.choice==2 and ">" or " ")..step[4],8,131)
+        text((self.choice==1 and "▶" or " ")..step[3],8,119)
+        text((self.choice==2 and "▶" or " ")..step[4],8,131)
       end
     end
     return state
   end)
 
   local function push(id,opts)
-    if active then return end
-    opts.valid=C.guard()
+    if active or bridge.busy() then return end
+    opts.valid=opts.valid or C.guard()
     local ok,result=pcall(mod.ui.push,mod.game,id,opts)
     if ok then active=result else
       if C.report then C.report("GR STAGE OPEN\n%s", tostring(result)) end
@@ -300,11 +311,14 @@ return function(mod, C)
     if r and r.keepsake then push("GRShowCard",{first=r.first}) end
   end
   startStage=function(mode)
+    if active or bridge.busy() then return end
     if not permitted() then return C.say({"Let the park event", "finish first."}) end
     local r=record()
     if not r then return end
     local prep=prepared()
-    push("GRConcert",{mode=mode,prep=prep,done=function(result)
+    local valid=C.guard()
+    local function done(result)
+      if not valid() or not permitted() then return end
       local latest=record()
       if not latest then return end
       if mode=="practice" then
@@ -318,7 +332,9 @@ return function(mod, C)
         latest.encore=true;latest.victory=true;write(latest)
         C.say({"The last chord\nrings out.","Speak to ROXIE\nfor the debrief."})
       end
-    end})
+    end
+    if bridge.start(mode,prep,valid,done) then return end
+    push("GRConcert",{mode=mode,prep=prep,valid=valid,done=done})
   end
   local function debrief()
     C.say({"ROXIE: We made\nour own stage.","WHITNEY: FEEDBACK\non the poster!","One name that's\njust for music.","CASEY: My chant!\nOn a real stage!","PIERS: Your band.\nKeep that sound.","You keep the\nFIRST SHOW card.","We pack the amps.\nThe path is clear.","Visit VIOLET for\nyour BAND BOOK."},function()
@@ -330,6 +346,7 @@ return function(mod, C)
     end)
   end
   openBook=function(atPark)
+    if active or bridge.busy() then return end
     local r=record()
     if not r then return C.say({"Newer save schema.","Use newer build."}) end
     local rows={{"NEXT OBJECTIVE",function() C.say(objective()) end}}

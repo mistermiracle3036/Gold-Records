@@ -12,6 +12,30 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.7.1
+
+Private paired-performance prototype, based on the supplied 0.7.0 build.
+
+- Use Crystal Cutscene's optional livePerformance v1 presentation for the
+  existing soundcheck, opening, encore and reprises. Keep all three untimed
+  cues, Piers' visible entrance and the existing native battle checkpoints.
+- Retain the native concert when the provider is absent, incompatible,
+  disabled through Cinematic shows, or cleanly rejects the request.
+- Validate each completion against its request and the current owner, save,
+  map, session and quest checkpoint. Skip, leave and technical failure keep
+  the set retryable; duplicate or incomplete results award no progress.
+- Add Larry quietly to the audience using Bani's approved shared color art.
+  He has no musician dialogue, recruitment hint, solo or performance role yet.
+- Fix the native cue and Band Book selection markers to use Crystal's visible
+  arrow glyph; the previous ASCII greater-than sign was absent from its font.
+- Preserve the existing first-show save schema, earned Piers victory, optional
+  preparation facts, keepsake and replay reward limits.
+
+This is the presentation integration milestone. Genre selection, open bookings,
+venue preferences, Mary/Mina stories and later recruitment remain planned.
+No new song, recording storyline, Ludicolo or Miror B chapter is included.
+See TESTING.md for mocked versus native evidence and phone checks still needed.
+
 ## 0.7.0
 
 Private first-show test build, based on the supplied 0.6.4 archive.

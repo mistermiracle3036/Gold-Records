@@ -12,7 +12,7 @@ local Happiness = require("src.core.gen2.Happiness")
 local BugContest = require("src.core.gen2.BugContest")
 
 return function(mod)
-  local VERSION = "0.7.0"
+  local VERSION = "0.7.1"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -63,7 +63,8 @@ return function(mod)
   -- Runtime objects do not consume an index, but this reserves Gold Records'
   -- future map-owned object band and documents ownership for other mods.
   mod.exports.owns = {
-    maps = {}, trainers = {}, items = {}, sprites = {},
+    maps = {}, trainers = {}, items = {},
+    sprites = {ROXIE_SPRITE, PIERS_SPRITE, "SPRITE_GR_LARRY"},
     objects = {
       [MAP] = { OBJ_NAME },
       [BASS_MAP] = {
@@ -104,6 +105,13 @@ return function(mod)
   })
 
   local ROXIE_FRONT_PATH = mod.path .. "/assets/roxie_front.png"
+  -- Bani's approved shared color walker, unchanged. Larry is only a fan
+  -- in this chapter; no keyboard/recruitment hint or world actor is added.
+  mod.content.sprites:register("SPRITE_GR_LARRY", {
+    id = "SPRITE_GR_LARRY", image = mod.path .. "/assets/larry.png",
+    frames = 6, walker = true, spriteType = "WALKING_SPRITE",
+    palette = "PAL_OW_BROWN", paletteId = 3, trueColor = true,
+  })
   local PIERS_FRONT_PATH = mod.path .. "/assets/piers_front.png"
 
   local function report(fmt, ...)
@@ -1832,6 +1840,8 @@ return function(mod)
   end)
 
   mod.options:define({
+    { key = "cinematic_shows", type = "toggle",
+      label = "Cinematic shows", default = true },
     { key = "show_report", type = "toggle",
       label = "Report quest actors", default = false },
   })

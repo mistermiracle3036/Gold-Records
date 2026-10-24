@@ -1,15 +1,22 @@
-# Gold Records — private 0.7.0 test
+# Gold Records — private 0.7.1 test
 
 Roxie starts a band out of spite and appoints you manager. Find FEEDBACK in
 Goldenrod, recruit Casey in Ecruteak, find somewhere to play, and make the first
 National Park show happen. No other mod is required.
 
 This build targets Gold, Silver and Crystal on gen1recomp 0.2.21 or newer.
-Validation here is static and mocked, **not a live three-edition playtest**.
+Validation includes automated checks and native desktop graphics fixtures,
+**not a live phone or three-edition playtest**.
 Back up your save, import this ZIP, and fully quit/relaunch the game. Keep one
 Gold Records installation enabled. Do not reset your quest or start a new game.
 
 ## The first show
+
+With a compatible Crystal Cutscene build exposing livePerformance v1 (the
+paired private 0.48.0 prototype), Cinematic shows uses its stage presentation.
+That option defaults on. Without a compatible provider, or with the option
+off, the existing native stage remains available. Larry quietly watches from
+the audience in both presentations; his later keyboard story is not unlocked.
 
 After the venue hunt and with four badges, speak to Roxie in National Park.
 Choose SOUNDCHECK to practice a four-count, bringing the bass forward, and
@@ -17,10 +24,12 @@ recovering after a cable crackle. Choose OPENING SET afterward.
 
 Use Up/Down and A (including the phone's standard controls). Cues are untimed;
 there is no audio-only instruction. Acknowledge each response with A. B or
-Start pauses; A resumes, B while paused leaves. Unfinished sets return to the
+Start pauses the native show; A resumes, B while paused leaves. In the cinematic
+show, B opens Resume / Skip / Leave and Start toggles pause. Neither Skip nor
+Leave marks the set complete in Gold Records. Unfinished sets return to the
 same checkpoint. A rough set still reaches Piers; no preparation or money is lost.
 
-Piers visibly enters the native stage screen before his interruption. After
+Piers visibly enters the stage before his interruption. After
 returning to the park, prepare your party and speak to him to begin the challenge.
 A loss preserves the opening and offers a direct retry. After winning and leaving
 the battle screen, talk to Roxie for PLAY ENCORE, then BAND DEBRIEF.
@@ -51,8 +60,10 @@ Trainer Journey is optional: existing once-only award IDs and `rock_star`
 profession ID are retained; its display name becomes BAND MANAGER. No ranks gate
 this mod. The current chapter still cannot earn its ten-point LEGEND threshold
 alone. Contest/Court flavor stops remain optional and recover when removed.
-There is no Quest System journal adapter, Channel news publisher or Cutscene
-adapter in this build.
+There is no Quest System journal adapter or Channel news publisher. Crystal
+Cutscene is an optional presentation provider. Gold Records alone owns quest
+progress, roster eligibility, rewards and the Band Book; the renderer owns its
+temporary scene. An accepted scene failure returns to a retry checkpoint.
 
 Gold Records adds owned runtime actors and temporarily uses native trainer
 carriers for its four battles. It restores names and its can-lose variable after
@@ -65,11 +76,16 @@ need a separate verified implementation. No gift Pokémon or ribbon is promised
 by this private build. The native First Show card is the implemented keepsake.
 
 Roxie's commissioned sheets by tharkka and Piers' by Yogurcomics are unchanged.
-The stage uses original code-drawn instruments, paired speakers and animated
+Larry uses Bani's unchanged approved shared color walker. The native stage uses
+original code-drawn instruments, paired speakers and animated
 picks/sticks. Casey still uses a Lass stand-in; there are no commissioned playing
 poses. Missing sprite data uses simple temporary silhouettes. No ROM images or
 songs were added. The existing map music remains; cues use the engine's short
 text-confirmation sound. This is a staging prototype, not a recorded song.
+
+The later live-show system (genres, selectable lineups, Pokemon routines,
+venue preferences, Mary and Mina, and later Miror B) remains planned. This
+build establishes the optional cinematic presentation for the existing story.
 
 ## Calibration
 

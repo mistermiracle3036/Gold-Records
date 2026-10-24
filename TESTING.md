@@ -1,4 +1,84 @@
-# Gold Records 0.7.0 — test and migration handback
+# Gold Records 0.7.1 — paired performance test
+
+## Current build
+
+Baseline: exact supplied private Gold Records 0.7.0, SHA-256
+`5b3fc0dce458aa6067b552b8ac641b19680a43a9265b21c2f3744eec987fc1fd`.
+The older central Kanto-Rocks checkout was not used or overwritten.
+
+This build adds an optional Crystal Cutscene livePerformance v1 adapter and
+Bani's approved Larry spectator art. It retains first_show schema 1, integer
+quest beats, all existing battles and the native presentation. Larry is just a
+fan here; no recruitment or instrumental expertise is revealed.
+
+Run `luajit tests/performance_integration.lua .` from the source tree. It also
+runs the complete baseline suite. All **53 baseline and 35 new mocked checks**
+passed. They cover callback identity/duplication, detached results, interrupted
+cues, visible Piers, retry, provider absence/version/removal, option changes,
+owner reload, save/session/map/checkpoint changes, foreign screens, old victories
+and future save schemas. Mocks do not prove real rendering or phone behavior.
+
+A native LÖVE graphics fixture also rendered the actual fallback concert.lua
+using the real engine Font/SpriteRenderer, Crystal palettes and imported art,
+and Gold Records' unmodified sprite registration prefix. All seven used sprite
+definitions loaded. Cue, playing, Piers entrance and pause frames were visually
+inspected; text stayed readable and Larry used his approved color sheet. The
+fixture caught the old invisible ASCII selection marker. The fix uses Crystal's
+supported arrow glyph; both cue selections and the Band Book were re-rendered
+and visually checked, and all 88 mocked checks passed again. Exiting
+cleared the screen's sprite references. World/save/dialogue services and asset
+filesystem resolution were fixture adapters, not a full game playthrough.
+
+Engine loader/source inspected for this integration:
+`ca142860c67f351ed5232436f40c88a8a5e3a47d` (development checkout).
+Strict modkit validation with fixture data, Gen 2 check, and distribution lint
+passed. The Gen 2 scanner reports unresolved module literals in the test stubs;
+these are not runtime compatibility proof or a claim of a three-edition test.
+
+The global sprite-registry audit reports existing divergences/stale entries in
+other projects. This isolated build's Larry file is checked byte-for-byte against
+the approved canonical_color master, with BROWN/3 and trueColor registration.
+The four existing commissioned PNGs and LICENSE remain unchanged from 0.7.0.
+Larry's shared registry usage now includes Kanto-Rocks (Gold Records). Updated
+credit tables were generated into this task's work folder for later portfolio
+adoption; the existing mod card and notices already credit Bani. No other mod
+source or canonical artwork was edited.
+
+## Paired phone route
+
+Import Gold Records 0.7.1 and the paired Crystal Cutscene 0.48.0 prototype,
+then fully quit/relaunch. Keep Cinematic shows on. This is a private test;
+back up the save and retain only one enabled copy of each mod.
+
+1. At four badges and the existing park objective, talk to Roxie. Choose
+   SOUNDCHECK. Check the actual commissioned cast, quiet Larry spectator,
+   instruments, untimed cues, and readable portrait/landscape framing.
+2. Pause and resume. Try Skip and Leave: neither should complete soundcheck.
+   Talk to Roxie and retry; complete all three cues.
+3. Complete OPENING SET, including one rough choice. Piers must visibly enter
+   before completion. Prepare your real party, then talk to Piers for battle.
+4. Lose and retry without repeating the opening; win, leave battle UI, then
+   choose PLAY ENCORE. Debrief and review the First Show card in Violet.
+5. Repeat on a save already past Piers: the encore must not require a new win.
+   Rehearse/reprise without rewriting the first-show summary or extra rewards.
+6. Disable Cinematic shows, or remove the optional provider and fully restart.
+   The same native show remains usable with Larry in its audience.
+7. Check save/reload, pause/leave, repeated shows, music restoration, controls,
+   and the park's Bug-Catching Contest. Report build versions and checkpoint.
+
+The paired native fixture used this actual performance_bridge.lua and sprite
+registration prefix with Crystal Cutscene's actual renderer in portrait and
+landscape. In both, three cues (including an alternate answer) and Piers' entrance
+completed, exactly one result arrived after cleanup, 31 scene resources released,
+and save/world/map/actors/camera/speed/zoom were unchanged. This fixture bypasses
+the story/map VM; the real quest progression is covered separately by the mocks.
+The future-lineup Olivine rehearsal also completed without save changes, releasing
+47 resources. It is a test preview behind a default-off option, not a recruitment.
+Final paired package hashes and screenshots are in the build handback. Phone
+appearance, touch controls, preparation time and performance need device testing.
+The following sections preserve the detailed 0.7.0 baseline test record.
+
+# Historical 0.7.0 baseline validation
 
 ## Build provenance
 
@@ -26,7 +106,7 @@ No special renderer is required; it does not take over map music or camera.
 
 Deferred: Milestone C's full venue payoffs, expanded multi-view Band Book,
 audition staging, optional Channel news, Cutscene enhancement, radio fulfillment,
-recording/tour, Casey/Wooper custom art, commissioned playing poses, HEADLINER
+live bookings/tour, Casey/Wooper custom art, commissioned playing poses, HEADLINER
 and gift-field writers. No claims of live visual or performance validation.
 
 ## Executed checks

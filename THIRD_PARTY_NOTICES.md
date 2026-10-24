@@ -7,6 +7,9 @@ third-party commissioned art, game data, or Nintendo/Creatures/GAME FREAK rights
   **tharkka** via Fiverr for this project's use. No broader permission is claimed.
 - **Piers art:** unchanged overworld and battle sheets commissioned from
   **Yogurcomics** for this project's use. No broader permission is claimed.
+- **Larry art:** **Bani**, the project's cleared shared Larry walker. The
+  approved color version is copied byte-for-byte from the canonical sprite
+  library, retaining its BROWN palette fallback and trueColor registration.
 - **New stage graphics:** original code-drawn speakers, instruments, kit and card
   in concert.lua. Existing character sheets are rendered unmodified behind the
   props. Temporary silhouettes and the existing Lass Casey are prototype art.
@@ -18,7 +21,9 @@ third-party commissioned art, game data, or Nintendo/Creatures/GAME FREAK rights
   copied; no required ranks or story dependency. `rock_star` keeps its stable ID.
 - **Kanto Contests / Court of Noctowl / Olivine Cafe:** optional presence-based
   dialogue; reference packages were not modified.
-- **Quest System, Pokémon Channel, Crystal Cutscene, Kanto Ribbons:** no implemented
+- **Crystal Cutscene:** optional livePerformance v1 presentation. Its source and
+  graphics are not bundled here. Gold Records retains ownership of all progress.
+- **Quest System, Pokémon Channel, Kanto Ribbons:** no implemented
   adapters in this build. Reserved Gold Records mon fields remain unwritten.
 - Roxie, Whitney, Casey, Jigglypuff and Piers appear as fan tribute. Writing is
   original. Pokémon names are trademarks of Nintendo / Creatures / GAME FREAK.

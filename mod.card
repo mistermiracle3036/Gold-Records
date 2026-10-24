@@ -10,10 +10,12 @@ return {
     "ask the DANCE THEATER, RADIO TOWER, OLIVINE CAFE and GOLDENROD UNDERGROUND for a stage, and get four very different refusals",
     "bring four badges to the band's first NATIONAL PARK show, where PIERS arrives uninvited and battles for the encore",
     "soundcheck, give readable manager cues, play the encore and keep a First Show card",
+    "optional Crystal Cutscene performances; Larry quietly joins the audience",
   },
   credits = { "pret/pokecrystal and pokered research", "gen1recomp engine",
               "Roxie sprite art commissioned from tharkka",
               "Piers sprite art commissioned from Yogurcomics",
+              "Larry sprite art by Bani, approved shared color walker",
               "Pokemon characters are used as fan tribute" },
   compat = "Gen 2 private alpha targeting Gold, Silver and Crystal. No hard mod dependencies. Device testing pending; see TESTING.md. Runtime trainer names are restored after owned battles.",
 }
