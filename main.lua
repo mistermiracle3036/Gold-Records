@@ -12,7 +12,7 @@ local Happiness = require("src.core.gen2.Happiness")
 local BugContest = require("src.core.gen2.BugContest")
 
 return function(mod)
-  local VERSION = "0.7.3"
+  local VERSION = "0.7.4"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 

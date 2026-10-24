@@ -353,7 +353,10 @@ return function(mod, C)
     push("GRConcert",{mode=mode,prep=prep,valid=valid,done=done,venue=venue})
   end
   local function debrief()
-    C.say({"ROXIE: We made\nour own stage.","WHITNEY: FEEDBACK\non the poster!","One name that's\njust for music.","CASEY: My chant!\nOn a real stage!","PIERS: Your band.\nKeep that sound.","You keep the\nFIRST SHOW card.","We pack the amps.\nThe path is clear.","Visit VIOLET for\nyour BAND BOOK."},function()
+    -- Developer, 2026-10-24: at ROUTE 36 only; the park keeps its line.
+    local opener=C.atVenue and C.atVenue() and "ROXIE: First real\nstage. Ours now."
+      or "ROXIE: We made\nour own stage."
+    C.say({opener,"WHITNEY: FEEDBACK\non the poster!","One name that's\njust for music.","CASEY: My chant!\nOn a real stage!","PIERS: Your band.\nKeep that sound.","You keep the\nFIRST SHOW card.","We pack the amps.\nThe path is clear.","Visit VIOLET for\nyour BAND BOOK."},function()
       local r=record()
       if not r or not r.encore then return end
       r.keepsake=true;r.debrief=true;write(r)

@@ -12,6 +12,23 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.7.4
+
+**Updating from 0.4.3?** The band now gets a full story past the drummer:
+four venues turn ROXIE down, the band plays its first show and PIERS
+challenges you for the encore. With Johto Expanded installed that show is at
+a packed music venue on ROUTE 36; without it, in NATIONAL PARK. Along the way
+you can show off a graceful Pokemon at the DANCE THEATER, busk in OLIVINE,
+earn the BASEMENT KING's respect and finally wake that WOOPER. ROXIE and
+PIERS have their own commissioned sprites, the first show has a Band Book,
+manager cues and a playable encore, and Trainer Journey players earn the
+ROCK STAR profession. Every character answers on the current engine again.
+
+### Changed
+- After a show at the ROUTE 36 venue, ROXIE opens the band debrief with
+  "First real stage. Ours now." A NATIONAL PARK show keeps "We made our own
+  stage."
+
 ## 0.7.3
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer:

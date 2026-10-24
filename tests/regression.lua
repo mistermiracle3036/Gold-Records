@@ -341,7 +341,9 @@ emit("battle.ended",{result="win",battle=battle});world.battleActive=false
 check("Piers win",state.beat==110 and karen.name=="KAREN")
 sayTo("NATIONAL_PARK","GR_SHOW_ROXIE");select("PLAY ENCORE");finishSet(false,false);done()
 check("actual encore recorded",state.first_show.encore and not state.first_show.keepsake)
-sayTo("NATIONAL_PARK","GR_SHOW_ROXIE");select("BAND DEBRIEF");done();press("b")
+sayTo("NATIONAL_PARK","GR_SHOW_ROXIE");select("BAND DEBRIEF")
+check("park debrief keeps its opener",lastScript.rows[1][2]:find("We made\nour own stage.",1,true)~=nil)
+done();press("b")
 check("keepsake and departure",state.first_show.keepsake and not findObj("NATIONAL_PARK","GR_SHOW_ROXIE"))
 local original=state.first_show.first
 enter("VIOLET_CITY");sayTo("VIOLET_CITY","GR_ROXIE");select("SHORT REPRISE");finishSet(false,false)
@@ -428,7 +430,8 @@ check("PIERS armed at the venue",#party==5)
 emit("battle.ended",{result="win",battle=battle});world.battleActive=false
 check("venue win",state.beat==110)
 sayTo(VM,"GR_SHOW_ROXIE");select("PLAY ENCORE");finishSet(false,false);done()
-sayTo(VM,"GR_SHOW_ROXIE");select("BAND DEBRIEF");done()
+sayTo(VM,"GR_SHOW_ROXIE");select("BAND DEBRIEF")
+check("venue debrief opener",queued():find("First real\nstage. Ours now.",1,true)~=nil);done()
 check("card names ROUTE 36",mod.game.stack:top() and state.first_show.keepsake);mod.game.stack:top():draw();press("b")
 check("band leaves, crowd stays",not findObj(VM,"GR_SHOW_ROXIE") and findObj(VM,"GR_VENUE_BARTENDER"))
 
