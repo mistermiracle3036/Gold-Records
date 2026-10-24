@@ -1,0 +1,8 @@
+Reference engine commit: 0142468125cf97bb72cc0dcd242b6dc9cd31401b
+Run from the engine checkout (MODDIR is the unpacked Gold Records directory):
+python3 tools/modkit.py validate "$MODDIR" --strict
+python3 tools/modkit.py gen2check "$MODDIR" --strict
+python3 tools/modkit.py lint "$MODDIR"
+Run from the mod directory:
+luajit tests/regression.lua .
+The harness is mocked; no live game or save is loaded.

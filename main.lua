@@ -9,10 +9,10 @@
 
 local Runtime = require("src.mods.Runtime")
 local Happiness = require("src.core.gen2.Happiness")
-local Clock = require("src.core.gen2.Clock")
+local BugContest = require("src.core.gen2.BugContest")
 
 return function(mod)
-  local VERSION = "0.6.4"
+  local VERSION = "0.7.0"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -122,6 +122,28 @@ return function(mod)
   --   102 Piers loss/retry; 110 Piers beaten
   local function beat() return tonumber(mod.save:get("beat", 0)) or 0 end
   local function setBeat(n) mod.save:set("beat", n) end
+  local function compatibleSave()
+    local r = mod.save:get("first_show", nil)
+    return type(r) ~= "table" or (tonumber(r.schema) or 0) <= 1
+  end
+
+  local session, operation = 0, 0
+  local concert, showBook
+  local function guard()
+    operation = operation + 1
+    local op, epoch = operation, session
+    local game, save, phase = mod.game, mod.game and mod.game.save, beat()
+    local here = mod.world:current()
+    local mapId = here and here.mapId
+    return function()
+      local now = mod.world:current()
+      return op == operation and epoch == session and game == mod.game
+        and save == mod.game.save and phase == beat()
+        and now and now.mapId == mapId
+    end
+  end
+  mod.events:on("game.ready", function() session = session + 1 end)
+  mod.events:on("map.entered", function() operation = operation + 1 end)
 
   -- Optional crossovers are presence checks only. They never read another
   -- mod's state and never make that mod a dependency.
@@ -140,7 +162,7 @@ return function(mod)
     tj = api
     tj.registerProfession({
       id = "rock_star",
-      name = "ROCK STAR",
+      name = "BAND MANAGER",
       owner = MOD_ID,
       summary = "managing a punk band across JOHTO",
       thresholds = { 1, 3, 6, 10 },
@@ -171,6 +193,7 @@ return function(mod)
   end
 
   mod.events:on("game.ready", function()
+    if not compatibleSave() then report("GR NEWER SAVE\nUse a newer build"); return end
     crossovers.olivineCafe = mod.find("olivine_cafe") ~= nil
     crossovers.kantoContests = mod.find("kanto_contests") ~= nil
     crossovers.courtOfNoctowl = mod.find("court_of_noctowl") ~= nil
@@ -183,7 +206,7 @@ return function(mod)
     -- mention content which is no longer installed.
     if beat() == 85 and not crossovers.kantoContests then setBeat(83) end
     if beat() == 86 and not crossovers.courtOfNoctowl then setBeat(84) end
-    if beat() >= 90 then mod.save:set("basement_armed", false) end
+    tj = crossovers.trainerJourney and tj or nil
   end)
 
   local function countFlags(flags)
@@ -277,6 +300,7 @@ return function(mod)
     "KING: Respect the\nbasement.\fTry me again.")
 
   local activeBattle, pendingBattle
+  local battleSave, battleObject, battleWorld, previousBattleType
 
   do
     local ok, err = pcall(function()
@@ -289,6 +313,9 @@ return function(mod)
       BattleState.new = function(game, opts)
         local state = orig(game, opts)
         local who = activeBattle or pendingBattle
+        if who and opts and opts.battle and battleSave == game.save then
+          battleObject = opts.battle
+        else who = nil end
         local frontPath = who == "piers" and PIERS_FRONT_PATH
                        or who == "roxie" and ROXIE_FRONT_PATH
                        or nil
@@ -313,8 +340,9 @@ return function(mod)
     local cls = td and td.classes and td.classes[def.class]
     if not (cls and cls.index) then return false, "class " .. def.class end
     for i, row in ipairs(cls.trainers or {}) do
-      if row.id == def.member or row.name == def.member then
-        def.classIx, def.memberIx = cls.index, i
+      if row.id == def.member or row.name == def.member
+          or (def.member == "KAZU1" and row.id == "KAZU") then
+        def.classIx, def.memberIx, def.resolvedMember = cls.index, i, row.id
         def.carrierRow, def.originalName = row, row.name
         return true
       end
@@ -360,7 +388,9 @@ return function(mod)
     local base = next()
     local key, def = activeBattle, activeBattle and BATTLES[activeBattle]
     if not def then return base end
+    if battleSave ~= mod.game.save then return base end
     if class ~= def.class and class ~= def.classIx then return base end
+    if member ~= def.member and member ~= def.resolvedMember and member ~= def.memberIx then return base end
     local ok, built = pcall(buildParty, def.party)
     pendingBattle, activeBattle = key, nil
     if not ok or not built then
@@ -374,6 +404,7 @@ return function(mod)
   local VAR_BATTLETYPE, BATTLETYPE_CANLOSE = 0x03, 1
   mod.events:on("world.trainer_engaged", function(ev)
     local ok, err = pcall(function()
+      if not compatibleSave() then return end
       local npc = ev and ev.npc
       local name = npc and npc.def and npc.def.name
       local key = name == OBJ_NAME and "roxie"
@@ -382,6 +413,12 @@ return function(mod)
                or name == BASEMENT_KING and "basement" or nil
       if not key then return end
       local def = BATTLES[key]
+      local here = mod.world:current()
+      if not here or here.mapId ~= def.map or not npc.def.runtime
+          or objectNamed(mod.world:overworld(), def.map, def.npc) ~= npc.def
+          or not npc.def.trainer
+          or ev.trainerClass ~= def.classIx or ev.partyIndex ~= def.memberIx then return end
+      battleSave, battleObject = mod.game.save, nil
       -- Arm the party hook only at the owned NPC engagement seam. Merely
       -- writing obj.trainer is not enough: the player may walk away and fight
       -- another trainer before returning.
@@ -389,6 +426,8 @@ return function(mod)
       if def.tempName and def.carrierRow then def.carrierRow.name = def.tempName end
       local world = mod.world:overworld()
       if world and world.scriptVars then
+        battleWorld = world
+        previousBattleType = world.scriptVars[VAR_BATTLETYPE]
         world.scriptVars[VAR_BATTLETYPE] = BATTLETYPE_CANLOSE
       end
     end)
@@ -407,8 +446,12 @@ return function(mod)
   mod.events:on("battle.ended", function(ev)
     local ok, err = pcall(function()
       local key = pendingBattle
-      if not key then return end
+      if not key or battleSave ~= mod.game.save or ev.battle ~= battleObject then return end
       pendingBattle = nil
+      if battleWorld and battleWorld.scriptVars then
+        battleWorld.scriptVars[VAR_BATTLETYPE] = previousBattleType
+      end
+      battleObject, battleSave = nil, nil
       defangBattle(key)
       local won = ev and ev.result == "win"
       if key == "roxie" then
@@ -438,6 +481,28 @@ return function(mod)
       if not won then healParty() end
     end)
     if not ok then report("GR BATTLE END\n%s", tostring(err)) end
+  end)
+
+  mod.events:on("game.ready", function()
+    for key, def in pairs(BATTLES) do
+      defangBattle(key)
+      def.classIx, def.memberIx, def.carrierRow, def.originalName = nil, nil, nil, nil
+    end
+    if battleWorld and battleWorld.scriptVars then
+      battleWorld.scriptVars[VAR_BATTLETYPE] = previousBattleType
+    end
+    activeBattle, pendingBattle, battleObject, battleSave, battleWorld = nil, nil, nil, nil, nil
+  end)
+
+  mod.events:on("map.entered", function(ev)
+    local key = activeBattle or pendingBattle
+    if key and ev.mapId ~= BATTLES[key].map then
+      defangBattle(key)
+      if battleWorld and battleWorld.scriptVars then
+        battleWorld.scriptVars[VAR_BATTLETYPE] = previousBattleType
+      end
+      pendingBattle, battleSave, battleObject = nil, nil, nil
+    end
   end)
 
   local roxieX, roxieY
@@ -470,6 +535,14 @@ return function(mod)
     if not world then return "no overworld" end
     -- Expected gate, but report it during private testing. If a conversation
     -- failed to advance, this makes the invisible state visible on device.
+    if beat() >= 90 then
+      for _, name in ipairs({FEEDBACK_NAME, WHITNEY_NAME}) do
+        local obj = objectNamed(world, BASS_MAP, name)
+        if obj and obj.runtime then mod.world:removeNpc(BASS_MAP .. "_obj_" .. obj.index) end
+      end
+      bassSpawnId = nil
+      return nil
+    end
     if beat() < 30 then return ("FEEDBACK gate B%d"):format(beat()) end
     local revealed = beat() >= 50
     local name = revealed and WHITNEY_NAME or FEEDBACK_NAME
@@ -502,7 +575,7 @@ return function(mod)
     end
     local id, err = mod.world:spawnNpc(BASS_MAP, {
       name = name,
-      sprite = revealed and "SPRITE_WHITNEY" or "SPRITE_KIMONO_GIRL",
+      sprite = "SPRITE_KIMONO_GIRL",
       x = x, y = y, movement = MOVE_STANDING_LEFT,
     })
     if not id then return "bass spawn " .. tostring(err) end
@@ -609,7 +682,7 @@ return function(mod)
 
     local wanted = {}
     if b >= 80 then
-      wanted[CASEY_NAME] = true
+      wanted[CASEY_NAME] = b < 90
     else
       wanted[AUDITION_ROXIE] = true
       wanted[GENE_NAME] = true
@@ -706,7 +779,7 @@ return function(mod)
     })
     if not id then return "feature spawn " .. tostring(err) end
     featureSpawnIds[actor.name] = id
-    if mod.options:get("show_report") ~= false then
+    if mod.options:get("show_report") == true then
       report("GR FEATURE\n%s %d,%d\nB%d", actor.label, x, y, beat())
     end
     return ("%s %d,%d"):format(actor.label, x, y)
@@ -719,7 +792,7 @@ return function(mod)
   local function placeWooper()
     local b = beat()
     return placeFeatureActor(ECRUTEAK_MAP, WOOPER_ACTOR,
-      b >= 81 and b <= 86 and not questFlag("wooper_done"))
+      b >= 81 and not questFlag("wooper_done"))
   end
 
   local function placeBusker()
@@ -761,10 +834,10 @@ return function(mod)
   }
 
   local function venueActive(mapId, b)
-    if mapId == AUDITION_MAP then return b >= 81 and b <= 86 end
+    if mapId == AUDITION_MAP then return b >= 81 end
     if mapId == RADIO_MAP then return b == 82 or b == 85 end
     if mapId == CAFE_MAP then return b == 83 or b == 86 end
-    if mapId == BASS_MAP then return b == 84 end
+    if mapId == BASS_MAP then return b >= 84 end
     return false
   end
 
@@ -796,6 +869,10 @@ return function(mod)
 
     local placed = {}
     for _, actor in ipairs(actors) do
+      local isBand = actor.name == VENUE_DANCE_ROXIE or actor.name == VENUE_UNDER_ROXIE
+      if isBand and b >= 90 then
+        removeVenueActor(mapId, actor.name)
+      else
       local existing = objectNamed(world, mapId, actor.name)
       if existing then
         placed[#placed + 1] = ("%s %d,%d"):format(
@@ -810,10 +887,11 @@ return function(mod)
         if not id then return "venue spawn " .. tostring(err) end
         venueSpawnIds[actor.name] = id
         placed[#placed + 1] = ("%s %d,%d"):format(actor.label, x, y)
-        if mod.options:get("show_report") ~= false then
+        if mod.options:get("show_report") == true then
           report("GR VENUE\n%s %d,%d\nB%d", actor.label, x, y, b)
         end
       end
+    end
     end
     return table.concat(placed, " ")
   end
@@ -822,10 +900,9 @@ return function(mod)
     setBeat(nextBeat)
     if nextBeat >= 90 then
       mod.save:set("basement_armed", false)
-      removeWooper()
     end
     local status = placeVenue(mapId)
-    if status then report("GR VENUE NEXT\n%s", tostring(status)) end
+    if status and mod.options:get("show_report") == true then report("GR VENUE NEXT\n%s", tostring(status)) end
   end
 
   --------------------------------------------------------------------------
@@ -865,7 +942,7 @@ return function(mod)
     local world = mod.world and mod.world:overworld()
     if not world then return "no overworld" end
     local b = beat()
-    if b < 90 then
+    if b < 90 or (concert and concert.departed()) or BugContest.isActive(mod.game.save) then
       clearShowActors()
       return nil
     end
@@ -900,7 +977,7 @@ return function(mod)
           if not id then return "show spawn " .. tostring(err) end
           showSpawnIds[actor.name] = id
           placed[#placed + 1] = ("%s %d,%d"):format(actor.label, x, y)
-          if mod.options:get("show_report") ~= false then
+          if mod.options:get("show_report") == true then
             report("GR SHOW\n%s %d,%d\nB%d", actor.label, x, y, b)
           end
         end
@@ -971,7 +1048,7 @@ return function(mod)
     "Now we need a\nplace to play.",
     "DANCE THEATER.\fThey let us\naudition there.",
     "That means they'll\nbook us. Probably.",
-    "Meet me there.",
+    "Ask the host here.",
   }
 
   local VENUE_OBJECTIVES = {
@@ -984,8 +1061,8 @@ return function(mod)
   }
 
   local DANCE_REFUSAL = {
-    "KIMONO GIRL:\nYou auditioned",
-    "here.",
+    "KIMONO GIRL:\nAn audition here",
+    "does not make this\nyour stage.",
     "That did not make\nit yours.",
     "Our stage is for\nour dances.",
     "ROXIE: Polite.\fThat almost hurts.",
@@ -1019,8 +1096,7 @@ return function(mod)
     "STAFF: We\nbroadcast.",
     "We do not host.",
     "ROXIE: You have a\nwhole lobby!",
-    "STAFF: We can\noffer a spot on",
-    "the radio.",
+    "STAFF: A radio\nspot? Certainly.",
     "After you have a\nvenue.",
     "ROXIE: Useful.\fAlso backwards.",
   }
@@ -1059,8 +1135,8 @@ return function(mod)
   local UNDERGROUND_REFUSAL = {
     "WHITNEY: No way!\fNot down here.",
     "ROXIE: This is the\nobvious place.",
-    "WHITNEY: If I play\nhere as myself...",
-    "Everybody knows\nFEEDBACK is me.",
+    "WHITNEY: He wants\nGYM name on ads.",
+    "FEEDBACK is my\nmusic name.",
     "ROXIE: So your\nsecret costs gigs.",
     "WHITNEY: Sorry.",
     "ROXIE: Fine.\fNATIONAL PARK.",
@@ -1071,8 +1147,7 @@ return function(mod)
   local KING_INTRO = {
     "KING: Hold it.\fNobody books this\nroom.",
     "You earn it.",
-    "Beat me and the\nbasement respects",
-    "your noise.",
+    "Win and we will\nrespect the noise.",
     "ROXIE: Finally.\fA booking policy I\nunderstand.",
   }
 
@@ -1100,7 +1175,7 @@ return function(mod)
 
   local BUSK_DAILY = {
     "SAILOR: Great set!",
-    "Come back tomorrow\nfor another.",
+    "Rest the crowd for\n30 play minutes.",
   }
 
   local WOOPER_WAKE = {
@@ -1142,6 +1217,7 @@ return function(mod)
     "FEEDBACK is just\nmy name down here.",
     "Borrowed kimono.\fCheap wig.",
     "GYM regulars walk\nright past me.",
+    "The wig stays on\ndown here, though.",
     "Battling is public\fThe bass is mine.",
     "ROXIE sounds wild.\fI'll play one set.",
     "One show. One\nencore.\fDon't tell my\ntrainers.",
@@ -1294,16 +1370,20 @@ return function(mod)
   end
 
   local function say(pages, onDone)
+    local current, used = guard(), false
     local ok, err = mod.world:queueScript({
       { "text", table.concat(pages, "\f") },
     }, {
-      onDone = function()
+      onDone = function(completed)
+        if used or completed ~= true or not current() then return end
+        used = true
         if not onDone then return end
         local done, why = pcall(onDone)
         if not done then report("GR TALK STATE\n%s", tostring(why)) end
       end,
     })
     if not ok then report("GR TALK FAIL\n%s", tostring(err)) end
+    return ok
   end
 
   local DANCERS = {
@@ -1314,39 +1394,56 @@ return function(mod)
     HITMONTOP = true,
   }
 
-  local function finishDanceShow(pages, advance, graceful)
-    say(pages, advance and function()
-      tjAward("HEART", 1, "dance_showcase")
-      tjProfession(1, "dance_showcase")
-      if graceful then tjEthos("tradition", 1, "dance_showcase") end
-      advanceVenue(AUDITION_MAP, 82)
-    end or nil)
+  local activePicker
+  local function clearPicker()
+    if activePicker and activePicker.game.stack:top() == activePicker.screen then
+      activePicker.game.stack:pop()
+    end
+    activePicker = nil
   end
+  mod.events:on("game.ready", clearPicker)
+  mod.events:on("map.entered", clearPicker)
 
   local function openDanceShow(advance)
-    local ok, err = pcall(function()
-      mod.ui.push(mod.game, "Gen2PartyMenu", {
-        prompt = "choose",
-        onChoose = function(_index, mon)
-          mod.game.stack:pop()
-          local species = mon and mon.species
-          if species and DANCERS[species] then
-            Happiness.change(mon, "GYMBATTLE")
-            finishDanceShow(DANCE_DELIGHT, advance, true)
-          else
-            finishDanceShow(DANCE_POLITE, advance, false)
-          end
-        end,
-        onCancel = function()
-          mod.game.stack:pop()
-          finishDanceShow(DANCE_CANCEL, advance, false)
-        end,
-      })
-    end)
-    if not ok then
-      report("GR PARTY PICK\n%s", tostring(err))
-      finishDanceShow(DANCE_CANCEL, advance, false)
+    local current, used = guard(), false
+    local game, picker = mod.game, nil
+    local function close()
+      if used or not current() or game.stack:top() ~= picker then return false end
+      used = true
+      game.stack:pop()
+      activePicker = nil
+      return true
     end
+    local ok, result = pcall(mod.ui.push, game, "Gen2PartyMenu", {
+      prompt = "choose",
+      onChoose = function(_index, mon)
+        if not close() or not mon then return end
+        local graceful = DANCERS[mon.species] == true
+        say(graceful and DANCE_DELIGHT or DANCE_POLITE, function()
+          local present = false
+          for _, member in ipairs(game.save.party or {}) do
+            if member == mon then present = true end
+          end
+          if not present then return end
+          if graceful and not questFlag("dance_friendship_v1") then
+            Happiness.change(mon, "GYMBATTLE")
+            setQuestFlag("dance_friendship_v1")
+          end
+          setQuestFlag("dance_completed_v1")
+          tjAward("HEART", 1, "dance_showcase")
+          tjProfession(1, "dance_showcase")
+          if graceful then tjEthos("tradition", 1, "dance_showcase") end
+          if advance then advanceVenue(AUDITION_MAP, 82) end
+        end)
+      end,
+      onCancel = function()
+        if close() then
+          say({"KIMONO GIRL:\nAnother time.", "Speak to ROXIE to\nskip the showcase."})
+        end
+      end,
+    })
+    if ok then picker = result; activePicker = {game = game, screen = picker}
+    else report("GR PARTY PICK\n%s", tostring(result)) end
   end
 
   local function talkBasementKing()
@@ -1367,28 +1464,35 @@ return function(mod)
     end)
   end
 
-  local function buskDay()
-    local save = mod.game and mod.game.save
-    return Clock.weekday(save)
+  -- This engine has only weekday (0..6), not an absolute game date.
+  -- A documented playtime cooldown avoids guessing history from that token.
+  local function buskMinute()
+    local t = mod.game.save.playTime
+    if type(t) ~= "table" then return nil end
+    return (tonumber(t.hours) or 0) * 60 + (tonumber(t.minutes) or 0)
   end
 
   local function talkBusker()
     facePlayer(OLIVINE_MAP, BUSKER_SAILOR)
-    local day = buskDay()
+    local minute = buskMinute()
+    if not minute then return say({"SAILOR: The clock\nisn't ready yet."}) end
     local state = mod.save:get("busk", nil)
-    if type(state) == "table" and state.done and state.day == day then
+    if type(state) == "table" and state.done and state.clock ~= "play_v1" then
+      state = {done = true, clock = "play_v1", last = minute}
+      mod.save:set("busk", state) -- migration visit counts as already paid
+    end
+    if state and state.done and minute < (state.last or minute) + 30 then
       return say(BUSK_DAILY)
     end
     say(BUSK_PERFORMANCE, function()
       local world = mod.world:overworld()
-      if not world then return report("GR BUSK\nno overworld") end
+      if not world then return end
+      -- receipt first: at-most-once attempt, not a cross-API transaction.
+      mod.save:set("busk", {done = true, clock = "play_v1", last = minute})
       local money = world:money(0)
       world:setMoney(0, math.max(0, math.min(999999, money + 300)))
-      local save = mod.game and mod.game.save
-      Happiness.changeParty(save and save.party or {}, "GYMBATTLE")
-      local firstBusk = not mod.save:get("busk", nil)
-      mod.save:set("busk", { day = day, done = true })
-      if firstBusk then
+      Happiness.changeParty(mod.game.save.party or {}, "GYMBATTLE")
+      if not (state and state.done) then
         tjAward("APPEAL", 1, "first_busk")
         tjProfession(1, "first_busk")
       end
@@ -1398,11 +1502,14 @@ return function(mod)
 
   local function talkWooper()
     facePlayer(ECRUTEAK_MAP, SLEEPING_WOOPER)
+    local current, used = guard(), false
     local ok, err = mod.world:queueScript({
       { "text", table.concat(WOOPER_WAKE, "\f") },
       { "start_battle", "wild", "WOOPER", 18 },
     }, {
       onDone = function(completed)
+        if used or not current() then return end
+        used = true
         if not completed then
           return report("GR WOOPER\nbattle did not run")
         end
@@ -1415,6 +1522,10 @@ return function(mod)
 
   local function talkVenueRoxie(mapId, name)
     facePlayer(mapId, name)
+    if mapId == AUDITION_MAP and beat() == 81 then
+      return say({"ROXIE: Skip it?\nWe can come back.", "RADIO TOWER next."},
+        function() advanceVenue(AUDITION_MAP, 82) end)
+    end
     local pages = VENUE_OBJECTIVES[beat()]
     if pages then say(pages) end
   end
@@ -1425,7 +1536,7 @@ return function(mod)
     if mapId == AUDITION_MAP and b == 81 then
       return say(DANCE_REFUSAL, function() openDanceShow(true) end)
     end
-    if mapId == AUDITION_MAP and b >= 82 and b <= 86 then
+    if mapId == AUDITION_MAP and b >= 82 then
       local warmth = tjRank("HEART") >= 2
         and { "KIMONO GIRL:\nWelcome back.", "Show us grace." }
         or DANCE_REPEAT
@@ -1452,6 +1563,7 @@ return function(mod)
 
   local function talkRoxie()
     facePlayer(MAP, OBJ_NAME)
+    if beat() >= 90 and showBook then return showBook(false) end
     local b = beat()
     if b == 0 then
       local pages = {}
@@ -1500,8 +1612,18 @@ return function(mod)
         advanceVenue(BASS_MAP, 90)
       end)
     end
-    if revealed or b >= 50 then return say(WHITNEY_JOINED) end
-    if b == 40 then return say(WHITNEY_REVEAL, revealWhitney) end
+    if b == 50 then
+      return say({"WHITNEY: ROXIE set\nan open audition.",
+        "ECRUTEAK's DANCE\nTHEATER. Drummers!", "Meet her there."}, function() setBeat(60) end)
+    end
+    if revealed or b >= 50 then return say(DRUM_OBJECTIVE) end
+    if b == 40 then
+      local pages = {}
+      for _, page in ipairs(WHITNEY_REVEAL) do pages[#pages+1] = page end
+      pages[#pages+1] = "WHITNEY: Drums!\nECRUTEAK's DANCE"
+      pages[#pages+1] = "THEATER. ROXIE has\nan open audition."
+      return say(pages, function() revealWhitney(); setBeat(60) end)
+    end
     if badgeCount(mod.world.game) < 3 then return say(FEEDBACK_LOCKED) end
     if b == 32 then
       return say(FEEDBACK_RETRY, function()
@@ -1549,7 +1671,10 @@ return function(mod)
     if not data then return end
     local b = beat()
     if b >= 80 then
-      if name == CASEY_NAME then say(data.joined) end
+      if name == CASEY_NAME and b == 80 then
+        return say(VENUE_START, function() setBeat(81); placeVenue(AUDITION_MAP) end)
+      end
+      if name == CASEY_NAME then say(VENUE_OBJECTIVES[b] or data.joined) end
       return
     end
     if b == 60 then
@@ -1565,7 +1690,12 @@ return function(mod)
       return say(data.clue, function() setQuestFlag(key) end)
     end
     if b == 71 then
-      if name == CASEY_NAME then return say(data.right, finishDrummer) end
+      if name == CASEY_NAME then
+        local pages = {}
+        for _, page in ipairs(data.right) do pages[#pages+1] = page end
+        for _, page in ipairs(VENUE_START) do pages[#pages+1] = page end
+        return say(pages, function() finishDrummer(); setBeat(81); placeVenue(AUDITION_MAP) end)
+      end
       return say(data.wrong)
     end
   end
@@ -1580,23 +1710,7 @@ return function(mod)
 
   local function talkShowRoxie()
     facePlayer(SHOW_MAP, SHOW_ROXIE)
-    local b = beat()
-    if b == 90 then
-      return say(SHOW_OPENING, function()
-        setBeat(100)
-        tjAward("APPEAL", 1, "park_show")
-        tjProfession(1, "park_show")
-        local status = placeShow()
-        if status and not status:match("PIERS") then
-          report("GR PIERS ARRIVE\n%s", tostring(status))
-        end
-      end)
-    end
-    if b == 102 then
-      return say({ "ROXIE: Breathe.\fThen take it back." })
-    end
-    if b >= 110 then return say({ "ROXIE: Our show.\fOur encore." }) end
-    say({ "ROXIE: PIERS wants\nour encore." })
+    if showBook then showBook(true) end
   end
 
   local function talkShowMember(name)
@@ -1606,7 +1720,7 @@ return function(mod)
       if b == 90 then
         return say({ "WHITNEY: A real\ncrowd!", "Don't tell my\ntrainers." })
       elseif b >= 110 then
-        return say({ "WHITNEY: We kept\nthe encore!" })
+        return say({ "WHITNEY: Ready for\none more song?" })
       end
       return say({ "WHITNEY: He wants\nour encore!" })
     end
@@ -1643,7 +1757,7 @@ return function(mod)
 
   mod.events:on("world.interacted", function(ev)
     local ok, err = pcall(function()
-      if not ev or ev.kind ~= "none" then return end
+      if not compatibleSave() or not ev or ev.kind ~= "none" then return end
       local world = mod.world:overworld()
       if ev.mapId == MAP then
         local obj = objectNamed(world, MAP, OBJ_NAME)
@@ -1719,12 +1833,13 @@ return function(mod)
 
   mod.options:define({
     { key = "show_report", type = "toggle",
-      label = "Report quest actors", default = true },
+      label = "Report quest actors", default = false },
   })
 
   local reported = {}
   mod.events:on("map.entered", function(ev)
     local ok, err = pcall(function()
+      if not compatibleSave() then return end
       local mapId = ev and ev.mapId
       if mapId ~= MAP and mapId ~= BASS_MAP and mapId ~= AUDITION_MAP
           and mapId ~= RADIO_MAP and mapId ~= CAFE_MAP
@@ -1756,7 +1871,7 @@ return function(mod)
       if world and mapId == MAP and beat() == 10 then armBattle("roxie") end
       if world and mapId == BASS_MAP and beat() == 31
           and badgeCount(mod.world.game) >= 3 then armBattle("whitney") end
-      if world and mapId == BASS_MAP and beat() == 84
+      if world and mapId == BASS_MAP and beat() >= 84
           and questFlag("basement_armed")
           and not questFlag("basement_respect") then
         armBattle("basement")
@@ -1766,7 +1881,7 @@ return function(mod)
         armBattle("piers")
       end
       if status ~= "" and not reported[mapId]
-          and mod.options:get("show_report") ~= false then
+          and mod.options:get("show_report") == true then
         reported[mapId] = true
         report("GR %s\n%s\nB%d", VERSION, status, beat())
       end
@@ -1774,5 +1889,17 @@ return function(mod)
     if not ok then report("GR MAP ENTER\n%s", tostring(err)) end
   end)
 
-  mod.log:info("gold_records %s loaded (gold)", VERSION)
+  local factory, loadError = load(mod:read("concert.lua"), "@gold_records/concert.lua")
+  if not factory then error(loadError) end
+  concert = factory()(mod, {
+    beat = beat, setBeat = setBeat, guard = guard, say = say, report = report,
+    refresh = placeShow, clear = clearShowActors,
+    opened = function()
+      tjAward("APPEAL", 1, "park_show")
+      tjProfession(1, "park_show")
+    end,
+  })
+  showBook = concert.openBook
+
+  mod.log:info("gold_records %s loaded (gen2 private test)", VERSION)
 end

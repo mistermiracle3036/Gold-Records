@@ -1,7 +1,7 @@
 {
   "id": "gold_records",
   "name": "Gold Records",
-  "version": "0.6.4",
+  "version": "0.7.0",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
@@ -9,7 +9,7 @@
   "games": [
     "gen2"
   ],
-  "game_version": ">=0.1.78 <2.0.0",
+  "game_version": ">=0.2.21 <2.0.0",
   "priority": 100,
   "affects_link": false,
   "permissions": [
@@ -17,10 +17,9 @@
   ],
   "dependencies": [],
   "optional_dependencies": [
-    "quest_system",
     "trainer_journey"
   ],
   "conflicts": [],
-  "description": "ROXIE came to JOHTO looking for a music scene and found temple bells and a sleeping WOOPER, so she starts a band out of spite and makes you its manager. Recruit FEEDBACK and CASEY, showcase a Pokemon, busk for the Olivine crowd, earn the Underground's respect, wake that WOOPER, and defend the NATIONAL PARK encore when PIERS arrives. ALPHA: the quest currently ends after the PIERS battle. POKEMON GOLD ONLY; this mod does not load on Red, Blue or Yellow.",
+  "description": "A standalone Johto band adventure: recruit FEEDBACK and CASEY, find a venue, manage a native National Park show, face Piers, play an encore and keep your First Show card. Private alpha targeting Gold, Silver and Crystal; device validation is pending. No other mod is required.",
   "github": "mistermiracle3036/Gold-Records"
 }

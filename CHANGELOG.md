@@ -12,6 +12,33 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.7.0
+
+Private first-show test build, based on the supplied 0.6.4 archive.
+
+- Add a native Band Book, repeatable soundcheck, three untimed manager cues,
+  visible Piers entrance, playable encore, band debrief and First Show card.
+- Snapshot the first set; sailors attend if the player previously busked.
+  Rough cues recover. Leaving a set does not award an unplayed outcome.
+- Preserve legacy Piers wins; old saves can play the new encore directly.
+  Debrief clears the park cast; Violet Roxie offers the card and short reprises.
+- Fix dialogue completion and stale save/map callbacks, picker cancellation,
+  technical picker failures and unlimited showcase friendship. Grant friendship
+  once per save, after a completed qualifying performance, to its actual mon.
+- Keep optional showcase, Basement King and unresolved Wooper available after
+  the venue hunt. Move recruitment objectives into local conversations.
+- Replace unreliable weekday-based busking with an explicit **30 saved-playtime
+  minute cooldown**. Existing buskers wait once after migration. This is an
+  alternative supported by this engine, not a real daily reset.
+- Accept Crystal's KAZU trainer member; match owned encounter, carrier member,
+  save and battle object. Preserve commissioned portraits and their ordering fix.
+- Defer park cast during an active Bug-Catching Contest; diagnostics default off.
+- Correct documentation and edition claims. Headliner/gift writers, radio/tour,
+  optional news and enhanced Cutscene presentation remain deferred.
+
+Validation: strict engine loader and mocked LuaJIT tests; no live/device pass.
+See TESTING.md for exact engine commit, migration and remaining checks.
+
 ## 0.6.4
 
 **Updating from 0.4.2?** Since the last release the band has gained a

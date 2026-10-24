@@ -1,256 +1,83 @@
-# Gold Records
+# Gold Records — private 0.7.0 test
 
-ROXIE came to JOHTO looking for a music scene and found temple bells, monks
-and somebody's sleeping WOOPER. So she is starting a band out of spite, and
-you are her manager. Recruit the members, promote the gig, then find out
-what happens when PIERS turns up to crash the encore.
+Roxie starts a band out of spite and appoints you manager. Find FEEDBACK in
+Goldenrod, recruit Casey in Ecruteak, find somewhere to play, and make the first
+National Park show happen. No other mod is required.
 
-A quest mod for [gen1recomp](https://github.com/bryanthaboi/gen1recomp),
-mod API 2, **Pokemon Gold**.
+This build targets Gold, Silver and Crystal on gen1recomp 0.2.21 or newer.
+Validation here is static and mocked, **not a live three-edition playtest**.
+Back up your save, import this ZIP, and fully quit/relaunch the game. Keep one
+Gold Records installation enabled. Do not reset your quest or start a new game.
 
-> **This is an ALPHA.** ROXIE turns up near
-> the VIOLET GYM once you have a badge, challenges you, and appoints you as
-> her manager whether you agreed or not. From there: find the mysterious
-> bassist FEEDBACK in GOLDENROD's UNDERGROUND, then work out who kept time
-> at a JIGGLYPUFF-interrupted drum audition in ECRUTEAK. Help the assembled
-> band ask four very different venues for a stage and hear four different
-> versions of no. With nobody willing to book them, bring four badges to a
-> public-park show where PIERS arrives uninvited and battles for the encore.
-> The current story ends after that battle.
->
-> Bug reports and ideas are welcome in [GitHub Issues](../../issues) —
-> please include the version from the load banner and which other mods were
-> enabled.
+## The first show
 
-## Screenshots
+After the venue hunt and with four badges, speak to Roxie in National Park.
+Choose SOUNDCHECK to practice a four-count, bringing the bass forward, and
+recovering after a cable crackle. Choose OPENING SET afterward.
 
-<table>
-<tr>
-<td width="50%"><img src="docs/01-roxie-violet-city.png" width="320" alt="ROXIE standing beside the player in Violet City, saying: Listen to this place..."></td>
-<td width="50%"><img src="docs/03-roxie-next-quest.png" width="320" alt="ROXIE in Violet City giving the player their next job"></td>
-</tr>
-<tr>
-<td>ROXIE is unimpressed by how quiet VIOLET CITY is.</td>
-<td>Win, and you are her manager whether you agreed or not.</td>
-</tr>
-<tr>
-<td><img src="docs/04-feedback-goldenrod.png" width="320" alt="A kimono-wearing figure in the Goldenrod Underground saying: FEEDBACK: You found me."></td>
-<td><img src="docs/05-drum-audition.png" width="320" alt="The Ecruteak Dance Theater with ROXIE, three drum candidates and a JIGGLYPUFF, ROXIE saying: Welcome to the drum audition"></td>
-</tr>
-<tr>
-<td>The bassist plays GOLDENROD's UNDERGROUND under a false name.</td>
-<td>Three drummers, three ideas of a beat, one JIGGLYPUFF.</td>
-</tr>
-</table>
+Use Up/Down and A (including the phone's standard controls). Cues are untimed;
+there is no audio-only instruction. Acknowledge each response with A. B or
+Start pauses; A resumes, B while paused leaves. Unfinished sets return to the
+same checkpoint. A rough set still reaches Piers; no preparation or money is lost.
 
-<img src="docs/02-roxie-battle.png" width="420" alt="Gold battle intro reading: LEADER ROXIE wants to battle!">
+Piers visibly enters the native stage screen before his interruption. After
+returning to the park, prepare your party and speak to him to begin the challenge.
+A loss preserves the opening and offers a direct retry. After winning and leaving
+the battle screen, talk to Roxie for PLAY ENCORE, then BAND DEBRIEF.
 
-She does not audition you politely.
+The debrief packs up the park cast and saves a First Show card. Visit Roxie at
+her usual Violet City position to read NEXT OBJECTIVE or FIRST SHOW CARD, rehearse,
+or play a short reprise. Reprises give no money, friendship or profession points
+and do not rewrite the first-show record. Old Piers wins need only the new encore.
 
-## Requirements
+## Side activities and rewards
 
-- gen1recomp **0.1.78 or newer** — the release Gen 2 support shipped in
-- A Pokemon **Gold** boot. This mod is Gen 2 only and is skipped on a
-  Red/Blue/Yellow boot. That is expected, not a fault.
+- The Dance Theater host remains available. Cancelling does not perform or
+  advance anything. At the initial venue stop, speak to local Roxie to explicitly
+  skip; you can return later. The first completed qualifying showcase grants
+  friendship to its actual participating Pokémon once per save. Nonqualifying
+  showcases still count as performances. Old Trainer Journey tags are preserved.
+- The Olivine sailor pays $300 and party friendship once per **30 saved-playtime
+  minutes**, not once per calendar day. The engine exposes no absolute game date.
+  Existing buskers start this cooldown on their first visit after updating.
+- The Basement King remains available after booking the park. Wooper remains
+  available until its existing one-shot completion flag is set.
+- Prior busking brings sailors to the stage audience. This fact is fixed in the
+  first-show record when the opening finishes; later busking affects reprises.
 
-## Install
+## Compatibility and ownership
 
-Download `gold_records-<version>.zip` from
-[the latest release](../../releases/latest), then in the launcher choose
-**MODS → Import mod .zip** and fully quit and relaunch.
+Trainer Journey is optional: existing once-only award IDs and `rock_star`
+profession ID are retained; its display name becomes BAND MANAGER. No ranks gate
+this mod. The current chapter still cannot earn its ten-point LEGEND threshold
+alone. Contest/Court flavor stops remain optional and recover when removed.
+There is no Quest System journal adapter, Channel news publisher or Cutscene
+adapter in this build.
 
-On iOS, delete any older downloaded copy from Files first. To update
-later, the mod's entry shows "vX.Y.Z available" — tap it, choose
-**Update**, then fully quit and relaunch.
+Gold Records adds owned runtime actors and temporarily uses native trainer
+carriers for its four battles. It restores names and its can-lose variable after
+owned battle outcomes, map abandonment and save reload. Vanilla records are not
+permanently edited. Piers' team remains unchanged.
 
-**Quest System is optional.** Install it and the questline also keeps an
-entry in the journal; without it everything else behaves identically. It
-is deliberately not a hard requirement: Quest System ships as a loose zip
-committed to another repository with no GitHub releases behind it, so the
-launcher cannot install or update it for you, and making you hunt that
-file down by hand is not a fair price for a journal line.
+`mon.grHeadliner` and `mon.grPiersGift` remain reserved set-once boolean contracts;
+**neither is written**. Persistent winning-participant identity and gift delivery
+need a separate verified implementation. No gift Pokémon or ribbon is promised
+by this private build. The native First Show card is the implemented keepsake.
 
-## Design decisions worth knowing
+Roxie's commissioned sheets by tharkka and Piers' by Yogurcomics are unchanged.
+The stage uses original code-drawn instruments, paired speakers and animated
+picks/sticks. Casey still uses a Lass stand-in; there are no commissioned playing
+poses. Missing sprite data uses simple temporary silhouettes. No ROM images or
+songs were added. The existing map music remains; cues use the engine's short
+text-confirmation sound. This is a staging prototype, not a recorded song.
 
-### Why Gold-only, and why that was a rewrite
+## Calibration
 
-Gen 2 in this engine is a **parallel implementation**, not an extension. A
-Gold boot never loads the Gen 1 game, overworld or battle modules at all,
-so a Gen 1 pattern aimed at them does not degrade gracefully — it lands on
-something nothing instantiates and does nothing, quietly. Moving towns was
-the small part of this port. Four mechanisms had to be replaced:
+Report quest actors defaults OFF. Enable it if your mod-options UI works to log
+positions to [ERRS]. If that UI is unavailable, change only `default = false` to
+`default = true` for `show_report` in main.lua in a separate private test copy
+(and clear an existing saved false option). The Position Reporter mod can also
+supply coordinates without changing Gold Records. Report expected versus actual
+positions, edition, engine version and quest checkpoint.
 
-| What | Gen 1 | Gold |
-|---|---|---|
-| Dialogue | `map_scripts` talk block | `world.interacted` + `queueScript` |
-| Badges | `Badges.count(data, save)` | `save.player.badges` + `.kantoBadges` |
-| NPC movement | `"STAY"` string | numeric (`STANDING_DOWN = 6`) |
-| On-screen output | `TextBox` | `Runtime.reportError` → `[ERRS]` |
-
-The dialogue one is the interesting one, because **Gold has no supported
-way for a mod to author NPC speech**. Talking dispatches on an NPC's
-`scriptKey` into the cart's decoded bytecode pool, and the `map_scripts`
-registry has no Gen 2 home — a Lua row list merged into `gen2Scripts` is
-not something Gold's script VM can run, so the registry is gated on a Gold
-boot rather than silently merged.
-
-The route through: `World:interactBody` tries trainer, boulder, itemball,
-scriptKey, sign, hidden item, std-tile and field-move in turn, and when
-nothing matches it emits `world.interacted` with `kind = "none"` and the
-faced cell's coordinates. A mod-spawned NPC has no `scriptKey`, so an A
-press aimed at ROXIE falls all the way through to there. The mod
-recognises her cell and queues the text itself.
-
-Court of Noctowl subsequently proved this route on a real Gold boot. Gold
-Records now uses the same path for every stage of ROXIE's conversation.
-
-### Roxie is her own NPC, not a takeover
-
-She has her own object rather than borrowing a townsperson's dialogue.
-On Gold that is not really a choice — there is no vanilla line to take
-over in a way the engine would run — but it was the right call on Gen 1
-too: it means no per-version text-constant hunt, and no other mod editing
-Violet City can silently clobber her, or be clobbered by her.
-
-Her current device-adjusted position is fixed at `(22,12)`, four cells right
-and seven cells up from the first Gym-area test position. She initially faces
-right.
-
-### The audition battle
-
-ROXIE's battle uses the native Gold trainer flow already proven by this mod.
-JANINE supplies the Poison-leader portrait and battle class;
-the trainer is temporarily named ROXIE, and `trainer.party` supplies a
-level 10 EKANS and level 12 KOFFING. JANINE's row is restored immediately
-afterward. The battle is safely losable: defeat does not black the player
-out, and ROXIE remains available for a retry.
-
-### The bassist
-
-Once the player becomes ROXIE's manager, FEEDBACK appears in the GOLDENROD
-UNDERGROUND beside the south entrance, using a KIMONO GIRL disguise. The
-designed cell is `(6,33)`; on device she actually stands at `(5,33)`, the
-first fallback, because the designed one is not free. The fallback search is
-load-bearing here, not decorative -- do not narrow it without re-testing.
-FEEDBACK will speak to any
-player but only auditions someone carrying three badges. The native battle
-intro supplies the surprise: the opponent is LEADER WHITNEY, with CLEFAIRY,
-SNUBBULL and MILTANK. After victory she admits FEEDBACK is her private stage
-name, explains that the borrowed kimono and cheap wig hide her from Gym
-regulars, agrees to one show and one encore, and changes to her real overworld
-sprite. Loss is safe and repeatable.
-
-### The drummer
-
-After ROXIE learns FEEDBACK's identity, she sends the player to an open
-audition in ECRUTEAK's DANCE THEATER. Three candidates demonstrate distinct
-rhythms: GENE counts in three, BILLY insists on five-four, and Johto anime
-character CASEY uses her four-beat ELECTABUZZ baseball chant.
-
-JIGGLYPUFF interrupts with its recurring anime singing gag and sends the room
-to sleep. On waking, the player learns that one four-beat rhythm continued.
-Gold has no supported mod-facing choice box, so the investigation uses the
-world itself as the choice: question all three candidates, then speak to the
-person you want to select. Wrong answers are safe and repeatable. Selecting
-CASEY recruits her as the band's drummer and clears the other audition actors
-from the room.
-
-### The first show
-
-After CASEY joins, ROXIE books NATIONAL PARK. The band does not appear until
-the player brings four badges, keeping the show after MORTY and its final
-battle in the intended level range. ROXIE, WHITNEY and CASEY perform the
-opening song before PIERS appears, so his interruption changes the live cast
-rather than placing him at the venue from the start.
-
-PIERS uses Gold's native trainer flow with KAREN as his temporary Dark-type
-carrier. His actual team is MURKROW Lv33, SNEASEL Lv33, WEEZING Lv34, CROBAT
-Lv34 and HOUNDOOM Lv35. Defeat is safe: the party is restored and PIERS offers
-a retry without a blackout. Victory ends the story currently implemented.
-
-### The HEADLINER ribbon is a field, not a call
-
-kanto_ribbons has no award API. Its exports are `{ version, hasRibbon,
-catalog }`, and every ribbon it grants comes from a resolver inside that
-mod reading save state — the same way it reads snag_quest's `mon.snagged`.
-
-So Gold Records writes and owns `mon.grHeadliner`, and kanto_ribbons picks
-it up in its own time.
-
-**The contract, in full.** Both fields are plain **booleans** — set once,
-never cleared — matching `mon.snagged` rather than the per-category count
-table `mon.contestWins` uses. Neither is written yet; `mod.exports.owns`
-reserves them and the write sites land in v0.5.x.
-
-| Field | Set to `true` | Means |
-|---|---|---|
-| `mon.grHeadliner` | on each party member present when PIERS is beaten | it played the show |
-| `mon.grPiersGift` | on the Pokemon PIERS hands over afterwards | provenance, **not** an award |
-
-`grPiersGift` is deliberately **not** a ribbon. It records where a Pokemon
-came from so later flavour can recognise it, which is closer to what the
-Traveler Ribbon already does than to an achievement of its own — and every
-new ribbon costs a 16×16 cell that has to stay distinct from the ones
-already in the sheet. Read it freely; do not spend an icon on it.
-
-A reader should test `mon.grHeadliner == true` rather than checking
-whether this mod is installed. That way it stays inert until the writer
-ships and applies retroactively the moment it does, with no release-order
-dependency in either direction.
-
-## Options
-
-| Option | Default | What it does |
-|---|---|---|
-| Report quest actors | on | Writes actor placement or gating status into the mod manager's `[ERRS]` screen. A development aid; it goes once the questline is stable. |
-
-## Compatibility
-
-Entirely additive: every quest actor is a runtime object owned by this mod.
-No vanilla record is overridden and no vanilla dialogue is displaced. Runtime
-actors are never serialized, so they do not enter the map-data merge; the mod
-rebuilds the appropriate cast from its own saved quest beat on map entry.
-
-Ownership is published at runtime in `mod.exports.owns`, including the two
-mon fields reserved for rewards — `mon.grHeadliner` and `mon.grPiersGift`.
-Read them freely; do not write them.
-
-## Known gaps in this alpha
-
-Things that are deliberate rather than broken, so you don't need to report
-them:
-
-- **ROXIE is wearing somebody else's face.** She uses an existing Gold
-  overworld sprite as a stand-in — art of her own is on the list, and it
-  needs some groundwork on how Gold handles palettes first. Everything she
-  *says* and does is hers.
-- **The drum audition cast stand where they stand.** Their positions in the
-  DANCE THEATER are still being nudged into place from real play, so expect
-  them to shuffle a little between versions.
-- **The story stops after PIERS is beaten.** The reward and gift-Pokemon
-  follow-up is still to come.
-  Nothing breaks when you reach the end — ROXIE simply has nothing new to
-  say.
-
-Anything else that looks wrong is worth an issue. If a character turns to
-face you and nothing happens, that is a swallowed script error rather than
-the end of the quest — please report it with your version from the load
-banner and which other mods were enabled.
-
-## Credits
-
-By **Mister Miracle**
-([@mistermiracle3036](https://github.com/mistermiracle3036)).
-
-- Built on the [gen1recomp](https://github.com/bryanthaboi/gen1recomp)
-  engine and pret/pokecrystal + pokered research.
-- **Quest System** by FAFF0x — optional journal integration.
-- **Kanto Ribbons** — planned optional integration via a mon field.
-- ROXIE, WHITNEY, CASEY, JIGGLYPUFF and PIERS appear as fan tribute; no art,
-  text or audio from their source games or anime is included.
-- Pokemon and all related names are trademarks of Nintendo / Creatures
-  Inc. / GAME FREAK inc. This mod contains no ROM data and requires your
-  own game copy via gen1recomp.
-
-Longer-form attribution lives in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+See TESTING.md for migration, reproducible tests and unverified device behavior.
