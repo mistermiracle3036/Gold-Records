@@ -12,7 +12,7 @@ local Happiness = require("src.core.gen2.Happiness")
 local BugContest = require("src.core.gen2.BugContest")
 
 return function(mod)
-  local VERSION = "0.7.4"
+  local VERSION = "0.7.5"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -162,13 +162,35 @@ return function(mod)
     trainerJourney = false,
   }
 
+  -- Trainer Journey API 2 (Trainer-Journey/docs/API2_CONVERSION_GUIDE.md,
+  -- REQUESTS 264). The old api_version == 1 gate switched every call below
+  -- off once Trainer Journey moved on. Professions and ethos are unchanged
+  -- in API 2; stat awards became XP accomplishments and skill rewards, and
+  -- rank tests became evaluateCheck gates (guide bands, sections 4-5).
   local tj
+  -- Each paying beat, by its old tag. The band story is the mod's main arc
+  -- (major, 500 XP; its stages add up and end on "complete").
+  local TJ_STORY = "band_story"
+  local TJ_REWARDS = {
+    roxie_battle = { story = "hired" },
+    feedback_recruited = { story = "bassist" },
+    casey_recruited = { story = "drummer" },
+    park_show = { story = "first_set" },
+    piers_battle = { story = "complete" },
+    basement_king = { side = "basement_respect" },
+    dance_showcase = { skill = "performance", points = 2 },
+    first_busk = { skill = "performance", points = 3 },
+  }
+
   local function tjInit()
     local handle = mod.find("trainer_journey")
     local api = handle and handle.exports and handle.exports.trainer_journey
-    if not (api and api.api_version == 1) then tj = nil; return end
+    if not (api and api.api_version == 2 and api.progression_version == 1) then
+      tj = nil; return
+    end
     tj = api
-    tj.registerProfession({
+    -- Registering again every session answers "duplicate"; that is normal.
+    pcall(tj.registerProfession, {
       id = "rock_star",
       name = "BAND MANAGER",
       owner = MOD_ID,
@@ -176,17 +198,58 @@ return function(mod)
       thresholds = { 1, 3, 6, 10 },
       rankNames = { "ROADIE", "OPENER", "HEADLINER", "LEGEND" },
     })
+    pcall(tj.registerAccomplishment, MOD_ID, TJ_STORY, {
+      size = "major",
+      stages = { hired = 50, bassist = 75, drummer = 75, first_set = 100, complete = 200 },
+    })
+    pcall(tj.registerAccomplishment, MOD_ID, "basement_respect", {
+      size = "small", stages = { complete = 25 },
+    })
+    for tag, r in pairs(TJ_REWARDS) do
+      if r.skill then
+        pcall(tj.registerSkillReward, MOD_ID, "lesson:" .. tag, r.skill, r.points)
+      end
+    end
   end
 
-  local function tjAward(stat, points, tag)
-    if not tj then return end
-    pcall(tj.awardOnce, stat, points, MOD_ID .. ":" .. tag)
+  -- Pending receipts (guide section 6): the quest fact is already saved by
+  -- the caller; the intent to pay is saved here, and it clears only when
+  -- Trainer Journey answers (paid or duplicate). No provider, no trainer
+  -- yet, an error or a throw all leave it pending for the next retry.
+  local function tjClaim(key)
+    local kind, tag = key:match("^(%a+):(.+)$")
+    local r = TJ_REWARDS[tag]
+    if not (tj and r) then return nil end
+    if kind == "prof" then
+      return tj.awardProfessionOnce("rock_star", 1, MOD_ID .. ":" .. tag)
+    elseif r.story then
+      return tj.awardAccomplishment(MOD_ID, TJ_STORY, r.story)
+    elseif r.side then
+      return tj.awardAccomplishment(MOD_ID, r.side, "complete")
+    end
+    return tj.awardSkillReward(MOD_ID, "lesson:" .. tag)
   end
 
-  local function tjProfession(points, tag)
-    if not tj then return end
-    pcall(tj.awardProfessionOnce, "rock_star", points, MOD_ID .. ":" .. tag)
+  local function tjSettle()
+    local pending = mod.save:get("tj_pending", nil)
+    if type(pending) ~= "table" or next(pending) == nil or not tj then return end
+    for key in pairs(pending) do
+      local ok, result = pcall(tjClaim, key)
+      if ok and result then pending[key] = nil end
+    end
+    mod.save:set("tj_pending", pending)
   end
+
+  local function tjQueue(key)
+    local pending = mod.save:get("tj_pending", nil)
+    if type(pending) ~= "table" then pending = {} end
+    pending[key] = true
+    mod.save:set("tj_pending", pending)
+    tjSettle()
+  end
+
+  local function tjAward(tag) tjQueue("pay:" .. tag) end
+  local function tjProfession(tag) tjQueue("prof:" .. tag) end
 
   local function tjEthos(direction, weight, tag)
     if not tj then return end
@@ -194,11 +257,17 @@ return function(mod)
     pcall(fn, weight, MOD_ID .. ":" .. tag)
   end
 
-  local function tjRank(stat)
-    if not tj then return 0 end
-    local ok, info = pcall(tj.getStat, stat)
-    return ok and type(info) == "table" and tonumber(info.rank) or 0
+  -- Flavour lines only: a failed or unavailable check changes nothing.
+  local function tjCheck(skill, gate)
+    if not tj then return false end
+    local ok, result = pcall(tj.evaluateCheck, skill, gate)
+    return ok and type(result) == "table" and result.passed == true
   end
+
+  mod.events:on("map.entered", function()
+    local ok, err = pcall(tjSettle)
+    if not ok then report("GR TJ SETTLE\n%s", tostring(err)) end
+  end)
 
   mod.events:on("game.ready", function()
     if not compatibleSave() then report("GR NEWER SAVE\nUse a newer build"); return end
@@ -215,6 +284,8 @@ return function(mod)
     if beat() == 85 and not crossovers.kantoContests then setBeat(83) end
     if beat() == 86 and not crossovers.courtOfNoctowl then setBeat(84) end
     tj = crossovers.trainerJourney and tj or nil
+    local ok, err = pcall(tjSettle)
+    if not ok then report("GR TJ SETTLE\n%s", tostring(err)) end
   end)
 
   local function countFlags(flags)
@@ -465,23 +536,23 @@ return function(mod)
       if key == "roxie" then
         setBeat(won and 20 or 11)
         if won then
-          tjAward("MOXIE", 1, "roxie_battle")
-          tjProfession(1, "roxie_battle")
+          tjAward("roxie_battle")
+          tjProfession("roxie_battle")
         end
       elseif key == "whitney" then
         setBeat(won and 40 or 32)
       elseif key == "piers" then
         setBeat(won and 110 or 102)
         if won then
-          tjAward("MOXIE", 1, "piers_battle")
-          tjProfession(1, "piers_battle")
+          tjAward("piers_battle")
+          tjProfession("piers_battle")
           tjEthos("innovation", 1, "park_show")
         end
       elseif won then
         mod.save:set("basement_respect", true)
         mod.save:set("basement_armed", false)
-        tjAward("MOXIE", 1, "basement_king")
-        tjProfession(1, "basement_king")
+        tjAward("basement_king")
+        tjProfession("basement_king")
       else
         mod.save:set("basement_loss", true)
         mod.save:set("basement_armed", false)
@@ -604,8 +675,8 @@ return function(mod)
       bassSpawnId = nil
     end
     setBeat(50)
-    tjAward("APPEAL", 1, "feedback_recruited")
-    tjProfession(1, "feedback_recruited")
+    tjAward("feedback_recruited")
+    tjProfession("feedback_recruited")
     local status = placeBassist()
     if status and not status:match("^WHITNEY") then
       report("GR REVEAL\n%s", tostring(status))
@@ -729,8 +800,8 @@ return function(mod)
 
   local function finishDrummer()
     setBeat(80)
-    tjAward("APPEAL", 1, "casey_recruited")
-    tjProfession(1, "casey_recruited")
+    tjAward("casey_recruited")
+    tjProfession("casey_recruited")
     removeAuditionActor(AUDITION_ROXIE)
     removeAuditionActor(GENE_NAME)
     removeAuditionActor(BILLY_NAME)
@@ -1687,8 +1758,8 @@ return function(mod)
             setQuestFlag("dance_friendship_v1")
           end
           setQuestFlag("dance_completed_v1")
-          tjAward("HEART", 1, "dance_showcase")
-          tjProfession(1, "dance_showcase")
+          tjAward("dance_showcase")
+          tjProfession("dance_showcase")
           if graceful then tjEthos("tradition", 1, "dance_showcase") end
           if advance then advanceVenue(AUDITION_MAP, 82) end
         end)
@@ -1709,7 +1780,7 @@ return function(mod)
     local pages
     if questFlag("basement_loss") then
       pages = KING_RETRY
-    elseif tjRank("MOXIE") >= 2 then
+    elseif tjCheck("performance", 35) then
       pages = { "KING: I heard\nabout you.", "You still earn\nthis room." }
       for _, p in ipairs(KING_INTRO) do pages[#pages + 1] = p end
     else
@@ -1750,8 +1821,8 @@ return function(mod)
       world:setMoney(0, math.max(0, math.min(999999, money + 300)))
       Happiness.changeParty(mod.game.save.party or {}, "GYMBATTLE")
       if not (state and state.done) then
-        tjAward("APPEAL", 1, "first_busk")
-        tjProfession(1, "first_busk")
+        tjAward("first_busk")
+        tjProfession("first_busk")
         -- Busked only after the UNDERGROUND sent them here: this set is
         -- the one somebody heard, so the ROUTE 36 hook plays now.
         if beat() == 90 and V.here() and not questFlag("venue_met") then
@@ -1802,7 +1873,7 @@ return function(mod)
       return say(DANCE_REFUSAL, function() openDanceShow(true) end)
     end
     if mapId == AUDITION_MAP and b >= 82 then
-      local warmth = tjRank("HEART") >= 2
+      local warmth = tjCheck("community", 30)
         and { "KIMONO GIRL:\nWelcome back.", "Show us grace." }
         or DANCE_REPEAT
       return say(warmth, function() openDanceShow(false) end)
@@ -1832,7 +1903,7 @@ return function(mod)
     local b = beat()
     if b == 0 then
       local pages = {}
-      if tjRank("APPEAL") >= 2 then
+      if tjCheck("performance", 20) then
         pages[#pages + 1] = "ROXIE: You're the\none they talk\fabout, right?"
       end
       for _, p in ipairs(INTRO) do pages[#pages + 1] = p end
@@ -2020,7 +2091,7 @@ return function(mod)
     end
     if b == 100 then
       local intro = venue and V.PIERS_ENCORE
-        or tjRank("APPEAL") >= 3 and PIERS_INTRO_FAME or PIERS_INTRO
+        or tjCheck("performance", 40) and PIERS_INTRO_FAME or PIERS_INTRO
       return say(intro, function()
         setBeat(101)
         V.armPiers()
@@ -2269,8 +2340,8 @@ return function(mod)
       if mod.save:get("show_stage", nil) == nil then
         mod.save:set("show_stage", V.place())
       end
-      tjAward("APPEAL", 1, "park_show")
-      tjProfession(1, "park_show")
+      tjAward("park_show")
+      tjProfession("park_show")
     end,
   })
   showBook = concert.openBook

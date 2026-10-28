@@ -126,7 +126,11 @@ mod.events = { on = function(self, name, fn)
 end }
 mod.hooks = { wrap = function(self, name, fn) wrappers[name] = fn end }
 mod.options = { define = function() end, get = function() return true end }
-mod.find = function(id) return installedMods[id] and { id = id } or nil end
+mod.find = function(id)
+  local m = installedMods[id]
+  if type(m) == "table" then return m end
+  return m and { id = id } or nil
+end
 local pickerFailure=false
 mod.ui={push=function(game,id,opts)
  local screen
@@ -439,4 +443,41 @@ check("band leaves, crowd stays",not findObj(VM,"GR_SHOW_ROXIE") and findObj(VM,
 for _,k in ipairs({"first_show","show_stage","venue_dragged","venue_met"}) do state[k]=nil end
 state.beat=100;enter("NATIONAL_PARK")
 check("park-opened show stays in the park",findObj("NATIONAL_PARK","GR_PIERS") ~= nil)
+-- Trainer Journey API 2 (REQUESTS 264): checks, and pay through pending
+-- receipts. The first claim is refused ("creation incomplete") and must stay
+-- pending; the next map entry pays it once.
+local paid, profs, refuseNext = {}, {}, true
+installedMods.trainer_journey = { id = "trainer_journey", exports = { trainer_journey = {
+  api_version = 2, progression_version = 1,
+  registerProfession = function() return true end,
+  registerAccomplishment = function() return true end,
+  registerSkillReward = function() return true end,
+  awardAccomplishment = function(owner, id, stage)
+    if refuseNext then return nil, "creation incomplete" end
+    paid[#paid + 1] = owner .. "/" .. id .. ":" .. stage; return { awarded = 50 }
+  end,
+  awardSkillReward = function(owner, id) paid[#paid + 1] = id; return { awarded = 2 } end,
+  awardProfessionOnce = function(id, pts, tag) profs[#profs + 1] = id .. "|" .. tag; return { ok = true } end,
+  evaluateCheck = function(skill, gate) return { passed = skill == "performance" and gate <= 20 } end,
+  leanTradition = function() end, leanInnovation = function() end,
+} } }
+-- Earlier beats in this run paid with no provider, so they sit pending and
+-- the next game.ready pays them (guide section 6: pending until an answer).
+check("backlog waits for a provider", state.tj_pending and state.tj_pending["pay:first_busk"])
+refuseNext = false; emit("game.ready", {})
+check("backlog paid when Trainer Journey appears", next(state.tj_pending) == nil and #paid > 0)
+paid, profs = {}, {}; refuseNext = true
+for _, k in ipairs({ "first_show", "show_stage", "venue_dragged", "venue_met" }) do state[k] = nil end
+state.beat = 0; enter("VIOLET_CITY"); sayTo("VIOLET_CITY", "GR_ROXIE")
+check("TJ API 2 check adds ROXIE's line", queued():find("one they talk", 1, true) ~= nil)
+done(); party, battle = engage(actor("VIOLET_CITY", "GR_ROXIE"), "JANINE")
+emit("battle.ended", { result = "win", battle = battle })
+check("profession paid on the win", #profs == 1 and profs[1] == "rock_star|gold_records:roxie_battle")
+check("refused claim stays pending", #paid == 0 and state.tj_pending["pay:roxie_battle"] == true)
+enter("VIOLET_CITY"); check("still refused, still pending", #paid == 0 and state.tj_pending["pay:roxie_battle"])
+refuseNext = false; enter("VIOLET_CITY")
+check("retry pays the story stage", paid[1] == "gold_records/band_story:hired"
+  and next(state.tj_pending) == nil)
+enter("VIOLET_CITY"); check("paid once", #paid == 1)
+installedMods.trainer_journey = nil; emit("game.ready", {})
 print("ALL MOCKED REGRESSIONS PASSED")

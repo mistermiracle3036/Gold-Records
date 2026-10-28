@@ -56,10 +56,15 @@ and do not rewrite the first-show record. Old Piers wins need only the new encor
 
 ## Compatibility and ownership
 
-Trainer Journey is optional: existing once-only award IDs and `rock_star`
-profession ID are retained; its display name becomes BAND MANAGER. No ranks gate
-this mod. The current chapter still cannot earn its ten-point LEGEND threshold
-alone. Contest/Court flavor stops remain optional and recover when removed.
+Trainer Journey is optional and uses its API 2 (version 0.7.5 on). The band
+story is one accomplishment worth 500 XP, paid in stages as ROXIE, FEEDBACK
+and CASEY join, the first set plays and PIERS is beaten. The BASEMENT KING is a
+small one (25 XP). The DANCE THEATER showcase and the first busk teach
+PERFORMANCE (2 and 3 points). The `rock_star` profession id is kept; it shows
+as BAND MANAGER. Skill checks only add flavour lines and never block the
+story. A reward that cannot be paid yet (no trainer made, Trainer Journey
+missing) waits and is paid once on a later load or map entry. The current
+chapter still cannot earn the ten-point LEGEND threshold alone. Contest/Court flavor stops remain optional and recover when removed.
 There is no Quest System journal adapter or Channel news publisher. Crystal
 Cutscene is an optional presentation provider. Gold Records alone owns quest
 progress, roster eligibility, rewards and the Band Book; the renderer owns its

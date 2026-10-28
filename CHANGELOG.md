@@ -12,6 +12,36 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.7.5
+
+**Updating from 0.4.3?** The band now gets a full story past the drummer:
+four venues turn ROXIE down, the band plays its first show and PIERS
+challenges you for the encore. With Johto Expanded installed that show is at
+a packed music venue on ROUTE 36; without it, in NATIONAL PARK. Along the way
+you can show off a graceful Pokemon at the DANCE THEATER, busk in OLIVINE,
+earn the BASEMENT KING's respect and finally wake that WOOPER. ROXIE and
+PIERS have their own commissioned sprites, the first show has a Band Book,
+manager cues and a playable encore, and Trainer Journey players earn XP, a
+little PERFORMANCE and the BAND MANAGER profession. Every character answers
+on the current engine again.
+
+### Fixed
+- **Trainer Journey works again.** Gold Records only talked to the old
+  Trainer Journey, so since Trainer Journey's update nothing it promised was
+  being paid: no BAND MANAGER progress, no ethos leans, no extra lines. It
+  now uses the current Trainer Journey (converted, not removed):
+  - the band story pays 500 XP in stages: 50 when ROXIE hires you, 75 each
+    for FEEDBACK and CASEY, 100 for the first set and 200 for beating PIERS;
+  - the BASEMENT KING's respect pays 25 XP;
+  - the DANCE THEATER showcase teaches 2 PERFORMANCE, the first busk 3;
+  - BAND MANAGER and the two ethos leans work as before;
+  - the four extra lines now need PERFORMANCE (ROXIE's first meeting 20,
+    the BASEMENT KING 35, PIERS in the park 40) or COMMUNITY (the DANCE
+    THEATER welcome back, 30). They only add a line; nothing is ever locked.
+- A reward Trainer Journey cannot take yet (no trainer made, or Trainer
+  Journey not installed) is kept and paid once, later. Beats you finished
+  before this update are not paid again.
+
 ## 0.7.4
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer:
