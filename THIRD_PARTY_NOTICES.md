@@ -10,6 +10,11 @@ third-party commissioned art, game data, or Nintendo/Creatures/GAME FREAK rights
 - **Larry art:** **Bani**, the project's cleared shared Larry walker. The
   approved color version is copied byte-for-byte from the canonical sprite
   library, retaining its BROWN palette fallback and trueColor registration.
+- **WOOPER and JIGGLYPUFF overworld art:** **anima-nel**, from the purchased
+  GBC Pokemon overworld pack, copied unchanged (`assets/wooper_anima.png`
+  from the canonical library, `assets/jigglypuff_anima.png` from the pack's
+  `gen1/normal/039_jigglypuff.png`). Private builds only until the public
+  credit is cleared (exchange/credits_extra.json).
 - **New stage graphics:** original code-drawn speakers, instruments, kit and card
   in concert.lua. Existing character sheets are rendered unmodified behind the
   props. Temporary silhouettes and the existing Lass Casey are prototype art.

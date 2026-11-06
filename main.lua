@@ -12,7 +12,7 @@ local Happiness = require("src.core.gen2.Happiness")
 local BugContest = require("src.core.gen2.BugContest")
 
 return function(mod)
-  local VERSION = "0.7.5"
+  local VERSION = "0.7.6"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -64,7 +64,8 @@ return function(mod)
   -- future map-owned object band and documents ownership for other mods.
   mod.exports.owns = {
     maps = {}, trainers = {}, items = {},
-    sprites = {ROXIE_SPRITE, PIERS_SPRITE, "SPRITE_GR_LARRY"},
+    sprites = {ROXIE_SPRITE, PIERS_SPRITE, "SPRITE_GR_LARRY",
+      "SPRITE_GR_WOOPER", "SPRITE_GR_JIGGLYPUFF"},
     objects = {
       [MAP] = { OBJ_NAME },
       [BASS_MAP] = {
@@ -112,6 +113,17 @@ return function(mod)
     frames = 6, walker = true, spriteType = "WALKING_SPRITE",
     palette = "PAL_OW_BROWN", paletteId = 3, trueColor = true,
   })
+  -- Every Pokemon placed in the world is anima-nel art, never Crystal's own
+  -- overworld (developer, 2026-11-01; REQUESTS 384). Six-frame colour
+  -- walkers copied unchanged, registered as Chance Encounters does.
+  for _, species in ipairs({ "WOOPER", "JIGGLYPUFF" }) do
+    mod.content.sprites:register("SPRITE_GR_" .. species, {
+      id = "SPRITE_GR_" .. species,
+      image = mod.path .. "/assets/" .. species:lower() .. "_anima.png",
+      frames = 6, walker = true, trueColor = true,
+      spriteType = "WALKING_SPRITE", palette = "PAL_OW_RED", paletteId = 0,
+    })
+  end
   local PIERS_FRONT_PATH = mod.path .. "/assets/piers_front.png"
 
   local function report(fmt, ...)
@@ -693,7 +705,7 @@ return function(mod)
     { name = GENE_NAME, sprite = "SPRITE_ROCKER", x = 2, y = 9 },
     { name = BILLY_NAME, sprite = "SPRITE_SUPER_NERD", x = 5, y = 9 },
     { name = CASEY_NAME, sprite = "SPRITE_LASS", x = 8, y = 9 },
-    { name = JIGGLY_NAME, sprite = "SPRITE_JIGGLYPUFF", x = 6, y = 11 },
+    { name = JIGGLY_NAME, sprite = "SPRITE_GR_JIGGLYPUFF", x = 6, y = 11 },
   }
 
   local function questFlag(key)
@@ -818,7 +830,7 @@ return function(mod)
   --------------------------------------------------------------------------
   local featureSpawnIds = {}
   local WOOPER_ACTOR = {
-    name = SLEEPING_WOOPER, sprite = "SPRITE_MONSTER", x = 23, y = 22,
+    name = SLEEPING_WOOPER, sprite = "SPRITE_GR_WOOPER", x = 23, y = 22,
     movement = MOVE_STANDING_DOWN, label = "WOOPER",
   }
   local BUSKER_ACTOR = {

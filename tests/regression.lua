@@ -480,4 +480,10 @@ check("retry pays the story stage", paid[1] == "gold_records/band_story:hired"
   and next(state.tj_pending) == nil)
 enter("VIOLET_CITY"); check("paid once", #paid == 1)
 installedMods.trainer_journey = nil; emit("game.ready", {})
+-- REQUESTS 384: Pokemon in the world are anima-nel colour walkers.
+for _, s in ipairs({ "SPRITE_GR_WOOPER", "SPRITE_GR_JIGGLYPUFF" }) do
+  local def = registeredSprites[s]
+  check(s .. " is anima-nel trueColor", def and def.trueColor == true and def.frames == 6
+    and def.image:find("_anima.png", 1, true) ~= nil)
+end
 print("ALL MOCKED REGRESSIONS PASSED")
