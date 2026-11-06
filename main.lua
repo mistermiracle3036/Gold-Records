@@ -1699,7 +1699,10 @@ return function(mod)
   V.TICKETS_LINE = { "TICKETS: Sold out\ntonight." } -- NEW
   V.LINE_TALK = { "Can't move!\fIt's packed!" } -- NEW
   V.BAR_TALK = { "BARTENDER: What'll\nit be?" } -- NEW
-  V.FAN_TALK = { "FAN: Turn it up!" } -- NEW
+  -- No "FAN:" label: the NPC gate matches a NAME: prefix against names AND
+  -- sprites, and "FAN" also hits SPRITE_POKEFAN_*, so the line was pinned on
+  -- the bartender or a far table. Unlabelled, it is whoever you face.
+  V.FAN_TALK = { "Turn it up!" } -- NEW
 
   local function facePlayer(mapId, name)
     local here = mod.world:current()

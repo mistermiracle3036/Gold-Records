@@ -29,6 +29,8 @@ on the current engine again.
 - The sleeping WOOPER in ECRUTEAK and JIGGLYPUFF at the drum audition now
   use anima-nel's colour overworld art instead of Crystal's generic Pokemon
   sprites.
+- The ROUTE 36 crowd's "Turn it up!" no longer carries a "FAN:" label, so it
+  is plainly the person you are talking to.
 
 ## 0.7.5
 
