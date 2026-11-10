@@ -584,6 +584,60 @@ check("4d: stranger crashes", queued():find("Who asked", 1, true) ~= nil); done(
 check("4b: billed on the record", state.first_show.first.billing == "WHITNEY")
 sayTo(VM, "GR_PIERS")
 check("4d: fame with two or more backers", queued():find("three towns over", 1, true) ~= nil); done()
+
+-- 4e, the bigger band. Drums: MAYLENE [PERSUASION 25]; a fail closes her.
+for _, k in ipairs({ "drummer", "keys", "first_show", "show_stage", "venue_dragged", "venue_met",
+    "drum_closed_maylene", "drum_closed_ingo", "larry_asks", "larry_last_visit", "cafe_visits",
+    "larry_closed", "elesa_met", "elesa_check_closed", "elesa_first_billing" }) do state[k] = nil end
+for i = #mapObjects.DANCE_THEATER, 1, -1 do mapObjects.DANCE_THEATER[i] = nil end
+state.beat = 71; enter("DANCE_THEATER")
+check("4e: MAYLENE and INGO audition", actor("DANCE_THEATER", "GR_GENE").sprite == "SPRITE_GR_MAYLENE"
+  and actor("DANCE_THEATER", "GR_BILLY").sprite == "SPRITE_GR_INGO")
+sayTo("DANCE_THEATER", "GR_BILLY"); pick("hire", false)
+check("4e: ROXIE overrules", queued():find("my ears", 1, true) ~= nil and state.drum_closed_ingo); done()
+sayTo("DANCE_THEATER", "GR_BILLY"); check("4e: closed, no menu", checkMenu == nil); done()
+sayTo("DANCE_THEATER", "GR_GENE")
+check("4e: hire is a check", checkMenu and checkMenu.rows[1].gate == 25); pick("hire", true)
+check("4e: MAYLENE hired", queued():find("won't hold back", 1, true) ~= nil
+  and queued():find("CASEY keeps", 1, true) == nil); done()
+check("4e: drummer saved, she stays", state.drummer == "maylene" and state.beat == 81
+  and findObj("DANCE_THEATER", "GR_GENE") and not findObj("DANCE_THEATER", "GR_CASEY"))
+
+-- Keys: LARRY refuses on two separate visits, then [PERSUASION 30].
+state.beat = 83; enter("OLIVINE_CAFE"); sayTo("OLIVINE_CAFE", "GR_LARRY")
+check("4e: LARRY no. 1", queued():find("I'm eating", 1, true) ~= nil); done()
+sayTo("OLIVINE_CAFE", "GR_LARRY"); check("4e: same visit, no new ask", state.larry_asks == 1); done()
+enter("OLIVINE_CAFE"); sayTo("OLIVINE_CAFE", "GR_LARRY")
+check("4e: LARRY no. 2", queued():find("I have a shift", 1, true) ~= nil and state.larry_asks == 2); done()
+sayTo("OLIVINE_CAFE", "GR_LARRY"); done(); check("4e: third ask waits a visit", checkMenu == nil)
+enter("OLIVINE_CAFE"); sayTo("OLIVINE_CAFE", "GR_LARRY"); done()
+check("4e: third ask is PERSUASION 30", checkMenu and checkMenu.rows[1].gate == 30); pick("ask", true)
+check("4e: LARRY plays", queued():find("lunch hour", 1, true) ~= nil and state.keys == "larry"); done()
+enter("RADIO_TOWER_1F"); check("4e: not both", not findObj("RADIO_TOWER_1F", "GR_ELESA"))
+
+-- The show follows the line-up: tags in the soundcheck, the keys on stage,
+-- MAYLENE's cues.
+state.beat = 90; state.venue_dragged = true; state.venue_met = true; state.show_stage = "ROUTE 36"
+for i = #mapObjects[VM], 1, -1 do mapObjects[VM][i] = nil end   -- the 4d band, CASEY's sprite
+enter(VM)
+check("4e: keys on stage", findObj(VM, "GR_SHOW_KEYS") and findObj(VM, "GR_SHOW_KEYS").sprite == "SPRITE_GR_LARRY"
+  and findObj(VM, "GR_SHOW_CASEY").sprite == "SPRITE_GR_MAYLENE")
+sayTo(VM, "GR_SHOW_ROXIE"); select("SOUNDCHECK")
+local stage = mod.game.stack:top()
+check("4e: MAYLENE's cues", stage.steps[1][1] == "MAYLENE: ONE! TWO!" and stage.steps[3][3] == "PLAY LOUD")
+finishSet(false, false)
+check("4e: soundcheck tags", queued():find("Three\nbeats", 1, true) ~= nil
+  and queued():find("in a tie", 1, true) ~= nil and queued():find("broke\na stick", 1, true) ~= nil); done()
+sayTo(VM, "GR_SHOW_KEYS"); check("4e: keys stage talk", queued():find("clock out", 1, true) ~= nil); done()
+
+-- ELESA: a failed LIGHTS check leaves first billing open.
+state.keys = nil; state.beat = 83; enter("RADIO_TOWER_1F"); sayTo("RADIO_TOWER_1F", "GR_ELESA")
+check("4e: ELESA first meeting", queued():find("isn't a show yet", 1, true) ~= nil); done()
+pick("lights", false); check("4e: ELESA flat", queued():find("spark", 1, true) ~= nil); done()
+sayTo("RADIO_TOWER_1F", "GR_ELESA")
+check("4e: later opener", queued():find("isn't a show yet", 1, true) == nil); done()
+check("4e: check closed, billing stays", checkMenu.rows[1].id == "bill"); pick("bill", true)
+check("4e: ELESA billed first", queued():find("HER name", 1, true) ~= nil and state.keys == "elesa"); done()
 installedMods.trainer_journey = nil; emit("game.ready", {})
 
 -- REQUESTS 384: Pokemon in the world are anima-nel colour walkers.

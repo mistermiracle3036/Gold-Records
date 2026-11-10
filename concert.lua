@@ -152,7 +152,7 @@ return function(mod, C)
       local place=opts.first.venue or "NATIONAL PARK"
       text(place,math.floor((160-Font.width(place))/2),48)
       text("ROXIE / "..(opts.first.billing or "FEEDBACK"),16,62)
-      text("CASEY ON DRUMS",24,72)
+      text((opts.first.drummer or "CASEY").." ON DRUMS",24,72)
       text(opts.first.outcome or "EARLIER SHOW",16,91)
       text(opts.first.preparation == "UNRECORDED" and "Old set: unknown"
         or opts.first.sailors and "Sailors sang along"
@@ -168,12 +168,32 @@ return function(mod, C)
     {"FEEDBACK: My turn!", "Bring up the bass.", "BASS UP", "GUITAR UP", "BASS TAKES LEAD", "We trade the lead."},
     {"A cable crackles!", "Help us regroup.", "COUNT FOUR", "PLAY LOUD", "BACK ON THE BEAT", "CASEY holds us."},
   }
+  -- Sheet 21 4e: the cues follow the drummer. CASEY plays them as written;
+  -- MAYLENE and INGO count in their own way (cue 1), and cue 3's steady
+  -- answer is theirs: PLAY LOUD for MAYLENE, COUNT FIVE for INGO.
+  local function drummer()
+    local b = C.band and C.band()
+    return b and b.drummer or {id="casey",name="CASEY",sprite="SPRITE_LASS"}
+  end
+  local function stepsFor(d)
+    if d.id == "casey" or not d.count then return steps end
+    local out = {}
+    for i, s in ipairs(steps) do
+      local c = {}
+      for j, v in ipairs(s) do c[j] = v end
+      out[i] = c
+    end
+    out[1][1], out[1][2] = d.count[1], d.count[2]
+    out[3][3], out[3][4] = d.steady[1], d.steady[2]
+    out[3][5], out[3][6] = d.steadyLine, C.roughLine or "We stumble back."
+    return out
+  end
   local function makeSprites(game)
     local S = require("src.render.SpriteRenderer")
     local defs = game.data.gen2Sprites or game.data.sprites or {}
     local out = {}
     for _,row in ipairs({{"roxie","SPRITE_GR_ROXIE"},{"bass","SPRITE_WHITNEY"},
-      {"casey","SPRITE_LASS"},{"piers","SPRITE_GR_PIERS"},
+      {"casey",drummer().sprite},{"piers","SPRITE_GR_PIERS"},
       {"larry","SPRITE_GR_LARRY"},
       {"fan","SPRITE_POKEFAN_M"},{"sailor","SPRITE_SAILOR"}}) do
       local def = defs[row[2]]
@@ -204,13 +224,14 @@ return function(mod, C)
     local state={game=game,kind="stage",isOpaque=true,valid=opts.valid,
       mode=opts.mode,prep=opts.prep,step=1,choice=1,phase="cue",t=0,
       rough=0,paused=false,sprites=makeSprites(game),venue=opts.venue,
-      billing=opts.billing or "FEEDBACK"}
+      billing=opts.billing or "FEEDBACK",drummer=drummer()}
+    state.steps=stepsFor(state.drummer)
     function state:exit() leave(self) end
     function state:finish()
       if not current(self) then pop(self); return end
       local result={outcome=self.rough==0 and "HELD THE BEAT" or "FOUND OUR FEET",
         sailors=self.prep.sailors,theater=self.prep.theater,basement=self.prep.basement,
-        billing=self.billing,rough=self.rough}
+        billing=self.billing,drummer=self.drummer.name,rough=self.rough}
       if pop(self) then opts.done(result) end
     end
     function state:update(dt)
@@ -247,7 +268,7 @@ return function(mod, C)
       end
     end
     function state:draw()
-      local step=steps[self.step]
+      local step=self.steps[self.step]
       rect(0,0,160,144,cream)
       text(self.mode=="practice" and "SOUNDCHECK" or self.mode=="opening" and "THE OPENING SET" or "ONE MORE SONG",8,3)
       -- Paired speakers and a centered kit; the right aisle is Piers' entry.
@@ -274,7 +295,7 @@ return function(mod, C)
       for _,x in ipairs({63,95}) do rect(x,32,1,18,ink);rect(x-4,31,9,2,gold) end
       rect(70,34+bob,7,1,cream);rect(84,34-bob,7,1,cream)
       rect(40,57,10,9,cream);rect(75,57,10,9,cream);rect(109,57,10,9,cream)
-      text("R",41,58);text("C",76,58);text(self.billing:sub(1,1),110,58)
+      text("R",41,58);text(self.drummer.name:sub(1,1),76,58);text(self.billing:sub(1,1),110,58)
       for _,x in ipairs({20,50,80,110}) do
         local who=x==80 and "larry"
           or self.prep.sailors and (x==20 or x==110) and "sailor" or "fan"
@@ -340,7 +361,8 @@ return function(mod, C)
       if not latest then return end
       if mode=="practice" then
         latest.practice=result.outcome;latest.soundcheck=true;write(latest)
-        C.say({"CASEY: Four beats.","Same cues on stage.","ROXIE: Now we can\nhear the bass."})
+        -- The drummer's own soundcheck and every line-up tag (sheet 21 4e).
+        C.say(C.soundcheck and C.soundcheck() or {"CASEY: Four beats.","Same cues on stage.","ROXIE: Now we can\nhear the bass."})
       elseif mode=="opening" and C.beat()==90 and not latest.opening then
         result.venue=C.place and C.place() or nil
         latest.opening=true;latest.first=result;write(latest)
@@ -372,7 +394,7 @@ return function(mod, C)
       pages[#pages+1]="WHITNEY: FEEDBACK\non the poster!"
       pages[#pages+1]="One name that's\njust for music."
     end
-    for _,p in ipairs({"CASEY: My chant!\nOn a real stage!","PIERS: Your band.\nKeep that sound.","You keep the\nFIRST SHOW card.","We pack the amps.\nThe path is clear.","Visit VIOLET for\nyour BAND BOOK."}) do pages[#pages+1]=p end
+    for _,p in ipairs({drummer().debrief or "CASEY: My chant!\nOn a real stage!","PIERS: Your band.\nKeep that sound.","You keep the\nFIRST SHOW card.","We pack the amps.\nThe path is clear.","Visit VIOLET for\nyour BAND BOOK."}) do pages[#pages+1]=p end
     C.say(pages,function()
       local r=record()
       if not r or not r.encore then return end

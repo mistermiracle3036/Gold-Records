@@ -10,6 +10,11 @@ third-party commissioned art, game data, or Nintendo/Creatures/GAME FREAK rights
 - **Larry art:** **Bani**, the project's cleared shared Larry walker. The
   approved color version is copied byte-for-byte from the canonical sprite
   library, retaining its BROWN palette fallback and trueColor registration.
+- **MAYLENE, INGO and ELESA overworld art:** copied unchanged from the
+  project's canonical sprite library, cleared and already shipping in other
+  mods: MAYLENE by **bloodless / BloodlessNS** (Polished Crystal), INGO by
+  **Blaklyte**, ELESA by **Azure_Keys, Solo993 and SirWhibbles / JaceDeane**
+  (Pokemon Black & White 3: Genesis).
 - **WOOPER and JIGGLYPUFF overworld art:** **anima-nel**, from the purchased
   GBC Pokemon overworld pack, copied unchanged (`assets/wooper_anima.png`
   from the canonical library, `assets/jigglypuff_anima.png` from the pack's

@@ -13,9 +13,21 @@ local BugContest = require("src.core.gen2.BugContest")
 local ScriptMenu = require("src.ui.gen2.ScriptMenu")
 
 return function(mod)
-  local VERSION = "0.8.0"
+  local VERSION = "0.8.1"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
+  -- The manager's decisions (quest clean-up sheet 21), filled beside say();
+  -- declared first because the audition and venue code read it too.
+  local M = {}
+  M.SHOW_KEYS = "GR_SHOW_KEYS" -- the fourth chair on stage (sheet 21 4e)
+  -- The drummer's and keys player's stage sprites follow the line-up.
+  function M.stageSprite(name)
+    if name == "GR_SHOW_CASEY" then return M.drum().sprite end
+    if name == M.SHOW_KEYS then
+      return M.keys() == "elesa" and "SPRITE_GR_ELESA" or "SPRITE_GR_LARRY"
+    end
+    return nil
+  end
 
   local MAP = "VIOLET_CITY"
   local OBJ_NAME = "GR_ROXIE"
@@ -66,7 +78,8 @@ return function(mod)
   mod.exports.owns = {
     maps = {}, trainers = {}, items = {},
     sprites = {ROXIE_SPRITE, PIERS_SPRITE, "SPRITE_GR_LARRY",
-      "SPRITE_GR_WOOPER", "SPRITE_GR_JIGGLYPUFF"},
+      "SPRITE_GR_WOOPER", "SPRITE_GR_JIGGLYPUFF",
+      "SPRITE_GR_MAYLENE", "SPRITE_GR_INGO", "SPRITE_GR_ELESA"},
     objects = {
       [MAP] = { OBJ_NAME },
       [BASS_MAP] = {
@@ -114,6 +127,16 @@ return function(mod)
     frames = 6, walker = true, spriteType = "WALKING_SPRITE",
     palette = "PAL_OW_BROWN", paletteId = 3, trueColor = true,
   })
+  -- Sheet 21 4e, the bigger band: canonical sheets copied unchanged, each
+  -- registered with its REGISTRY.json palette (one character, one palette).
+  for _, s in ipairs({ { "MAYLENE", "PAL_OW_RED", 0 }, { "INGO", "PAL_OW_BROWN", 3 },
+      { "ELESA", "PAL_OW_BLUE", 1 } }) do
+    mod.content.sprites:register("SPRITE_GR_" .. s[1], {
+      id = "SPRITE_GR_" .. s[1], image = mod.path .. "/assets/" .. s[1]:lower() .. ".png",
+      frames = 6, walker = true, spriteType = "WALKING_SPRITE",
+      palette = s[2], paletteId = s[3],
+    })
+  end
   -- Every Pokemon placed in the world is anima-nel art, never Crystal's own
   -- overworld (developer, 2026-11-01; REQUESTS 384). Six-frame colour
   -- walkers copied unchanged, registered as Chance Encounters does.
@@ -696,8 +719,10 @@ return function(mod)
   local auditionSpawnIds = {}
   local AUDITION_ACTORS = {
     { name = AUDITION_ROXIE, sprite = ROXIE_SPRITE, x = 4, y = 11 },
-    { name = GENE_NAME, sprite = "SPRITE_ROCKER", x = 2, y = 9 },
-    { name = BILLY_NAME, sprite = "SPRITE_SUPER_NERD", x = 5, y = 9 },
+    -- Sheet 21 4e: MAYLENE and INGO audition in GENE's and BILLY's places
+    -- (the object names stay, so saved clue flags keep their meaning).
+    { name = GENE_NAME, sprite = "SPRITE_GR_MAYLENE", x = 2, y = 9 },
+    { name = BILLY_NAME, sprite = "SPRITE_GR_INGO", x = 5, y = 9 },
     { name = CASEY_NAME, sprite = "SPRITE_LASS", x = 8, y = 9 },
     { name = JIGGLY_NAME, sprite = "SPRITE_GR_JIGGLYPUFF", x = 6, y = 11 },
   }
@@ -767,7 +792,8 @@ return function(mod)
 
     local wanted = {}
     if b >= 80 then
-      wanted[CASEY_NAME] = b < 90
+      -- Whoever was hired stays in the theater until the show is booked.
+      wanted[M.drum().actor] = b < 90
     else
       wanted[AUDITION_ROXIE] = true
       wanted[GENE_NAME] = true
@@ -809,11 +835,14 @@ return function(mod)
     tjAward("casey_recruited")
     tjProfession("casey_recruited")
     removeAuditionActor(AUDITION_ROXIE)
-    removeAuditionActor(GENE_NAME)
-    removeAuditionActor(BILLY_NAME)
     removeAuditionActor(JIGGLY_NAME)
+    -- The two not hired leave; the hired drummer stays (sheet 21 4e).
+    for _, name in ipairs({ CASEY_NAME, GENE_NAME, BILLY_NAME }) do
+      if name ~= M.drum().actor then removeAuditionActor(name) end
+    end
     local status = placeAudition()
-    if status and not status:match("CASEY") then
+    local label = M.drum().actor:gsub("^GR_", "")
+    if status and not status:find(label, 1, true) then
       report("GR DRUMMER\n%s", tostring(status))
     end
   end
@@ -995,7 +1024,6 @@ return function(mod)
   -- added only after the opening set, so his interruption is a real arrival.
   --------------------------------------------------------------------------
   local V = {} -- the ROUTE 36 venue state; its section below fills it
-  local M = {} -- the manager's decisions (sheet 21); filled beside say()
   local showSpawnIds = {}
   local SHOW_ACTORS = {
     { name = SHOW_ROXIE, sprite = ROXIE_SPRITE, x = 10, y = 44,
@@ -1006,6 +1034,8 @@ return function(mod)
       label = "CASEY" },
     { name = PIERS_NAME, sprite = PIERS_SPRITE, x = 12, y = 42,
       label = "PIERS" },
+    { name = M.SHOW_KEYS, sprite = "SPRITE_GR_LARRY", x = 17, y = 44,
+      label = "KEYS" },
   }
 
   local function removeShowActor(name)
@@ -1042,8 +1072,12 @@ return function(mod)
 
     local wanted = {
       [SHOW_ROXIE] = true, [SHOW_WHITNEY] = true, [SHOW_CASEY] = true,
+      [M.SHOW_KEYS] = M.keys() ~= nil,
     }
     if b >= 100 then wanted[PIERS_NAME] = true end
+    for _, actor in ipairs(SHOW_ACTORS) do
+      actor.sprite = M.stageSprite(actor.name) or actor.sprite
+    end
     for _, actor in ipairs(SHOW_ACTORS) do
       if not wanted[actor.name] then removeShowActor(actor.name) end
     end
@@ -1157,6 +1191,9 @@ return function(mod)
       label = "ROXIE", band = true },
     { name = SHOW_WHITNEY, sprite = "SPRITE_WHITNEY", x = 12, y = 4,
       label = "WHITNEY", band = true },
+    -- Keys and lights (4e) beside WHITNEY on the boards (stage y2-4).
+    { name = M.SHOW_KEYS, sprite = "SPRITE_GR_LARRY", x = 14, y = 3,
+      label = "KEYS", band = true, keys = true },
     { name = PIERS_NAME, sprite = PIERS_SPRITE, x = 11, y = 8,
       movement = V.UP, label = "PIERS", band = true },
     { name = "GR_VENUE_BARTENDER", sprite = "SPRITE_POKEFAN_M", palette = 11,
@@ -1246,8 +1283,10 @@ return function(mod)
     -- A PIERS who never heard the band busk is not waiting at the front: he
     -- crashes the opening set as a stranger and is placed from beat 100.
     local piers = M.piersFriend() or beat() >= 100
+    for _, a in ipairs(V.STAGE) do a.sprite = M.stageSprite(a.name) or a.sprite end
     return V.placeSet(V.MAP, V.STAGE, function(a)
       if a.name == PIERS_NAME then return band and piers end
+      if a.keys then return band and M.keys() ~= nil end
       return not a.band or band
     end)
   end
@@ -1532,8 +1571,8 @@ return function(mod)
 
   local AUDITION_EVENT = {
     "ROXIE: Heard all\nthree.\fLet's start the\naudition.",
-    "GENE: ONE! TWO!\nTHREE! CRASH!",
-    "BILLY: One, two,\nthree, four, five.",
+    "MAYLENE: ONE! TWO!\nSTRIKE!",
+    "INGO: Departing in\nfive. Four. Three.",
     "CASEY: E-LEC-\nTA-BUZZ!",
     "A pink singer\nhops onstage.",
     "JIGGLYPUFF:\nJiggly...",
@@ -1554,35 +1593,17 @@ return function(mod)
   }
 
   local CANDIDATE_DIALOGUE = {
+    -- Sheet 21 4e (approved 2026-11-10): MAYLENE and INGO in GENE's and
+    -- BILLY's places. Picking either is a hire, not a wrong answer.
     [GENE_NAME] = {
-      intro = {
-        "GENE: Loud wins.",
-        "I count in threes.\fHits harder.",
-      },
-      repeatIntro = { "GENE: Three beats.\fAll loud." },
-      clue = {
-        "GENE: My beat was\nONE-TWO-THREE.",
-        "Four taps?\fWasn't me.",
-      },
-      wrong = {
-        "GENE: You pick me?\fONE! TWO! THREE!",
-        "ROXIE: Only three.\fWe heard four.",
-      },
+      intro = { "MAYLENE: One. Two.\nSTRIKE! Like that." },
+      repeatIntro = { "MAYLENE: One. Two.\nSTRIKE! Like that." },
+      clue = { "MAYLENE: I count\nin threes. Always." },
     },
     [BILLY_NAME] = {
-      intro = {
-        "BILLY: Five-four.",
-        "Complex is better.",
-      },
-      repeatIntro = { "BILLY: Five-four.\fCount carefully." },
-      clue = {
-        "BILLY: I played\nfive-four.",
-        "Five taps per bar.\fNot four.",
-      },
-      wrong = {
-        "BILLY: Pick me?\fCount to five!",
-        "ROXIE: That's five\nWe heard four.",
-      },
+      intro = { "INGO: Five beats a\nbar. On time." },
+      repeatIntro = { "INGO: Five beats a\nbar. On time." },
+      clue = { "INGO: Five. Never\nfour. Never late." },
     },
     [CASEY_NAME] = {
       intro = {
@@ -1846,6 +1867,177 @@ return function(mod)
   M.NO_BACKER = { "ROXIE: Nobody's\nbacking us yet.", "Win somebody over.", "Anybody." }
   -- The approved ROUTE 36 hook's last two pages, after any first-backer line.
   M.HOOK_TAIL = { "There's a stage on\nROUTE 36.", "Bring 4 BADGES.\fThen we play." }
+
+  --------------------------------------------------------------------------
+  -- 4e, the bigger band (approved 2026-11-10, "approve revised band").
+  -- Drums: CASEY free, MAYLENE or INGO [PERSUASION 25]. Keys and lights:
+  -- ELESA or LARRY, never both, or nobody. Lines verbatim from the sheet
+  -- unless marked NEW. Existing saves read as CASEY and no fourth member.
+  --------------------------------------------------------------------------
+  M.DRUMS = {
+    casey = { id = "casey", name = "CASEY", sprite = "SPRITE_LASS", actor = CASEY_NAME,
+      soundcheck = { "CASEY: Four beats.", "Same cues on stage." },
+      debrief = "CASEY: My chant!\nOn a real stage!" },
+    maylene = { id = "maylene", name = "MAYLENE", sprite = "SPRITE_GR_MAYLENE", actor = GENE_NAME,
+      reply = "She's loud. Hire her.",
+      hired = { "ROXIE: ...She IS\nloud.", "Fine. Threes.\nWe'll play faster.",
+        "MAYLENE: Yes! I\nwon't hold back!" },
+      count = { "MAYLENE: ONE! TWO!", "STRIKE!" },
+      steady = { "PLAY LOUD", "COUNT FOUR" }, steadyLine = "MAYLENE drives it.",
+      soundcheck = { "MAYLENE: Three\nbeats. Hit hard." },
+      debrief = "MAYLENE: My hands\nhurt. Again!",
+      talk = { "MAYLENE: Ready.\nAre they ready?" } },
+    ingo = { id = "ingo", name = "INGO", sprite = "SPRITE_GR_INGO", actor = BILLY_NAME,
+      reply = "Different is good.",
+      hired = { "ROXIE: Five-four.\nI have to count?", "WHITNEY will love\nit. Fine. Hired.",
+        "INGO: All aboard." },
+      count = { "INGO: Departing in", "five. Four. Three." },
+      steady = { "COUNT FIVE", "PLAY LOUD" }, steadyLine = "INGO keeps time.",
+      soundcheck = { "INGO: Five beats.\nMind the gap." },
+      debrief = "INGO: We arrived\non time. Bravo.",
+      talk = { "INGO: Next stop:\nthe second verse." } },
+  }
+  M.ROUGH_LINE = "We stumble back." -- NEW: cue 3's rough reply for MAYLENE/INGO
+  M.DRUM_FAIL = { "ROXIE: No. My\nband, my ears.", "Four beats.\fFind them." }
+  function M.drum() return M.DRUMS[mod.save:get("drummer", "casey")] or M.DRUMS.casey end
+  function M.keys() return mod.save:get("keys", nil) end
+
+  M.ELESA, M.LARRY = "GR_ELESA", "GR_LARRY"
+  M.ELESA_MET = { "ELESA: A rock gig.\nLit by whom?", "...Nobody? Then it\nisn't a show yet." }
+  M.ELESA_AGAIN = { "ELESA: A rock gig.\nLit by whom?" }
+  M.ELESA_PASS = { "ELESA: You mean\nit. Good. I'm in.", "The lights are\nmine. All of them." }
+  M.ELESA_FAIL = { "ELESA: Flat. Come\nback with a spark." }
+  M.ELESA_BILL = { "ELESA: My name\nfirst. Then yes.", "ROXIE: HER name\nfirst? ...Fine." }
+  M.ELESA_STAGE = { "ELESA: Lights on\nmy count. Mine." }
+  M.LARRY_ASK1 = { "LARRY: I'm eating.", "Keys? In school.\nThat was long ago." }
+  M.LARRY_ASK2 = { "LARRY: You again.\nI have a shift." }
+  M.LARRY_PASS = { "LARRY: ...One.\nOn my lunch hour.", "Don't make it a\nthing." }
+  M.LARRY_FAIL = { "LARRY: No. Really.\nEnjoy your show." }
+  M.LARRY_STAGE = { "LARRY: I clock out\nat nine." }
+
+  -- Line-up tags (4e): each adds its lines; none replaces a show cue.
+  function M.allGirls()
+    local d = M.drum().id
+    return (d == "casey" or d == "maylene") and M.keys() ~= "larry"
+  end
+  function M.gymLeaders()
+    local n = 1 -- ROXIE
+    if M.wigOff() then n = n + 1 end
+    if M.drum().id == "maylene" then n = n + 1 end
+    if M.keys() == "elesa" then n = n + 1 end
+    return n
+  end
+  M.TAG_GIRLS_CROWD = { "An all-girl band!\nFinally!" }
+  M.TAG_GIRLS_ROXIE = { "ROXIE: Yeah, we\nnoticed. Count in." }
+  M.TAG_GYM_DOOR = { "DOOR: Three GYM\nLEADERS? Tonight?", "I should've\ncharged more." }
+  function M.girlsPiers()
+    return { (M.keys() and "PIERS: Four girls" or "PIERS: Three girls") .. "\nand more noise",
+      "than my whole\ntown. Respect." }
+  end
+  -- The soundcheck carries the drummer's own lines and every tag's.
+  function M.soundcheck()
+    local pages = {}
+    for _, p in ipairs(M.drum().soundcheck) do pages[#pages + 1] = p end
+    pages[#pages + 1] = "ROXIE: Now we can\nhear the bass."
+    local function add(list) for _, p in ipairs(list) do pages[#pages + 1] = p end end
+    if M.allGirls() and (M.drum().id ~= "casey" or M.keys()) then add(M.TAG_GIRLS_ROXIE) end
+    if M.drum().id == "ingo" then add({ "ROXIE: He bows\nafter every song." }) end
+    if M.drum().id == "maylene" then add({ "WHITNEY: She broke\na stick already!" }) end
+    if M.keys() == "larry" then
+      add({ "WHITNEY: The keys\nguy's in a tie!", "ROXIE: Leave him.\nHe's on his lunch." })
+    end
+    if M.keys() == "elesa" then add({ "ROXIE: Too bright!", "ELESA: Too dim." }) end
+    return pages
+  end
+  -- ELESA in the RADIO TOWER lobby, LARRY eating at the OLIVINE CAFE, from
+  -- the drummer joining until the show opens, while the chair is free.
+  -- Vanilla maps: the walkable fallback (cellForActor) picks a free cell.
+  M.ELESA_ACTOR = { name = M.ELESA, sprite = "SPRITE_GR_ELESA", x = 2, y = 6,
+    movement = MOVE_STANDING_DOWN, label = "ELESA" }
+  M.LARRY_ACTOR = { name = M.LARRY, sprite = "SPRITE_GR_LARRY", x = 6, y = 3,
+    movement = MOVE_STANDING_DOWN, label = "LARRY" }
+  function M.chairOpen()
+    local b = beat()
+    return b >= 80 and b < 100 and M.keys() == nil
+  end
+  function M.placeElesa()
+    return placeFeatureActor(RADIO_MAP, M.ELESA_ACTOR, M.chairOpen())
+  end
+  function M.placeLarry()
+    return placeFeatureActor(CAFE_MAP, M.LARRY_ACTOR, M.chairOpen() and not questFlag("larry_closed"))
+  end
+
+  -- Records the fourth member; both actors leave on the next map entry
+  -- (placeElesa / placeLarry), never in the middle of their own lines.
+  function M.join(id) mod.save:set("keys", id) end
+
+  -- ELESA: [PERFORMANCE 25], or first billing with no check (ROXIE resents
+  -- it). A failed check closes the check only; the billing way stays.
+  function M.talkElesa()
+    facePlayer(RADIO_MAP, M.ELESA)
+    local opener = questFlag("elesa_met") and M.ELESA_AGAIN or M.ELESA_MET
+    say(opener, function()
+      setQuestFlag("elesa_met")
+      local rows = {}
+      if not questFlag("elesa_check_closed") then
+        rows[#rows + 1] = M.stat("lights", "LIGHTS", "Light our show. Join the band.", "performance", 25)
+      end
+      rows[#rows + 1] = M.plain("bill", "BILLING", "Your name goes first.")
+      rows[#rows + 1] = M.plain("leave", "LEAVE", "Not now.")
+      M.menu("THE LIGHTS", rows, function(row, passed)
+        if row.id == "leave" then return end
+        if row.id == "bill" then
+          M.join("elesa"); setQuestFlag("elesa_first_billing")
+          return say(M.ELESA_BILL)
+        end
+        if not passed then
+          setQuestFlag("elesa_check_closed")
+          return say(M.ELESA_FAIL)
+        end
+        M.join("elesa")
+        say(M.ELESA_PASS)
+      end)
+    end)
+  end
+
+  -- LARRY: two plain refusals on two separate visits to the cafe, then
+  -- [PERSUASION 40], 5 easier per earlier ask (30). A fail closes him.
+  function M.talkLarry()
+    facePlayer(CAFE_MAP, M.LARRY)
+    local asks = tonumber(mod.save:get("larry_asks", 0)) or 0
+    local visit = tonumber(mod.save:get("cafe_visits", 0)) or 0
+    local last = tonumber(mod.save:get("larry_last_visit", -1)) or -1
+    if asks < 2 then
+      if visit == last then return say(asks >= 2 and M.LARRY_ASK2 or M.LARRY_ASK1) end
+      mod.save:set("larry_asks", asks + 1)
+      mod.save:set("larry_last_visit", visit)
+      return say(asks == 0 and M.LARRY_ASK1 or M.LARRY_ASK2)
+    end
+    if visit == last or not (tj and type(tj.openCheckMenu) == "function") then
+      return say(M.LARRY_ASK2)
+    end
+    say(M.LARRY_ASK2, function()
+      M.menu("LARRY", {
+        M.stat("ask", "ASK", "One song. That's all.", "persuasion", math.max(30, 40 - 5 * asks)),
+        M.plain("leave", "LEAVE", "Enjoy your lunch."),
+      }, function(row, passed)
+        if row.id ~= "ask" then return end
+        mod.save:set("larry_last_visit", visit)
+        if not passed then
+          setQuestFlag("larry_closed")
+          return say(M.LARRY_FAIL)
+        end
+        M.join("larry")
+        say(M.LARRY_PASS)
+      end)
+    end)
+  end
+
+  -- Concert view of the line-up (concert.lua).
+  function M.band()
+    local d = M.drum()
+    return { drummer = d, keys = M.keys(), original = d.id == "casey" and not M.keys() }
+  end
 
   local activePicker
   local function clearPicker()
@@ -2249,11 +2441,13 @@ return function(mod)
     local data = CANDIDATE_DIALOGUE[name]
     if not data then return end
     local b = beat()
+    local drum = M.drum()
     if b >= 80 then
-      if name == CASEY_NAME and b == 80 then
+      if name ~= drum.actor then return end
+      if b == 80 then
         return say(VENUE_START, function() setBeat(81); placeVenue(AUDITION_MAP) end)
       end
-      if name == CASEY_NAME then say(VENUE_OBJECTIVES[b] or data.joined) end
+      if drum.id == "casey" then say(VENUE_OBJECTIVES[b] or data.joined) else say(drum.talk) end
       return
     end
     if b == 60 then
@@ -2275,7 +2469,30 @@ return function(mod)
         for _, page in ipairs(VENUE_START) do pages[#pages+1] = page end
         return say(pages, function() finishDrummer(); setBeat(81); placeVenue(AUDITION_MAP) end)
       end
-      return say(data.wrong)
+      -- 4e: MAYLENE or INGO can be hired against ROXIE's ear [PERSUASION
+      -- 25]. A fail: ROXIE overrules and that candidate is closed. Without
+      -- Trainer Journey, ROXIE overrules as before; CASEY is her answer.
+      local id = name == GENE_NAME and "maylene" or "ingo"
+      local cand = M.DRUMS[id]
+      if questFlag("drum_closed_" .. id) or not (tj and type(tj.openCheckMenu) == "function") then
+        return say(M.DRUM_FAIL)
+      end
+      return M.menu("THE DRUMMER", {
+        M.stat("hire", "HIRE", cand.reply, "persuasion", 25),
+        M.plain("back", "BACK", "Let me think."),
+      }, function(row, passed)
+        if row.id ~= "hire" then return end
+        if not passed then
+          setQuestFlag("drum_closed_" .. id)
+          return say(M.DRUM_FAIL)
+        end
+        mod.save:set("drummer", id)
+        -- VENUE_START's first two pages are CASEY's; the rest is the plan.
+        local pages = {}
+        for _, p in ipairs(cand.hired) do pages[#pages + 1] = p end
+        for i = 3, #VENUE_START do pages[#pages + 1] = VENUE_START[i] end
+        say(pages, function() finishDrummer(); setBeat(81); placeVenue(AUDITION_MAP) end)
+      end)
     end
   end
 
@@ -2303,6 +2520,12 @@ return function(mod)
       end
       return say({ "WHITNEY: He wants\nour encore!" })
     end
+    -- 4e: the fourth chair and a drummer other than CASEY have one stage
+    -- line each (the sheet's "stage talk"); CASEY keeps hers.
+    if name == M.SHOW_KEYS then
+      return say(M.keys() == "elesa" and M.ELESA_STAGE or M.LARRY_STAGE)
+    end
+    if M.drum().id ~= "casey" then return say(M.drum().talk) end
     if b == 90 then return say({ "CASEY: Four beats.\fNo speeding up." }) end
     if b >= 110 then
       return say({ "CASEY: E-LEC-\nTA-BUZZ!", "We held the beat!" })
@@ -2345,7 +2568,14 @@ return function(mod)
         V.armPiers()
       end)
     end
-    say(friend and V.PIERS_BEAT or PIERS_BEAT)
+    -- 4e: after the show, an all-girl line-up (not the original three)
+    -- gets PIERS's respect too ("Three girls" when the fourth chair is empty).
+    local pages = {}
+    for _, p in ipairs(friend and V.PIERS_BEAT or PIERS_BEAT) do pages[#pages + 1] = p end
+    if b >= 110 and M.allGirls() and not M.band().original then
+      for _, p in ipairs(M.girlsPiers()) do pages[#pages + 1] = p end
+    end
+    say(pages)
   end
 
   -- ROXIE on the phone by the entrance. Her walk through the packed line is
@@ -2366,6 +2596,7 @@ return function(mod)
   function V.talkEntrance(actor)
     facePlayer(V.ENT, actor.name)
     if actor.label == "DOOR" then
+      if questFlag("venue_met") and M.gymLeaders() >= 3 then return say(M.TAG_GYM_DOOR) end
       return say(questFlag("venue_met") and V.DOOR_OPEN or V.DOOR_SHUT)
     end
     if actor.label == "TICKETS" then return say(V.TICKETS_LINE) end
@@ -2375,10 +2606,15 @@ return function(mod)
   function V.talkStage(actor)
     if actor.name == SHOW_ROXIE then return talkShowRoxie() end
     if actor.name == PIERS_NAME then return talkPiers() end
-    if actor.name == SHOW_WHITNEY or actor.name == SHOW_CASEY then
+    if actor.name == SHOW_WHITNEY or actor.name == SHOW_CASEY or actor.name == M.SHOW_KEYS then
       return talkShowMember(actor.name)
     end
     facePlayer(V.MAP, actor.name)
+    -- 4e: an all-girl line-up other than the original three gets its cheer.
+    if actor.label == "FAN" and M.allGirls() and not M.band().original
+        and questFlag("venue_dragged") then
+      return say(M.TAG_GIRLS_CROWD)
+    end
     say(actor.label == "BAR" and V.BAR_TALK or V.FAN_TALK)
   end
 
@@ -2441,10 +2677,13 @@ return function(mod)
         local host = ev.mapId == RADIO_MAP and RADIO_HOST or CAFE_HOST
         local roxie = ev.mapId == RADIO_MAP
           and VENUE_RADIO_ROXIE or VENUE_CAFE_ROXIE
-        for _, name in ipairs({ host, roxie }) do
+        local keys = ev.mapId == RADIO_MAP and M.ELESA or M.LARRY
+        for _, name in ipairs({ host, roxie, keys }) do
           local obj = objectNamed(world, ev.mapId, name)
           if hit(obj) then
             if name == host then talkVenueHost(ev.mapId, name)
+            elseif name == M.ELESA then M.talkElesa()
+            elseif name == M.LARRY then M.talkLarry()
             else talkVenueRoxie(ev.mapId, name) end
             return
           end
@@ -2461,7 +2700,7 @@ return function(mod)
         end
       elseif ev.mapId == SHOW_MAP then
         for _, name in ipairs({
-          SHOW_ROXIE, SHOW_WHITNEY, SHOW_CASEY, PIERS_NAME,
+          SHOW_ROXIE, SHOW_WHITNEY, SHOW_CASEY, PIERS_NAME, M.SHOW_KEYS,
         }) do
           local obj = objectNamed(world, SHOW_MAP, name)
           if hit(obj) then
@@ -2521,6 +2760,13 @@ return function(mod)
         addStatus(placeVenue(mapId))
       elseif mapId == RADIO_MAP or mapId == CAFE_MAP then
         addStatus(placeVenue(mapId))
+        if mapId == RADIO_MAP then
+          addStatus(M.placeElesa())
+        else
+          -- LARRY's asks must come on separate visits: count the visits.
+          mod.save:set("cafe_visits", (tonumber(mod.save:get("cafe_visits", 0)) or 0) + 1)
+          addStatus(M.placeLarry())
+        end
       elseif mapId == ECRUTEAK_MAP then
         addStatus(placeWooper())
       elseif mapId == OLIVINE_MAP then
@@ -2572,7 +2818,10 @@ return function(mod)
     -- knows the original three only: ROXIE, FEEDBACK in the wig, CASEY).
     billing = M.billing,
     piersFriend = function() return V.here() and M.piersFriend() end,
-    nativeOnly = function() return V.here() or M.wigOff() end,
+    -- 4e option A: any new member plays the built-in stage; the Cutscene
+    -- show stays for the original three.
+    nativeOnly = function() return V.here() or M.wigOff() or not M.band().original end,
+    band = M.band, soundcheck = M.soundcheck, roughLine = M.ROUGH_LINE,
     -- Before ROXIE is found at ROUTE 36, the Band Book points the way there.
     objective = function()
       if not V.here() or beat() ~= 90 or questFlag("venue_met") then return nil end

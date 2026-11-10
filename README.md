@@ -1,4 +1,4 @@
-# Gold Records — private 0.8.0 test
+# Gold Records — private 0.8.1 test
 
 Roxie starts a band out of spite and asks you to manage it. Find FEEDBACK in
 Goldenrod, recruit Casey in Ecruteak, win somebody over to back the band, and
@@ -22,8 +22,20 @@ its check menu with what they need, and each one changes the story:
   ROXIE's news. If PIERS never heard the band busk, he crashes the show as a
   stranger.
 
+- **The drummer (0.8.1).** CASEY is ROXIE's own answer. MAYLENE (loud, in
+  threes) or INGO (five beats, never late) can be hired against ROXIE's ear
+  with PERSUASION 25; a fail closes that one. The show's cues follow the
+  drummer.
+- **Keys and lights (0.8.1).** ELESA in the RADIO TOWER lobby (PERFORMANCE
+  25, or give her first billing) or LARRY eating at the OLIVINE CAFE (he says
+  no twice, on two visits; then PERSUASION 30). Not both, or nobody. Who is
+  in the band adds lines: an all-girl band, three GYM LEADERS, and each new
+  member's own. Any line-up other than the original three plays the
+  built-in stage.
+
 Without Trainer Journey the checked ways are absent and the story plays as
-before: battle FEEDBACK, the wig stays on, and busking wins PIERS.
+before: battle FEEDBACK, the wig stays on, CASEY drums, and busking wins
+PIERS. ELESA can still join by first billing.
 
 This build targets Gold, Silver and Crystal on gen1recomp 0.2.21 or newer.
 Validation includes automated checks and native desktop graphics fixtures,

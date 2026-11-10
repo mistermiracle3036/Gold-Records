@@ -12,6 +12,49 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.8.1
+
+**Updating from 0.4.3?** The band now gets a full story past the drummer, and
+you are a manager who decides things: who drums (CASEY, MAYLENE or INGO), who
+plays keys and lights (ELESA, LARRY or nobody), whether WHITNEY plays in her
+wig or under her own name, and who backs the band (the KIMONO GIRLS, the
+RADIO TOWER, the UNDERGROUND or PIERS after a busk). The first show follows,
+where PIERS challenges you for the encore: at a packed music venue on ROUTE 36
+with Johto Expanded, in NATIONAL PARK without it. ROXIE and PIERS have their
+own commissioned sprites, the show has a Band Book, manager cues and a
+playable encore, and Trainer Journey players earn XP and the BAND MANAGER
+profession. Every character answers on the current engine again.
+
+### Added: the bigger band
+- **The drummer.** MAYLENE and INGO now audition in GENE's and BILLY's places.
+  CASEY is still ROXIE's answer to the clue puzzle, but you can hire MAYLENE
+  (loud, in threes) or INGO (five beats, never late) against ROXIE's ear with
+  PERSUASION 25. If you fail, ROXIE overrules you and that one is closed. The
+  hired drummer stays in the DANCE THEATER and takes the stage.
+- **Keys and lights**, a fourth chair you can fill any time after the drummer
+  joins and before the show:
+  - ELESA in the RADIO TOWER lobby: PERFORMANCE 25, or promise her first
+    billing with no check (ROXIE is not pleased);
+  - LARRY, eating at the OLIVINE CAFE: he says no twice, on two separate
+    visits, then PERSUASION 30. A fail closes him.
+  ELESA or LARRY, never both, or nobody.
+- **The show follows the line-up.** MAYLENE and INGO count in their own way
+  and have their own steady answer on cue 3 (PLAY LOUD, COUNT FIVE), their
+  own soundcheck, debrief and stage lines, and the card names the drummer.
+  The keys player stands on stage with a line of their own.
+- **Lines for who is in the band**: an all-girl band gets a cheer from the
+  crowd, a word from ROXIE and PIERS's respect after the show; three GYM
+  LEADERS impress the DOOR; INGO, MAYLENE, LARRY and ELESA each bring a line
+  to the soundcheck. The original three keep today's lines.
+
+### Notes
+- A line-up other than ROXIE, FEEDBACK and CASEY plays on the built-in stage;
+  Crystal Cutscene's presentation knows only the original three.
+- Without Trainer Journey: CASEY drums, LARRY says no, and ELESA can still
+  join for first billing.
+- Still to come: LARRY's thank-you gift after the show, bond progress for
+  the new members, and the backers' own people in the crowd.
+
 ## 0.8.0
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer, and
