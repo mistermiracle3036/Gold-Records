@@ -12,6 +12,58 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.8.0
+
+**Updating from 0.4.3?** The band now gets a full story past the drummer, and
+you are a manager who decides things. Four venues turn ROXIE down; win a
+backer (the KIMONO GIRLS, the RADIO TOWER, the UNDERGROUND or PIERS after a
+busk) and the band plays its first show, where PIERS challenges you for the
+encore. With Johto Expanded installed the show is at a packed music venue on
+ROUTE 36; without it, in NATIONAL PARK. ROXIE and PIERS have their own
+commissioned sprites, the first show has a Band Book, manager cues and a
+playable encore, and Trainer Journey players earn XP and the BAND MANAGER
+profession. Every character answers on the current engine again.
+
+### Changed: the manager decides
+With Trainer Journey installed, the story's big calls are real skill checks,
+shown in Trainer Journey's check menu. Each one decides something.
+- **ROXIE asks.** After "How about managing me?" answer I'M IN or NOT YET.
+  NOT YET leaves her waiting in VIOLET.
+- **Reaching FEEDBACK.** Battle her with 3 BADGES as before, or sit in on her
+  set (PERFORMANCE 30) to get in without them. A failed sit-in closes that way.
+- **Her terms.** One show in the wig, or play as WHITNEY under her own name
+  (PERSUASION 30). A fail keeps the wig on for good. Her name goes on the
+  bill, the card and the stage, and ROXIE has something to say about it.
+- **Backers.** The ROUTE 36 stage needs one backer, and busking is no longer
+  the only way:
+  - the KIMONO GIRLS, if the showcase delights them (PERFORMANCE 35; it
+    replaces the old rule that certain Pokemon always delighted);
+  - the RADIO TOWER, if you pitch a spot before a venue (PERSUASION 30);
+  - the UNDERGROUND, if WHITNEY plays under her own name;
+  - PIERS, who backs the band once you busk in OLIVINE. Busking never closes,
+    so the story can always go on.
+  A failed check closes that backer. The first backer you land sets ROXIE's
+  news, and with two or more PIERS has heard of you.
+- **PIERS without the busk** is a stranger at ROUTE 36: he isn't waiting at
+  the front, he crashes the opening set with the park's lines.
+
+Without Trainer Journey the checked ways are simply absent: battle FEEDBACK,
+the wig stays on, busk for PIERS. That is the story as it was, and it still
+completes.
+
+### Removed
+- The four silent extra lines that skill checks used to add (ROXIE's first
+  meeting, the BASEMENT KING, the DANCE THEATER welcome back, PIERS's fame
+  opener as a hidden check). Checks are now the shown choices above.
+
+### Notes
+- Existing saves past these beats keep their story: FEEDBACK battled, the wig
+  on, and PIERS a backer if you had busked.
+- A show with WHITNEY under her own name plays on the built-in stage; Crystal
+  Cutscene's presentation knows the original line-up only.
+- Still to come from the same plan: the bigger band (MAYLENE, INGO, ELESA or
+  LARRY) and the backers' own people in the crowd.
+
 ## 0.7.6
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer:

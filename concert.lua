@@ -151,7 +151,7 @@ return function(mod, C)
       text("GOLD RECORDS",32,34)
       local place=opts.first.venue or "NATIONAL PARK"
       text(place,math.floor((160-Font.width(place))/2),48)
-      text("ROXIE / FEEDBACK",16,62)
+      text("ROXIE / "..(opts.first.billing or "FEEDBACK"),16,62)
       text("CASEY ON DRUMS",24,72)
       text(opts.first.outcome or "EARLIER SHOW",16,91)
       text(opts.first.preparation == "UNRECORDED" and "Old set: unknown"
@@ -203,13 +203,14 @@ return function(mod, C)
   register("GRConcert", function(game,opts)
     local state={game=game,kind="stage",isOpaque=true,valid=opts.valid,
       mode=opts.mode,prep=opts.prep,step=1,choice=1,phase="cue",t=0,
-      rough=0,paused=false,sprites=makeSprites(game),venue=opts.venue}
+      rough=0,paused=false,sprites=makeSprites(game),venue=opts.venue,
+      billing=opts.billing or "FEEDBACK"}
     function state:exit() leave(self) end
     function state:finish()
       if not current(self) then pop(self); return end
       local result={outcome=self.rough==0 and "HELD THE BEAT" or "FOUND OUR FEET",
         sailors=self.prep.sailors,theater=self.prep.theater,basement=self.prep.basement,
-        billing="FEEDBACK",rough=self.rough}
+        billing=self.billing,rough=self.rough}
       if pop(self) then opts.done(result) end
     end
     function state:update(dt)
@@ -273,7 +274,7 @@ return function(mod, C)
       for _,x in ipairs({63,95}) do rect(x,32,1,18,ink);rect(x-4,31,9,2,gold) end
       rect(70,34+bob,7,1,cream);rect(84,34-bob,7,1,cream)
       rect(40,57,10,9,cream);rect(75,57,10,9,cream);rect(109,57,10,9,cream)
-      text("R",41,58);text("C",76,58);text("F",110,58)
+      text("R",41,58);text("C",76,58);text(self.billing:sub(1,1),110,58)
       for _,x in ipairs({20,50,80,110}) do
         local who=x==80 and "larry"
           or self.prep.sailors and (x==20 or x==110) and "sailor" or "fan"
@@ -296,7 +297,9 @@ return function(mod, C)
           or self.step==2 and "FAN: Let it ring!" or "KID: Play louder!",8,112)
         text("A: NEXT  B: PAUSE",8,128)
       else
-        text(step[1],8,96);text(step[2],8,107)
+        -- Cue 2 is the bassist's: named as she is billed (sheet 21 4b).
+        local title=self.billing~="FEEDBACK" and step[1]:gsub("^FEEDBACK:",self.billing..":") or step[1]
+        text(title,8,96);text(step[2],8,107)
         text((self.choice==1 and "▶" or " ")..step[3],8,119)
         text((self.choice==2 and "▶" or " ")..step[4],8,131)
       end
@@ -325,6 +328,12 @@ return function(mod, C)
     local prep=prepared()
     local valid=C.guard()
     local venue=C.atVenue and C.atVenue() or false
+    -- Sheet 21: PIERS is a friend only at ROUTE 36 and only if he heard the
+    -- busk; a stranger crashes with the park's lines. The Cutscene show
+    -- knows the original line-up only, so any change plays the native stage.
+    local friend=C.piersFriend and C.piersFriend() or false
+    local native=(C.nativeOnly and C.nativeOnly()) or venue
+    local billing=C.billing and C.billing() or "FEEDBACK"
     local function done(result)
       if not valid() or not permitted() then return end
       local latest=record()
@@ -336,7 +345,7 @@ return function(mod, C)
         result.venue=C.place and C.place() or nil
         latest.opening=true;latest.first=result;write(latest)
         C.setBeat(100);C.refresh();C.opened()
-        if venue then
+        if friend then
           -- NEW lines (2026-10-24 build): PIERS invited them, so no "who asked".
           C.say({"ROXIE: Still not\na chance.","PIERS: Then win\nit off me.","Prepare your team.\nThen talk to me."})
         else
@@ -349,14 +358,22 @@ return function(mod, C)
     end
     -- Crystal Cutscene's livePerformance v1 stages national_park and
     -- olivine_harbor only, so a ROUTE 36 set always uses the native stage.
-    if not venue and bridge.start(mode,prep,valid,done) then return end
-    push("GRConcert",{mode=mode,prep=prep,valid=valid,done=done,venue=venue})
+    if not native and bridge.start(mode,prep,valid,done) then return end
+    push("GRConcert",{mode=mode,prep=prep,valid=valid,done=done,venue=friend,billing=billing})
   end
   local function debrief()
     -- Developer, 2026-10-24: at ROUTE 36 only; the park keeps its line.
     local opener=C.atVenue and C.atVenue() and "ROXIE: First real\nstage. Ours now."
       or "ROXIE: We made\nour own stage."
-    C.say({opener,"WHITNEY: FEEDBACK\non the poster!","One name that's\njust for music.","CASEY: My chant!\nOn a real stage!","PIERS: Your band.\nKeep that sound.","You keep the\nFIRST SHOW card.","We pack the amps.\nThe path is clear.","Visit VIOLET for\nyour BAND BOOK."},function()
+    local pages={opener}
+    -- Her two FEEDBACK-poster pages only fit the wig; under her own name
+    -- they are left out (sheet 21 4b) rather than reworded here.
+    if not (C.billing and C.billing()=="WHITNEY") then
+      pages[#pages+1]="WHITNEY: FEEDBACK\non the poster!"
+      pages[#pages+1]="One name that's\njust for music."
+    end
+    for _,p in ipairs({"CASEY: My chant!\nOn a real stage!","PIERS: Your band.\nKeep that sound.","You keep the\nFIRST SHOW card.","We pack the amps.\nThe path is clear.","Visit VIOLET for\nyour BAND BOOK."}) do pages[#pages+1]=p end
+    C.say(pages,function()
       local r=record()
       if not r or not r.encore then return end
       r.keepsake=true;r.debrief=true;write(r)

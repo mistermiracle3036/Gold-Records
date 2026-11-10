@@ -26,6 +26,13 @@ package.preload["src.core.gen2.Happiness"] = function()
   return H
 end
 
+-- Crystal's own menu, used when Trainer Journey is absent. The test picks a
+-- row by its word through pickWord() below.
+local lastMenu
+package.preload["src.ui.gen2.ScriptMenu"] = function()
+  return { new = function(game, opts) lastMenu = { opts = opts }; return lastMenu end }
+end
+
 package.preload["src.core.gen2.Clock"] = function()
   return { weekday = function() return mockDay end }
 end
@@ -289,11 +296,15 @@ check("open failure no credit",state.beat==81 and not state.dance_completed_v1)
 local mon={species="EEVEE",hp=10,happiness=70};mod.game.save.party={mon}
 sayTo("DANCE_THEATER","GR_DANCE_HOST");done();partyPicker.onChoose(1,mon);done(false)
 check("aborted performance no friendship",mon.happiness==70)
+-- Sheet 21 4d: delight is a [PERFORMANCE 35] check, not the species. With
+-- no Trainer Journey there is no check: a polite showcase, no friendship.
+sayTo("DANCE_THEATER","GR_DANCE_HOST");done();partyPicker.onChoose(1,mon)
+check("no TJ: polite, no check menu",lastScript.rows[1][2]:find("unusual dance",1,true)~=nil)
+done()
+check("showcase completes and advances",mon.happiness==70 and state.beat==82 and state.dance_completed_v1)
 sayTo("DANCE_THEATER","GR_DANCE_HOST");done();partyPicker.onChoose(1,mon);done()
-check("qualifying completed reward",mon.happiness==73 and state.beat==82 and state.dance_completed_v1)
-sayTo("DANCE_THEATER","GR_DANCE_HOST");done();partyPicker.onChoose(1,mon);done()
-check("repeat bounded",mon.happiness==73)
-state.dance_friendship_v1=nil;sayTo("DANCE_THEATER","GR_DANCE_HOST");done();partyPicker.onChoose(1,mon)
+check("repeat stays polite",mon.happiness==70)
+sayTo("DANCE_THEATER","GR_DANCE_HOST");done();partyPicker.onChoose(1,mon)
 mod.game.save.party={{species="EEVEE",happiness=70}};done()
 check("participant replacement not rewarded",not state.dance_friendship_v1)
 -- Stale picker never pops newer screen.
@@ -400,7 +411,7 @@ local function queued() return lastScript and lastScript.rows[1][2] or "" end
 for _,k in ipairs({"first_show","busk","show_stage","venue_dragged","venue_met"}) do state[k]=nil end
 mod.game.save.player.badges={a=true,b=true,c=true,d=true}
 state.beat=84;enter("GOLDENROD_UNDERGROUND");sayTo("GOLDENROD_UNDERGROUND","GR_WHITNEY")
-check("unbusked hook sends you to busk",queued():find("busk in\nOLIVINE first",1,true)~=nil)
+check("no backer: ROXIE says nobody backs us",queued():find("Nobody's\nbacking us yet.",1,true)~=nil)
 done();check("hook still assigns the show",state.beat==90)
 enter(VE)
 check("packed line, no ROXIE before a busk",not findObj(VE,"GR_VENUE_PHONE_ROXIE")
@@ -469,7 +480,8 @@ check("backlog paid when Trainer Journey appears", next(state.tj_pending) == nil
 paid, profs = {}, {}; refuseNext = true
 for _, k in ipairs({ "first_show", "show_stage", "venue_dragged", "venue_met" }) do state[k] = nil end
 state.beat = 0; enter("VIOLET_CITY"); sayTo("VIOLET_CITY", "GR_ROXIE")
-check("TJ API 2 check adds ROXIE's line", queued():find("one they talk", 1, true) ~= nil)
+-- Sheet 21: the four silent flavour checks are gone; checks are shown.
+check("no silent flavour line on ROXIE's intro", queued():find("one they talk", 1, true) == nil)
 done(); party, battle = engage(actor("VIOLET_CITY", "GR_ROXIE"), "JANINE")
 emit("battle.ended", { result = "win", battle = battle })
 check("profession paid on the win", #profs == 1 and profs[1] == "rock_star|gold_records:roxie_battle")
@@ -480,6 +492,100 @@ check("retry pays the story stage", paid[1] == "gold_records/band_story:hired"
   and next(state.tj_pending) == nil)
 enter("VIOLET_CITY"); check("paid once", #paid == 1)
 installedMods.trainer_journey = nil; emit("game.ready", {})
+-- Sheet 21 (REQUESTS 692/706): the manager decides.
+local checkMenu
+local function pick(id, passed)            -- Trainer Journey's shown check menu
+  local m = assert(checkMenu, "no check menu"); checkMenu = nil
+  for _, r in ipairs(m.rows) do if r.id == id then return m.onChoose(r, { passed = passed }) end end
+  error("no row " .. id)
+end
+local function pickWord(word)              -- Crystal's own menu, no Trainer Journey
+  local m = assert(lastMenu, "no menu"); lastMenu = nil
+  for i, item in ipairs(m.opts.header.items) do if item == word then return m.opts.onChoose(i) end end
+  error("no item " .. word)
+end
+for _, k in ipairs({ "first_show", "show_stage", "venue_dragged", "venue_met", "backers", "backers_closed",
+    "first_backer", "whitney_billing", "feedback_way", "sit_in_closed", "roxie_heard_name", "busk" }) do
+  state[k] = nil
+end
+mod.game.save.player.badges = { a = true }
+
+-- 4a, without Trainer Journey: Crystal's own menu asks.
+state.beat = 20; enter("VIOLET_CITY"); sayTo("VIOLET_CITY", "GR_ROXIE")
+check("4a: the offer is asked", queued():find("How about managing", 1, true) ~= nil); done()
+pickWord("NOT YET")
+check("4a: NOT YET writes nothing", state.beat == 20 and queued():find("Think fast", 1, true) ~= nil); done()
+sayTo("VIOLET_CITY", "GR_ROXIE"); done(); pickWord("I'M IN")
+check("4a: I'M IN hears the rest", queued():find("You're hired", 1, true) ~= nil); done()
+check("4a: hired", state.beat == 30)
+
+installedMods.trainer_journey = { id = "trainer_journey", exports = { trainer_journey = {
+  api_version = 2, progression_version = 1,
+  registerProfession = function() return true end, registerAccomplishment = function() return true end,
+  registerSkillReward = function() return true end,
+  awardAccomplishment = function() return { awarded = 1 } end, awardSkillReward = function() return { awarded = 1 } end,
+  awardProfessionOnce = function() return { ok = true } end,
+  leanTradition = function() end, leanInnovation = function() end,
+  openCheckMenu = function(opts) checkMenu = opts; return true end,
+} } }
+emit("game.ready", {})
+
+-- 4b, reaching FEEDBACK under 3 BADGES: [PERFORMANCE 30]; a fail closes it.
+-- (Earlier sections left WHITNEY standing there; start the room fresh.)
+for i = #mapObjects.GOLDENROD_UNDERGROUND, 1, -1 do mapObjects.GOLDENROD_UNDERGROUND[i] = nil end
+enter("GOLDENROD_UNDERGROUND"); sayTo("GOLDENROD_UNDERGROUND", "GR_FEEDBACK"); done()
+check("4b: sit-in offered", checkMenu and checkMenu.rows[1].stat == "performance" and checkMenu.rows[1].gate == 30)
+pick("sitin", false)
+check("4b: sit-in fail closes it", queued():find("Get BADGES", 1, true) ~= nil and state.sit_in_closed); done()
+sayTo("GOLDENROD_UNDERGROUND", "GR_FEEDBACK"); done()
+check("4b: closed means no menu", checkMenu == nil)
+state.sit_in_closed = nil
+sayTo("GOLDENROD_UNDERGROUND", "GR_FEEDBACK"); done(); pick("sitin", true)
+check("4b: sit-in pass", queued():find("You can follow", 1, true) ~= nil); done()
+check("4b: reveal follows at once", state.beat == 40 and queued():find("You got me", 1, true) ~= nil); done()
+check("4b: her terms", checkMenu and checkMenu.rows[2].stat == "persuasion" and checkMenu.rows[2].gate == 30)
+pick("name", true)
+check("4b: wig off", queued():find("name on the bill", 1, true) ~= nil); done()
+check("4b: billed as WHITNEY", state.whitney_billing == "WHITNEY" and state.beat == 60
+  and state.feedback_way == "sit_in")
+enter("VIOLET_CITY"); sayTo("VIOLET_CITY", "GR_ROXIE")
+check("4b: ROXIE hears it once", queued():find("GYM\nLEADER on bass", 1, true) ~= nil); done()
+sayTo("VIOLET_CITY", "GR_ROXIE")
+check("4b: only once", queued():find("GYM\nLEADER", 1, true) == nil); done()
+
+-- 4d, backers: KIMONO GIRLS by [PERFORMANCE 35], RADIO by [PERSUASION 30],
+-- the UNDERGROUND for WHITNEY under her own name.
+local dancer = { species = "RATTATA", hp = 10, happiness = 70 }; mod.game.save.party = { dancer }
+state.beat = 81; enter("DANCE_THEATER"); sayTo("DANCE_THEATER", "GR_DANCE_HOST"); done()
+partyPicker.onChoose(1, dancer)
+check("4d: showcase is a check", checkMenu and checkMenu.rows[1].gate == 35); pick("dance", true)
+check("4d: delight and the backing", queued():find("We will send them", 1, true) ~= nil); done()
+check("4d: KIMONO back the band", dancer.happiness == 73 and state.backers.kimono
+  and state.first_backer == "kimono" and state.beat == 82)
+enter("RADIO_TOWER_1F"); sayTo("RADIO_TOWER_1F", "GR_RADIO_HOST"); done()
+check("4d: radio pitch", checkMenu and checkMenu.rows[1].stat == "persuasion"); pick("pitch", true)
+check("4d: radio spot", queued():find("Tonight at six", 1, true) ~= nil); done()
+check("4d: RADIO backs, stop advances", state.backers.radio and state.beat == 83)
+state.beat = 84; enter("GOLDENROD_UNDERGROUND"); sayTo("GOLDENROD_UNDERGROUND", "GR_WHITNEY")
+check("4d: UNDERGROUND backs WHITNEY", queued():find("yes if it's me", 1, true) ~= nil
+  and queued():find("The dancers", 1, true) ~= nil and queued():find("No way", 1, true) == nil); done()
+check("4d: three backers", state.backers.underground and state.beat == 90)
+
+-- The stage needs a backer, not a busk; PIERS never heard them, so he is a stranger.
+mod.game.save.player.badges = { a = true, b = true, c = true, d = true }
+enter(VE); check("4d: no busk, still the phone", findObj(VE, "GR_VENUE_PHONE_ROXIE") ~= nil)
+sayTo(VE, "GR_VENUE_PHONE_ROXIE"); done()
+check("4d: stranger PIERS, door knows you", state.venue_met == true)
+enter(VM)
+check("4d: no stranger at the front", not findObj(VM, "GR_PIERS") and findObj(VM, "GR_SHOW_ROXIE"))
+sayTo(VM, "GR_SHOW_ROXIE"); select("SOUNDCHECK"); finishSet(false, false); done()
+sayTo(VM, "GR_SHOW_ROXIE"); select("OPENING SET"); finishSet(false, true)
+check("4d: stranger crashes", queued():find("Who asked", 1, true) ~= nil); done()
+check("4b: billed on the record", state.first_show.first.billing == "WHITNEY")
+sayTo(VM, "GR_PIERS")
+check("4d: fame with two or more backers", queued():find("three towns over", 1, true) ~= nil); done()
+installedMods.trainer_journey = nil; emit("game.ready", {})
+
 -- REQUESTS 384: Pokemon in the world are anima-nel colour walkers.
 for _, s in ipairs({ "SPRITE_GR_WOOPER", "SPRITE_GR_JIGGLYPUFF" }) do
   local def = registeredSprites[s]

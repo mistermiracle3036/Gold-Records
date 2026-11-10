@@ -1,8 +1,29 @@
-# Gold Records — private 0.7.1 test
+# Gold Records — private 0.8.0 test
 
-Roxie starts a band out of spite and appoints you manager. Find FEEDBACK in
-Goldenrod, recruit Casey in Ecruteak, find somewhere to play, and make the first
-National Park show happen. No other mod is required.
+Roxie starts a band out of spite and asks you to manage it. Find FEEDBACK in
+Goldenrod, recruit Casey in Ecruteak, win somebody over to back the band, and
+make the first show happen: on ROUTE 36's music venue with Johto Expanded, in
+National Park without it. No other mod is required.
+
+## The manager decides (0.8.0)
+
+With Trainer Journey installed, the big calls are real skill checks, shown in
+its check menu with what they need, and each one changes the story:
+
+- **The offer.** ROXIE asks; answer I'M IN or NOT YET (she waits).
+- **Reaching FEEDBACK.** Beat her with 3 BADGES, or sit in on her set with
+  PERFORMANCE 30 and skip the BADGES. A failed sit-in closes that way.
+- **Her terms.** One show in the wig, or PERSUASION 30 to have her play as
+  WHITNEY under her own name. A fail keeps the wig on for good.
+- **Backers.** The band needs one backer for the ROUTE 36 stage: PIERS (busk
+  in OLIVINE; never closes), the KIMONO GIRLS (a showcase with PERFORMANCE 35),
+  the RADIO TOWER (PERSUASION 30), or the UNDERGROUND (only for WHITNEY under
+  her own name). A failed check closes that backer. The first backer sets
+  ROXIE's news. If PIERS never heard the band busk, he crashes the show as a
+  stranger.
+
+Without Trainer Journey the checked ways are absent and the story plays as
+before: battle FEEDBACK, the wig stays on, and busking wins PIERS.
 
 This build targets Gold, Silver and Crystal on gen1recomp 0.2.21 or newer.
 Validation includes automated checks and native desktop graphics fixtures,
@@ -43,9 +64,9 @@ and do not rewrite the first-show record. Old Piers wins need only the new encor
 
 - The Dance Theater host remains available. Cancelling does not perform or
   advance anything. At the initial venue stop, speak to local Roxie to explicitly
-  skip; you can return later. The first completed qualifying showcase grants
-  friendship to its actual participating Pokémon once per save. Nonqualifying
-  showcases still count as performances. Old Trainer Journey tags are preserved.
+  skip; you can return later. A delighted showcase (the PERFORMANCE 35 check)
+  grants friendship to its participating Pokémon once per save; a polite one
+  still counts as a performance. Old Trainer Journey tags are preserved.
 - The Olivine sailor pays $300 and party friendship once per **30 saved-playtime
   minutes**, not once per calendar day. The engine exposes no absolute game date.
   Existing buskers start this cooldown on their first visit after updating.
@@ -61,8 +82,8 @@ story is one accomplishment worth 500 XP, paid in stages as ROXIE, FEEDBACK
 and CASEY join, the first set plays and PIERS is beaten. The BASEMENT KING is a
 small one (25 XP). The DANCE THEATER showcase and the first busk teach
 PERFORMANCE (2 and 3 points). The `rock_star` profession id is kept; it shows
-as BAND MANAGER. Skill checks only add flavour lines and never block the
-story. A reward that cannot be paid yet (no trainer made, Trainer Journey
+as BAND MANAGER. Skill checks are the shown choices above; every one has an
+unchecked way that keeps the story moving. A reward that cannot be paid yet (no trainer made, Trainer Journey
 missing) waits and is paid once on a later load or map entry. The current
 chapter still cannot earn the ten-point LEGEND threshold alone. Contest/Court flavor stops remain optional and recover when removed.
 There is no Quest System journal adapter or Channel news publisher. Crystal

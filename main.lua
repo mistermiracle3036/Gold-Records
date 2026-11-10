@@ -10,9 +10,10 @@
 local Runtime = require("src.mods.Runtime")
 local Happiness = require("src.core.gen2.Happiness")
 local BugContest = require("src.core.gen2.BugContest")
+local ScriptMenu = require("src.ui.gen2.ScriptMenu")
 
 return function(mod)
-  local VERSION = "0.7.6"
+  local VERSION = "0.8.0"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
 
@@ -267,13 +268,6 @@ return function(mod)
     if not tj then return end
     local fn = direction == "tradition" and tj.leanTradition or tj.leanInnovation
     pcall(fn, weight, MOD_ID .. ":" .. tag)
-  end
-
-  -- Flavour lines only: a failed or unavailable check changes nothing.
-  local function tjCheck(skill, gate)
-    if not tj then return false end
-    local ok, result = pcall(tj.evaluateCheck, skill, gate)
-    return ok and type(result) == "table" and result.passed == true
   end
 
   mod.events:on("map.entered", function()
@@ -1001,6 +995,7 @@ return function(mod)
   -- added only after the opening set, so his interruption is a real arrival.
   --------------------------------------------------------------------------
   local V = {} -- the ROUTE 36 venue state; its section below fills it
+  local M = {} -- the manager's decisions (sheet 21); filled beside say()
   local showSpawnIds = {}
   local SHOW_ACTORS = {
     { name = SHOW_ROXIE, sprite = ROXIE_SPRITE, x = 10, y = 44,
@@ -1233,7 +1228,8 @@ return function(mod)
   function V.placeEntrance()
     if not V.ready() then return nil end
     local known = questFlag("venue_met")
-    local phone = V.here() and beat() == 90 and V.busked() and not known
+    -- One backer gets the band onto the stage (sheet 21, 4d).
+    local phone = V.here() and beat() == 90 and M.backerCount() > 0 and not known
       and badgeCount(mod.world.game) >= SHOW_BADGE_GATE
     return V.placeSet(V.ENT, V.ENTRANCE, function(a)
       if a.phone then return phone end
@@ -1247,7 +1243,11 @@ return function(mod)
     local band = V.here() and beat() >= 90
       and not (concert and concert.departed())
       and (questFlag("venue_met") or questFlag("venue_dragged"))
+    -- A PIERS who never heard the band busk is not waiting at the front: he
+    -- crashes the opening set as a stranger and is placed from beat 100.
+    local piers = M.piersFriend() or beat() >= 100
     return V.placeSet(V.MAP, V.STAGE, function(a)
+      if a.name == PIERS_NAME then return band and piers end
       return not a.band or band
     end)
   end
@@ -1660,12 +1660,6 @@ return function(mod)
     "Bring 4 BADGES.\fThen we play.",
   }
 
-  V.HOOK_UNBUSKED = { -- NEW: the stage waits for one busk
-    "ROXIE: Fine.",
-    "Nobody's heard us\nplay yet.",
-    "Let's go busk in\nOLIVINE first.",
-  }
-
   V.HOOK_AFTER_BUSK = {
     "ROXIE: Hey!", -- NEW opener; the rest is the approved hook
     "Someone heard us\nbusk in OLIVINE.",
@@ -1729,13 +1723,129 @@ return function(mod)
     return ok
   end
 
-  local DANCERS = {
-    BELLOSSOM = true, EEVEE = true,
-    VAPOREON = true, JOLTEON = true, FLAREON = true,
-    ESPEON = true, UMBREON = true,
-    POLIWAG = true, POLIWHIRL = true, POLIWRATH = true, POLITOED = true,
-    HITMONTOP = true,
+  --------------------------------------------------------------------------
+  -- The manager decides (quest clean-up sheet 21, developer-approved
+  -- 2026-11-10). Every check is a real Trainer Journey check, shown in its
+  -- own menu (AUTHOR_API.md "Shared social-check UI"): a row carries its
+  -- word, its skill and gate, and the reply the player says; TJ reads the
+  -- skill live and hands back check.passed. Without Trainer Journey the
+  -- checked rows are absent and the plain ones fall back to Crystal's own
+  -- ScriptMenu, so today's story still completes. Kept in one table: the
+  -- main chunk sits near Lua's 200-local cap.
+  --------------------------------------------------------------------------
+  M.SCREEN = "GRChoice"
+  mod.content.screens:register(M.SCREEN, { new = function(game, opts)
+    local labels = {}
+    for i, row in ipairs(opts.rows) do labels[i] = row.action end
+    local menu
+    menu = ScriptMenu.new(game, { title = opts.title, style = "vertical",
+      header = { left = 0, top = 5, right = 19, bottom = math.min(17, 7 + #labels * 2),
+        dataFlags = 0xc0, cursor = 1, items = labels },
+      onChoose = function(index)
+        if game.stack:top() == menu then game.stack:pop() end
+        if index == 0 then opts.onCancel() else opts.onChoose(opts.rows[index]) end
+      end,
+    })
+    return menu
+  end })
+
+  function M.plain(id, word, reply) return { id = id, kind = "plain", action = word, reply = reply } end
+  function M.stat(id, word, reply, skill, gate)
+    return { id = id, kind = "stat", action = word, reply = reply, stat = skill, gate = gate }
+  end
+
+  -- rows: plain and stat rows; onPick(row, passed). Stat rows are dropped
+  -- without Trainer Journey; a menu with nothing but LEAVE is not opened.
+  function M.menu(title, rows, onPick, onCancel)
+    onCancel = onCancel or function() end
+    if tj and type(tj.openCheckMenu) == "function" then
+      local called, ok, err = pcall(tj.openCheckMenu, {
+        game = mod.game, title = title, rows = rows, owner = MOD_ID,
+        onChoose = function(row, check)
+          if row then onPick(row, row.kind ~= "stat" or (check and check.passed == true)) end
+        end,
+        onCancel = onCancel,
+      })
+      if called and ok then return true end
+      report("GR CHECK MENU\n%s", tostring(called and err or ok))
+    end
+    local plainRows = {}
+    for _, r in ipairs(rows) do if r.kind ~= "stat" then plainRows[#plainRows + 1] = r end end
+    local pushed, why = pcall(mod.ui.push, mod.game, M.SCREEN, { title = title, rows = plainRows,
+      onChoose = function(row) onPick(row, true) end, onCancel = onCancel })
+    if not pushed then report("GR MENU\n%s", tostring(why)) end
+    return pushed
+  end
+
+  -- Saved facts. Existing saves past these beats read as today's story:
+  -- FEEDBACK battled, the wig on.
+  function M.billing() return mod.save:get("whitney_billing", "FEEDBACK") end
+  function M.wigOff() return M.billing() == "WHITNEY" end
+
+  -- Backers (4d): who gets the band onto the ROUTE 36 stage. PIERS backs
+  -- whoever has busked in OLIVINE (never closes); KIMONO and RADIO are won
+  -- or closed by one check; the UNDERGROUND backs WHITNEY under her name.
+  function M.backer(id)
+    if id == "piers" then return V.busked() end
+    local b = mod.save:get("backers", nil)
+    return type(b) == "table" and b[id] == true
+  end
+  function M.closed(id)
+    local c = mod.save:get("backers_closed", nil)
+    return type(c) == "table" and c[id] == true
+  end
+  function M.win(id)
+    if id ~= "piers" then
+      local b = mod.save:get("backers", nil)
+      if type(b) ~= "table" then b = {} end
+      b[id] = true
+      mod.save:set("backers", b)
+    end
+    if mod.save:get("first_backer", nil) == nil then mod.save:set("first_backer", id) end
+  end
+  function M.close(id)
+    local c = mod.save:get("backers_closed", nil)
+    if type(c) ~= "table" then c = {} end
+    c[id] = true
+    mod.save:set("backers_closed", c)
+  end
+  function M.backerCount()
+    local n = 0
+    for _, id in ipairs({ "piers", "kimono", "radio", "underground" }) do
+      if M.backer(id) then n = n + 1 end
+    end
+    return n
+  end
+  -- A save that busked before 0.8.0 recorded no first backer: PIERS it is.
+  function M.firstBacker()
+    return mod.save:get("first_backer", nil) or (V.busked() and "piers") or nil
+  end
+  -- PIERS is a friend at the door only if he heard the band busk; else he
+  -- crashes the show as a stranger, with the park's lines (sheet 4d, D4).
+  function M.piersFriend() return M.backer("piers") end
+
+  -- New lines, verbatim from sheet 21 section 6 (approved 2026-11-10).
+  M.NOT_YET = { "ROXIE: Think fast.", "Quiet's winning." }
+  M.SIT_PASS = { "FEEDBACK: Huh.", "You can follow.", "No BADGES. Good\nears, though." }
+  M.SIT_FAIL = { "FEEDBACK: Off the\nbeat. Get BADGES." }
+  M.NAME_PASS = { "WHITNEY: No wig?", "Out loud?", "...They'd see me\nmess up.",
+    "Okay. Okay! My\nname on the bill.", "The wig was itchy\nanyway." }
+  M.NAME_FAIL = { "WHITNEY: Nope!", "The wig stays." }
+  M.ROXIE_HEARS = { "ROXIE: A GYM\nLEADER on bass.", "That sells\ntickets. Ugh." }
+  M.KIMONO_BACKS = { "KIMONO GIRL:\nOur guests will", "hear of you.", "We will send them." }
+  M.RADIO_PASS = { "STAFF: Announce a\nshow with no hall?", "...It would fill\nthe hall. Clever.",
+    "One spot.", "Tonight at six." }
+  M.RADIO_FAIL = { "STAFF: Venue\nfirst. Policy." }
+  M.UNDER_BACKS = { "WHITNEY: He says\nyes if it's me.", "It's me now.", "So... yes?",
+    "ROXIE: Your room's\ntoo small. Bring", "your crowd to\nROUTE 36." }
+  M.HOOK_FIRST = {
+    kimono = { "ROXIE: The dancers\nsent a crowd.", "Polite people.", "We'll fix that." },
+    radio = { "ROXIE: We're on\nthe radio!", "Now JOHTO has to\nshow up." },
+    underground = { "ROXIE: WHITNEY's\nfans are coming.", "All of them.", "Duck." },
   }
+  M.NO_BACKER = { "ROXIE: Nobody's\nbacking us yet.", "Win somebody over.", "Anybody." }
+  -- The approved ROUTE 36 hook's last two pages, after any first-backer line.
+  M.HOOK_TAIL = { "There's a stage on\nROUTE 36.", "Bring 4 BADGES.\fThen we play." }
 
   local activePicker
   local function clearPicker()
@@ -1761,22 +1871,45 @@ return function(mod)
       prompt = "choose",
       onChoose = function(_index, mon)
         if not close() or not mon then return end
-        local graceful = DANCERS[mon.species] == true
-        say(graceful and DANCE_DELIGHT or DANCE_POLITE, function()
-          local present = false
-          for _, member in ipairs(game.save.party or {}) do
-            if member == mon then present = true end
+        -- 4d: delight, not politeness, is a shown [PERFORMANCE 35] check
+        -- (it replaced the old species auto-delight). It is asked once: a
+        -- pass makes the KIMONO GIRLS a backer, a fail closes them. Later
+        -- showcases replay the answer. Without Trainer Journey: polite.
+        local function finish(graceful, backs)
+          local pages = {}
+          for _, p in ipairs(graceful and DANCE_DELIGHT or DANCE_POLITE) do pages[#pages + 1] = p end
+          if backs then for _, p in ipairs(M.KIMONO_BACKS) do pages[#pages + 1] = p end end
+          say(pages, function()
+            local present = false
+            for _, member in ipairs(game.save.party or {}) do
+              if member == mon then present = true end
+            end
+            if not present then return end
+            if graceful and not questFlag("dance_friendship_v1") then
+              Happiness.change(mon, "GYMBATTLE")
+              setQuestFlag("dance_friendship_v1")
+            end
+            setQuestFlag("dance_completed_v1")
+            tjAward("dance_showcase")
+            tjProfession("dance_showcase")
+            if graceful then tjEthos("tradition", 1, "dance_showcase") end
+            if advance then advanceVenue(AUDITION_MAP, 82) end
+          end)
+        end
+        if M.backer("kimono") then return finish(true, false) end
+        if M.closed("kimono") or not (tj and type(tj.openCheckMenu) == "function") then
+          return finish(false, false)
+        end
+        M.menu("THE SHOWCASE", {
+          M.stat("dance", "DANCE", "Watch this. Real grace.", "performance", 35),
+          M.plain("plain", "POLITE", "A simple bow will do."),
+        }, function(row, passed)
+          if row.id == "dance" and passed then
+            M.win("kimono")
+            return finish(true, true)
           end
-          if not present then return end
-          if graceful and not questFlag("dance_friendship_v1") then
-            Happiness.change(mon, "GYMBATTLE")
-            setQuestFlag("dance_friendship_v1")
-          end
-          setQuestFlag("dance_completed_v1")
-          tjAward("dance_showcase")
-          tjProfession("dance_showcase")
-          if graceful then tjEthos("tradition", 1, "dance_showcase") end
-          if advance then advanceVenue(AUDITION_MAP, 82) end
+          if row.id == "dance" then M.close("kimono") end
+          finish(false, false)
         end)
       end,
       onCancel = function()
@@ -1795,9 +1928,6 @@ return function(mod)
     local pages
     if questFlag("basement_loss") then
       pages = KING_RETRY
-    elseif tjCheck("performance", 35) then
-      pages = { "KING: I heard\nabout you.", "You still earn\nthis room." }
-      for _, p in ipairs(KING_INTRO) do pages[#pages + 1] = p end
     else
       pages = KING_INTRO
     end
@@ -1838,9 +1968,11 @@ return function(mod)
       if not (state and state.done) then
         tjAward("first_busk")
         tjProfession("first_busk")
-        -- Busked only after the UNDERGROUND sent them here: this set is
-        -- the one somebody heard, so the ROUTE 36 hook plays now.
-        if beat() == 90 and V.here() and not questFlag("venue_met") then
+        M.win("piers")
+        -- Busked only after the UNDERGROUND sent them here, with nobody
+        -- backing the band yet: PIERS heard this set, so his hook plays now.
+        if beat() == 90 and V.here() and not questFlag("venue_met")
+            and M.backerCount() == 1 then
           local pages = {}
           for _, p in ipairs(BUSK_PAID) do pages[#pages + 1] = p end
           for _, p in ipairs(V.HOOK_AFTER_BUSK) do pages[#pages + 1] = p end
@@ -1888,14 +2020,27 @@ return function(mod)
       return say(DANCE_REFUSAL, function() openDanceShow(true) end)
     end
     if mapId == AUDITION_MAP and b >= 82 then
-      local warmth = tjCheck("community", 30)
-        and { "KIMONO GIRL:\nWelcome back.", "Show us grace." }
-        or DANCE_REPEAT
-      return say(warmth, function() openDanceShow(false) end)
+      return say(DANCE_REPEAT, function() openDanceShow(false) end)
     end
     if mapId == RADIO_MAP and b == 82 then
+      -- 4d: the refusal still stands, then the manager's pitch [PERSUASION
+      -- 30] can win a radio spot. A fail closes the RADIO TOWER as a backer.
+      local nextStop = crossovers.kantoContests and 85 or 83
       return say(RADIO_REFUSAL, function()
-        advanceVenue(mapId, crossovers.kantoContests and 85 or 83)
+        if M.backer("radio") or M.closed("radio")
+            or not (tj and type(tj.openCheckMenu) == "function") then
+          return advanceVenue(mapId, nextStop)
+        end
+        M.menu("THE RADIO", {
+          M.stat("pitch", "PITCH", "Spot first. Venue after.", "persuasion", 30),
+          M.plain("leave", "LEAVE", "Fair enough."),
+        }, function(row, passed)
+          if row.id ~= "pitch" then return advanceVenue(mapId, nextStop) end
+          if passed then M.win("radio") else M.close("radio") end
+          say(passed and M.RADIO_PASS or M.RADIO_FAIL, function()
+            advanceVenue(mapId, nextStop)
+          end)
+        end, function() advanceVenue(mapId, nextStop) end)
       end)
     end
     if mapId == RADIO_MAP and b == 85 then
@@ -1914,15 +2059,14 @@ return function(mod)
 
   local function talkRoxie()
     facePlayer(MAP, OBJ_NAME)
+    -- Once, the first time she hears WHITNEY is on the bill under her name.
+    if beat() >= 50 and M.wigOff() and not questFlag("roxie_heard_name") then
+      return say(M.ROXIE_HEARS, function() setQuestFlag("roxie_heard_name") end)
+    end
     if beat() >= 90 and showBook then return showBook(false) end
     local b = beat()
     if b == 0 then
-      local pages = {}
-      if tjCheck("performance", 20) then
-        pages[#pages + 1] = "ROXIE: You're the\none they talk\fabout, right?"
-      end
-      for _, p in ipairs(INTRO) do pages[#pages + 1] = p end
-      say(pages, function()
+      say(INTRO, function()
         setBeat(10)
         armBattle("roxie")
       end)
@@ -1937,7 +2081,19 @@ return function(mod)
         armBattle("roxie")
       end)
     elseif b == 20 then
-      say(MANAGER, function() setBeat(30) end)
+      -- 4a: the offer is asked, not imposed. NOT YET writes nothing and
+      -- leaves her waiting here; the whole offer plays again next time.
+      local ask, rest = {}, {}
+      for i, p in ipairs(MANAGER) do
+        if i <= 3 then ask[#ask + 1] = p else rest[#rest + 1] = p end
+      end
+      say(ask, function()
+        M.menu("THE OFFER", { M.plain("in", "I'M IN", "I'm in."),
+          M.plain("later", "NOT YET", "Not yet.") }, function(row)
+          if row.id == "in" then return say(rest, function() setBeat(30) end) end
+          say(M.NOT_YET)
+        end)
+      end)
     elseif b < 50 then
       say(OBJECTIVE)
     elseif b == 50 then
@@ -1961,12 +2117,29 @@ return function(mod)
     if b == 84 then
       local pages = UNDERGROUND_REFUSAL
       if V.here() then
-        -- Same refusal; the last three park pages become the ROUTE 36 hook.
+        -- 4d: WHITNEY under her own name brings the UNDERGROUND in as a
+        -- backer; otherwise the same refusal. Then the ROUTE 36 hook, set
+        -- by the first backer the band landed.
         pages = {}
-        for i = 1, #UNDERGROUND_REFUSAL - 3 do pages[i] = UNDERGROUND_REFUSAL[i] end
-        for _, p in ipairs(V.busked() and V.HOOK or V.HOOK_UNBUSKED) do
-          pages[#pages + 1] = p
+        local backs = M.wigOff()
+        if backs then
+          for _, p in ipairs(M.UNDER_BACKS) do pages[#pages + 1] = p end
+        else
+          for i = 1, #UNDERGROUND_REFUSAL - 3 do pages[#pages + 1] = UNDERGROUND_REFUSAL[i] end
         end
+        local first = M.firstBacker() or (backs and "underground") or nil
+        local hook
+        if first == "piers" then hook = V.HOOK
+        elseif first then
+          hook = {}
+          for _, p in ipairs(M.HOOK_FIRST[first]) do hook[#hook + 1] = p end
+          for _, p in ipairs(M.HOOK_TAIL) do hook[#hook + 1] = p end
+        else hook = M.NO_BACKER end
+        for _, p in ipairs(hook) do pages[#pages + 1] = p end
+        return say(pages, function()
+          if backs then M.win("underground") end
+          advanceVenue(BASS_MAP, 90)
+        end)
       end
       return say(pages, function()
         advanceVenue(BASS_MAP, 90)
@@ -1978,13 +2151,59 @@ return function(mod)
     end
     if revealed or b >= 50 then return say(DRUM_OBJECTIVE) end
     if b == 40 then
-      local pages = {}
-      for _, page in ipairs(WHITNEY_REVEAL) do pages[#pages+1] = page end
-      pages[#pages+1] = "WHITNEY: Drums!\nECRUTEAK's DANCE"
-      pages[#pages+1] = "THEATER. ROXIE has\nan open audition."
-      return say(pages, function() revealWhitney(); setBeat(60) end)
+      local drums = { "WHITNEY: Drums!\nECRUTEAK's DANCE",
+        "THEATER. ROXIE has\nan open audition." }
+      local function joined(pages)
+        for _, p in ipairs(drums) do pages[#pages + 1] = p end
+        say(pages, function() revealWhitney(); setBeat(60) end)
+      end
+      -- 4b, her terms: ONE SHOW in the wig, or [PERSUASION 30] her own
+      -- name on the bill. A fail leaves the wig on for good. Without
+      -- Trainer Journey there is no ask and the wig stays, as before.
+      return say(WHITNEY_REVEAL, function()
+        if not (tj and type(tj.openCheckMenu) == "function") then return joined({}) end
+        M.menu("HER TERMS", {
+          M.plain("deal", "DEAL", "One show, in the wig. Deal."),
+          M.stat("name", "NAME", "Play as WHITNEY. Put your own name on the bill.",
+            "persuasion", 30),
+        }, function(row, passed)
+          if row.id ~= "name" then return joined({}) end
+          if not passed then
+            local pages = {}
+            for _, p in ipairs(M.NAME_FAIL) do pages[#pages + 1] = p end
+            return joined(pages)
+          end
+          mod.save:set("whitney_billing", "WHITNEY")
+          local pages = {}
+          for _, p in ipairs(M.NAME_PASS) do pages[#pages + 1] = p end
+          joined(pages)
+        end)
+      end)
     end
-    if badgeCount(mod.world.game) < 3 then return say(FEEDBACK_LOCKED) end
+    if badgeCount(mod.world.game) < 3 then
+      -- 4b, reaching her: [PERFORMANCE 30] sits in on her set without the
+      -- BADGES. A fail closes this way; the BADGES and the battle stay.
+      if questFlag("sit_in_closed") or not (tj and type(tj.openCheckMenu) == "function") then
+        return say(FEEDBACK_LOCKED)
+      end
+      return say(FEEDBACK_LOCKED, function()
+        M.menu("FEEDBACK", {
+          M.stat("sitin", "SIT IN", "Let me sit in on your set.", "performance", 30),
+          M.plain("leave", "LEAVE", "I'll be back with BADGES."),
+        }, function(row, passed)
+          if row.id ~= "sitin" then return end
+          if not passed then
+            setQuestFlag("sit_in_closed")
+            return say(M.SIT_FAIL)
+          end
+          mod.save:set("feedback_way", "sit_in")
+          say(M.SIT_PASS, function()
+            setBeat(40)
+            talkBassist(false)
+          end)
+        end)
+      end)
+    end
     if b == 32 then
       return say(FEEDBACK_RETRY, function()
         setBeat(31)
@@ -2098,15 +2317,19 @@ return function(mod)
 
   local function talkPiers()
     local venue = V.here()
+    -- A friend only at ROUTE 36 and only if he heard the busk (sheet 21
+    -- D4); otherwise the stranger who crashes, with the park's lines.
+    local friend = venue and M.piersFriend()
     facePlayer(V.mapId(), PIERS_NAME)
     local b = beat()
-    if venue and b == 90 then
+    if friend and b == 90 then
       if not questFlag("venue_met") then return V.meetPiers() end
       return say(V.PIERS_WAIT)
     end
     if b == 100 then
-      local intro = venue and V.PIERS_ENCORE
-        or tjCheck("performance", 40) and PIERS_INTRO_FAME or PIERS_INTRO
+      -- His fame opener now plays when two or more backers filled the room.
+      local intro = friend and V.PIERS_ENCORE
+        or M.backerCount() >= 2 and PIERS_INTRO_FAME or PIERS_INTRO
       return say(intro, function()
         setBeat(101)
         V.armPiers()
@@ -2122,7 +2345,7 @@ return function(mod)
         V.armPiers()
       end)
     end
-    say(venue and V.PIERS_BEAT or PIERS_BEAT)
+    say(friend and V.PIERS_BEAT or PIERS_BEAT)
   end
 
   -- ROXIE on the phone by the entrance. Her walk through the packed line is
@@ -2132,6 +2355,9 @@ return function(mod)
     say(V.PHONE, function()
       mod.save:set("show_stage", V.PLACE)
       setQuestFlag("venue_dragged")
+      -- No friend waiting at the front: nobody to greet, so the manager is
+      -- known to the door now (the lane opens) and PIERS crashes later.
+      if not M.piersFriend() then setQuestFlag("venue_met") end
       local ok, err = mod.world:warpTo(V.MAP, V.FRONT_X, V.FRONT_Y, "up")
       if not ok then report("GR VENUE WARP\n%s", tostring(err)) end
     end)
@@ -2341,10 +2567,17 @@ return function(mod)
     beat = beat, setBeat = setBeat, guard = guard, say = say, report = report,
     refresh = V.refresh, clear = V.clear,
     place = V.place, atVenue = V.here,
+    -- Sheet 21: who is on the bill, whether PIERS is a friend at ROUTE 36,
+    -- and whether the line-up can use Crystal Cutscene's show (its cue set
+    -- knows the original three only: ROXIE, FEEDBACK in the wig, CASEY).
+    billing = M.billing,
+    piersFriend = function() return V.here() and M.piersFriend() end,
+    nativeOnly = function() return V.here() or M.wigOff() end,
     -- Before ROXIE is found at ROUTE 36, the Band Book points the way there.
     objective = function()
       if not V.here() or beat() ~= 90 or questFlag("venue_met") then return nil end
-      if not V.busked() then return { "Busk in OLIVINE", "first." } end
+      -- NEW (0.8.0): the busk never closes, so it is the way to point.
+      if M.backerCount() == 0 then return { "Find a backer.", "Busk in OLIVINE." } end
       if badgeCount(mod.world.game) < SHOW_BADGE_GATE then
         return { "Bring 4 BADGES", "to ROUTE 36." }
       end
