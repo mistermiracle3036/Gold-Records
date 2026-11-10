@@ -1879,7 +1879,7 @@ return function(mod)
       soundcheck = { "CASEY: Four beats.", "Same cues on stage." },
       debrief = "CASEY: My chant!\nOn a real stage!" },
     maylene = { id = "maylene", name = "MAYLENE", sprite = "SPRITE_GR_MAYLENE", actor = GENE_NAME,
-      reply = "She's loud. Hire her.",
+      hireReply = "She's loud. Hire her.",
       hired = { "ROXIE: ...She IS\nloud.", "Fine. Threes.\nWe'll play faster.",
         "MAYLENE: Yes! I\nwon't hold back!" },
       count = { "MAYLENE: ONE! TWO!", "STRIKE!" },
@@ -1888,7 +1888,7 @@ return function(mod)
       debrief = "MAYLENE: My hands\nhurt. Again!",
       talk = { "MAYLENE: Ready.\nAre they ready?" } },
     ingo = { id = "ingo", name = "INGO", sprite = "SPRITE_GR_INGO", actor = BILLY_NAME,
-      reply = "Different is good.",
+      hireReply = "Different is good.",
       hired = { "ROXIE: Five-four.\nI have to count?", "WHITNEY will love\nit. Fine. Hired.",
         "INGO: All aboard." },
       count = { "INGO: Departing in", "five. Four. Three." },
@@ -2478,7 +2478,7 @@ return function(mod)
         return say(M.DRUM_FAIL)
       end
       return M.menu("THE DRUMMER", {
-        M.stat("hire", "HIRE", cand.reply, "persuasion", 25),
+        M.stat("hire", "HIRE", cand.hireReply, "persuasion", 25),
         M.plain("back", "BACK", "Let me think."),
       }, function(row, passed)
         if row.id ~= "hire" then return end
