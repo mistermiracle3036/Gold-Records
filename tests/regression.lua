@@ -580,7 +580,8 @@ enter(VM)
 check("4d: no stranger at the front", not findObj(VM, "GR_PIERS") and findObj(VM, "GR_SHOW_ROXIE"))
 sayTo(VM, "GR_SHOW_ROXIE"); select("SOUNDCHECK"); finishSet(false, false); done()
 sayTo(VM, "GR_SHOW_ROXIE"); select("OPENING SET"); finishSet(false, true)
-check("4d: stranger crashes", queued():find("Who asked", 1, true) ~= nil); done()
+check("4d: stranger crashes", queued():find("Who asked", 1, true) ~= nil)
+check("4f: crowd line by first backer", queued():find("So this is rock.", 1, true) ~= nil); done()
 check("4b: billed on the record", state.first_show.first.billing == "WHITNEY")
 sayTo(VM, "GR_PIERS")
 check("4d: fame with two or more backers", queued():find("three towns over", 1, true) ~= nil); done()
@@ -638,6 +639,13 @@ sayTo("RADIO_TOWER_1F", "GR_ELESA")
 check("4e: later opener", queued():find("isn't a show yet", 1, true) == nil); done()
 check("4e: check closed, billing stays", checkMenu.rows[1].id == "bill"); pick("bill", true)
 check("4e: ELESA billed first", queued():find("HER name", 1, true) ~= nil and state.keys == "elesa"); done()
+
+-- Bonds (REQUESTS 732): one fact per hire, one per show played together.
+state.first_show = { schema = 1, opening = true }
+local facts = {}
+for _, f in ipairs(mod.exports.getAffinityEvents()) do facts[f.id] = f.character end
+check("bonds: hire and show facts", facts["gold_records:hired:maylene"] == "maylene"
+  and facts["gold_records:show:elesa"] == "elesa" and not facts["gold_records:hired:casey"])
 installedMods.trainer_journey = nil; emit("game.ready", {})
 
 -- REQUESTS 384: Pokemon in the world are anima-nel colour walkers.

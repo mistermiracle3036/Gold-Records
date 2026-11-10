@@ -367,12 +367,13 @@ return function(mod, C)
         result.venue=C.place and C.place() or nil
         latest.opening=true;latest.first=result;write(latest)
         C.setBeat(100);C.refresh();C.opened()
-        if friend then
+        local after=friend
           -- NEW lines (2026-10-24 build): PIERS invited them, so no "who asked".
-          C.say({"ROXIE: Still not\na chance.","PIERS: Then win\nit off me.","Prepare your team.\nThen talk to me."})
-        else
-          C.say({"ROXIE: Who asked\nyou?","PIERS: Nobody.\nThat's the fun.","Prepare your team.\nThen talk to me."})
-        end
+          and {"ROXIE: Still not\na chance.","PIERS: Then win\nit off me.","Prepare your team.\nThen talk to me."}
+          or {"ROXIE: Who asked\nyou?","PIERS: Nobody.\nThat's the fun.","Prepare your team.\nThen talk to me."}
+        local crowd=C.openingCrowd and C.openingCrowd()
+        if crowd then table.insert(after,1,crowd) end
+        C.say(after)
       elseif mode=="encore" and C.beat()>=110 and not latest.encore then
         latest.encore=true;latest.victory=true;write(latest)
         C.say({"The last chord\nrings out.","Speak to ROXIE\nfor the debrief."})
@@ -388,9 +389,11 @@ return function(mod, C)
     local opener=C.atVenue and C.atVenue() and "ROXIE: First real\nstage. Ours now."
       or "ROXIE: We made\nour own stage."
     local pages={opener}
-    -- Her two FEEDBACK-poster pages only fit the wig; under her own name
-    -- they are left out (sheet 21 4b) rather than reworded here.
-    if not (C.billing and C.billing()=="WHITNEY") then
+    -- Under her own name she gets her own two pages (sheet 21 4f).
+    if C.billing and C.billing()=="WHITNEY" then
+      pages[#pages+1]="WHITNEY: WHITNEY\non the poster!"
+      pages[#pages+1]="My trainers are\ngoing to scream."
+    else
       pages[#pages+1]="WHITNEY: FEEDBACK\non the poster!"
       pages[#pages+1]="One name that's\njust for music."
     end

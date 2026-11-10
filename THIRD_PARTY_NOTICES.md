@@ -15,11 +15,10 @@ third-party commissioned art, game data, or Nintendo/Creatures/GAME FREAK rights
   mods: MAYLENE by **bloodless / BloodlessNS** (Polished Crystal), INGO by
   **Blaklyte**, ELESA by **Azure_Keys, Solo993 and SirWhibbles / JaceDeane**
   (Pokemon Black & White 3: Genesis).
-- **WOOPER and JIGGLYPUFF overworld art:** **anima-nel**, from the purchased
-  GBC Pokemon overworld pack, copied unchanged (`assets/wooper_anima.png`
-  from the canonical library, `assets/jigglypuff_anima.png` from the pack's
-  `gen1/normal/039_jigglypuff.png`). Private builds only until the public
-  credit is cleared (exchange/credits_extra.json).
+- **WOOPER and JIGGLYPUFF overworld art:** **Anima_nel**'s art from the GBC
+  Pokemon overworld pack, used within this mod under the artist's terms, not
+  ours and not a redistribution of the pack (`assets/wooper_anima.png`,
+  `assets/jigglypuff_anima.png`, copied unchanged).
 - **New stage graphics:** original code-drawn speakers, instruments, kit and card
   in concert.lua. Existing character sheets are rendered unmodified behind the
   props. Temporary silhouettes and the existing Lass Casey are prototype art.

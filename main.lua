@@ -13,7 +13,7 @@ local BugContest = require("src.core.gen2.BugContest")
 local ScriptMenu = require("src.ui.gen2.ScriptMenu")
 
 return function(mod)
-  local VERSION = "0.8.1"
+  local VERSION = "0.8.2"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
   -- The manager's decisions (quest clean-up sheet 21), filled beside say();
@@ -149,6 +149,20 @@ return function(mod)
     })
   end
   local PIERS_FRONT_PATH = mod.path .. "/assets/piers_front.png"
+
+  -- In-game credits (work order exchange/work-orders/credits-adoption.md,
+  -- REQUESTS 30): the shared library byte for byte (LIB_VERSION 4, as
+  -- Credits-Book and the other adopters ship) and this mod's generated
+  -- artist list. One START > CREDITS row however many mods embed it.
+  do
+    local function module(path)
+      return assert(load(assert(mod:read(path)), "@" .. mod.id .. "/" .. path))()
+    end
+    local ok, err = pcall(function()
+      module("lib/credits.lua").attach(mod, module("lib/credits_data.lua"))
+    end)
+    if not ok then pcall(Runtime.reportError, "gold_records", "GR CREDITS\n" .. tostring(err)) end
+  end
 
   local function report(fmt, ...)
     local ok, msg = pcall(string.format, fmt, ...)
@@ -499,7 +513,11 @@ return function(mod)
     if battleSave ~= mod.game.save then return base end
     if class ~= def.class and class ~= def.classIx then return base end
     if member ~= def.member and member ~= def.resolvedMember and member ~= def.memberIx then return base end
-    local ok, built = pcall(buildParty, def.party)
+    -- The character's canonical roster when Trainer Journey has one (sheet
+    -- 21 section 8); otherwise this mod's own party, as before.
+    local ok, built = pcall(function()
+      return M.rosterParty(key, def.party) or buildParty(def.party)
+    end)
     pendingBattle, activeBattle = key, nil
     if not ok or not built then
       report("GR PARTY FAIL\n%s", tostring(built))
@@ -2033,6 +2051,45 @@ return function(mod)
     end)
   end
 
+  -- Bonds (REQUESTS 732, Trainer Journey 0.8.59): TJ polls this export,
+  -- ungated; each fact id pays half a star once, forever. A bond rises for
+  -- hiring someone and for playing the show with them, never for talking
+  -- (sheet 21 4e). LARRY's gift fact waits for REQUESTS 731.
+  mod.exports.getAffinityEvents = function()
+    local out = {}
+    local function fact(kind, who)
+      out[#out + 1] = { id = MOD_ID .. ":" .. kind .. ":" .. who, schema = 1,
+        character = who, kind = "chapter" }
+    end
+    local members = {}
+    if M.drum().id ~= "casey" then members[#members + 1] = M.drum().id end
+    if M.keys() then members[#members + 1] = M.keys() end
+    local r = mod.save:get("first_show", nil)
+    local played = type(r) == "table" and r.opening == true
+    for _, who in ipairs(members) do
+      fact("hired", who)
+      if played then fact("show", who) end
+    end
+    return out
+  end
+
+  -- Character rosters (REQUESTS 705/732): ROXIE, WHITNEY and PIERS each
+  -- have one canonical team across mods. Asked at the battle's own top
+  -- level and size, with this mod's party as the default; nil means ours.
+  M.ROSTER_KEYS = { roxie = "roxie", whitney = "whitney", piers = "piers" }
+  function M.rosterParty(key, rows)
+    local who = M.ROSTER_KEYS[key]
+    if not (who and tj and tj.team_version == 1 and type(tj.getCharacterTeam) == "function") then
+      return nil
+    end
+    local top = 0
+    for _, r in ipairs(rows) do top = math.max(top, r.level or 0) end
+    local ok, party = pcall(tj.getCharacterTeam, who, { level = top, size = #rows,
+      minSize = #rows, purpose = "story", default = rows })
+    if ok and type(party) == "table" and #party > 0 then return party end
+    return nil
+  end
+
   -- Concert view of the line-up (concert.lua).
   function M.band()
     local d = M.drum()
@@ -2822,11 +2879,23 @@ return function(mod)
     -- show stays for the original three.
     nativeOnly = function() return V.here() or M.wigOff() or not M.band().original end,
     band = M.band, soundcheck = M.soundcheck, roughLine = M.ROUGH_LINE,
+    -- Sheet 21 4f: the crowd's first word after the opening set, by the
+    -- band's first backer (none for a park show or before any backer).
+    openingCrowd = function()
+      if not V.here() then return nil end
+      local lines = {
+        piers = "PIERS said come.\nSo we came.",
+        kimono = "So this is rock.\nHow spirited.",
+        radio = "I heard it on the\nradio! It's true!",
+        underground = "WHITNEY! Over\nhere! WHITNEY!",
+      }
+      return lines[M.firstBacker() or ""]
+    end,
     -- Before ROXIE is found at ROUTE 36, the Band Book points the way there.
     objective = function()
       if not V.here() or beat() ~= 90 or questFlag("venue_met") then return nil end
-      -- NEW (0.8.0): the busk never closes, so it is the way to point.
-      if M.backerCount() == 0 then return { "Find a backer.", "Busk in OLIVINE." } end
+      -- Sheet 21 4f (Quest Clean-Up, REQUESTS 733).
+      if M.backerCount() == 0 then return { "Find a backer.", "Ask at each stop." } end
       if badgeCount(mod.world.game) < SHOW_BADGE_GATE then
         return { "Bring 4 BADGES", "to ROUTE 36." }
       end
