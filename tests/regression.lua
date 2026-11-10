@@ -33,6 +33,18 @@ package.preload["src.ui.gen2.ScriptMenu"] = function()
   return { new = function(game, opts) lastMenu = { opts = opts }; return lastMenu end }
 end
 
+-- The shared gift helper (lib/gift_jingle.lua): a bag with a test limit and
+-- a TextBox the test closes with lastGift.done().
+local bagFull, given, lastGift = false, {}, nil
+package.preload["src.inventory.Bag"] = function()
+  return { add = function(save, id, n) if bagFull then return false end
+    given[id] = (given[id] or 0) + (n or 1); return true end }
+end
+package.preload["src.render.TextBox"] = function()
+  return { soundOpts = function() return {} end,
+    new = function(game, line, done) lastGift = { line = line, done = done }; return {} end }
+end
+
 package.preload["src.core.gen2.Clock"] = function()
   return { weekday = function() return mockDay end }
 end
@@ -646,6 +658,25 @@ local facts = {}
 for _, f in ipairs(mod.exports.getAffinityEvents()) do facts[f.id] = f.character end
 check("bonds: hire and show facts", facts["gold_records:hired:maylene"] == "maylene"
   and facts["gold_records:show:elesa"] == "elesa" and not facts["gold_records:hired:casey"])
+
+-- LARRY's gift (REQUESTS 731): at the debrief, once, with the gift jingle.
+-- A full bag keeps it, and ROXIE hands it over in VIOLET.
+state.keys = "larry"; state.beat = 110
+state.first_show = { schema = 1, opening = true, encore = true, victory = true, debrief = false,
+  first = { billing = "FEEDBACK", outcome = "HELD THE BEAT" } }
+for i = #mapObjects[VM], 1, -1 do mapObjects[VM][i] = nil end
+bagFull = true; enter(VM); sayTo(VM, "GR_SHOW_ROXIE"); select("BAND DEBRIEF"); done()
+check("gift: LARRY thanks you", queued():find("Nobody does that", 1, true) ~= nil); done()
+check("gift: full bag keeps it", not given.LEFTOVERS and state.larry_gift_pending and not state.larry_gift_given)
+done(); mod.game.stack.states = {}
+bagFull = false; enter("VIOLET_CITY"); sayTo("VIOLET_CITY", "GR_ROXIE")
+check("gift: ROXIE has it", queued():find("LARRY left", 1, true) ~= nil); done()
+check("gift: LEFTOVERS once", given.LEFTOVERS == 1 and state.larry_gift_given
+  and lastGift.line:find("LEFTOVERS", 1, true) ~= nil)
+sayTo("VIOLET_CITY", "GR_ROXIE")
+-- (No gift left: ROXIE opens her Band Book, which is a screen, not a line.)
+check("gift: never twice", queued():find("LARRY left", 1, true) == nil)
+lastScript = nil; mod.game.stack.states = {}
 installedMods.trainer_journey = nil; emit("game.ready", {})
 
 -- REQUESTS 384: Pokemon in the world are anima-nel colour walkers.

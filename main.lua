@@ -13,7 +13,7 @@ local BugContest = require("src.core.gen2.BugContest")
 local ScriptMenu = require("src.ui.gen2.ScriptMenu")
 
 return function(mod)
-  local VERSION = "0.8.2"
+  local VERSION = "0.8.3"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
   -- The manager's decisions (quest clean-up sheet 21), filled beside say();
@@ -2090,6 +2090,38 @@ return function(mod)
     return nil
   end
 
+  -- LARRY's gift (sheet 21 4e; Checker approved REQUESTS 731): once per
+  -- save, after the first show, only if he played (which takes both
+  -- refusals and the PERSUASION check). Given at the band debrief, before
+  -- the band leaves the stage; the shared helper plays Crystal's own gift
+  -- jingle (exchange/shared/gift_jingle.lua, copied byte for byte).
+  M.LARRY_THANKS = { "LARRY: I'd stopped\nplaying. For work.", "You kept asking.\nNobody does that.",
+    "Here. LEFTOVERS.\nIt's all I carry." }
+  M.Gift = assert(load(assert(mod:read("lib/gift_jingle.lua")), "@gold_records/lib/gift_jingle.lua"))()
+  function M.larryGift(next)
+    if M.keys() ~= "larry" or questFlag("larry_gift_given") then return false end
+    say(M.LARRY_THANKS, function()
+      local ok = M.Gift.give(mod, "LEFTOVERS", 1, "You receive\nLEFTOVERS!", { onDone = next })
+      if ok then setQuestFlag("larry_gift_given"); return end
+      -- NEW: a full bag keeps the gift; ROXIE passes it on in VIOLET.
+      setQuestFlag("larry_gift_pending")
+      say({ "Your BAG is full.", "ROXIE will keep it\nfor you." }, next)
+    end)
+    return true
+  end
+  -- The kept gift, from ROXIE once the bag has room.
+  function M.pendingGift()
+    if not questFlag("larry_gift_pending") or questFlag("larry_gift_given") then return false end
+    say({ "ROXIE: LARRY left\nthis for you." }, function()
+      if M.Gift.give(mod, "LEFTOVERS", 1, "You receive\nLEFTOVERS!") then
+        setQuestFlag("larry_gift_given")
+      else
+        say({ "Your BAG is still\nfull." })
+      end
+    end)
+    return true
+  end
+
   -- Concert view of the line-up (concert.lua).
   function M.band()
     local d = M.drum()
@@ -2312,6 +2344,7 @@ return function(mod)
     if beat() >= 50 and M.wigOff() and not questFlag("roxie_heard_name") then
       return say(M.ROXIE_HEARS, function() setQuestFlag("roxie_heard_name") end)
     end
+    if M.pendingGift() then return end
     if beat() >= 90 and showBook then return showBook(false) end
     local b = beat()
     if b == 0 then
@@ -2879,6 +2912,7 @@ return function(mod)
     -- show stays for the original three.
     nativeOnly = function() return V.here() or M.wigOff() or not M.band().original end,
     band = M.band, soundcheck = M.soundcheck, roughLine = M.ROUGH_LINE,
+    afterShow = M.larryGift,
     -- Sheet 21 4f: the crowd's first word after the opening set, by the
     -- band's first backer (none for a park show or before any backer).
     openingCrowd = function()

@@ -402,8 +402,10 @@ return function(mod, C)
       local r=record()
       if not r or not r.encore then return end
       r.keepsake=true;r.debrief=true;write(r)
-      C.clear()
-      openCard()
+      -- LARRY's thank-you gift comes first if he played (sheet 21 4e);
+      -- then the band packs up and the FIRST SHOW card opens.
+      local function finish() C.clear();openCard() end
+      if not (C.afterShow and C.afterShow(finish)) then finish() end
     end)
   end
   openBook=function(atPark)

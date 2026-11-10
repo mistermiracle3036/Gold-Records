@@ -12,6 +12,26 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.8.3
+
+**Updating from 0.4.3?** The band now gets a full story past the drummer, and
+you are a manager who decides things: who drums (CASEY, MAYLENE or INGO), who
+plays keys and lights (ELESA, LARRY or nobody), whether WHITNEY plays in her
+wig or under her own name, and who backs the band (the KIMONO GIRLS, the
+RADIO TOWER, the UNDERGROUND or PIERS after a busk). The first show follows,
+where PIERS challenges you for the encore: at a packed music venue on ROUTE 36
+with Johto Expanded, in NATIONAL PARK without it. Win LARRY over and he thanks
+you after the show. ROXIE and PIERS have their own commissioned sprites, the
+show has a Band Book, manager cues and a playable encore, and Trainer Journey
+players earn XP, bonds and the BAND MANAGER profession. Artists are credited
+in game. Every character answers on the current engine again.
+
+### Added
+- **LARRY's thank-you.** If LARRY played keys (two refusals and a PERSUASION
+  check later), he hands you his LEFTOVERS at the band debrief, with Crystal's
+  own item jingle. Once per save. With a full BAG, ROXIE keeps it for you in
+  VIOLET.
+
 ## 0.8.2
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer, and
