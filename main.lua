@@ -13,7 +13,7 @@ local BugContest = require("src.core.gen2.BugContest")
 local ScriptMenu = require("src.ui.gen2.ScriptMenu")
 
 return function(mod)
-  local VERSION = "0.8.3"
+  local VERSION = "0.8.4"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
   -- The manager's decisions (quest clean-up sheet 21), filled beside say();
@@ -79,7 +79,7 @@ return function(mod)
     maps = {}, trainers = {}, items = {},
     sprites = {ROXIE_SPRITE, PIERS_SPRITE, "SPRITE_GR_LARRY",
       "SPRITE_GR_WOOPER", "SPRITE_GR_JIGGLYPUFF",
-      "SPRITE_GR_MAYLENE", "SPRITE_GR_INGO", "SPRITE_GR_ELESA"},
+      "SPRITE_GR_MAYLENE", "SPRITE_GR_INGO", "SPRITE_GR_ELESA", "SPRITE_GR_RYME"},
     objects = {
       [MAP] = { OBJ_NAME },
       [BASS_MAP] = {
@@ -126,6 +126,14 @@ return function(mod)
     id = "SPRITE_GR_LARRY", image = mod.path .. "/assets/larry.png",
     frames = 6, walker = true, spriteType = "WALKING_SPRITE",
     palette = "PAL_OW_BROWN", paletteId = 3, trueColor = true,
+  })
+  -- RYME (sheet 21b): Bani's commissioned colour walker, canonical
+  -- ryme_bani.png after REQUESTS 795's shoe fix, unchanged; full colour as
+  -- drawn, so trueColor like LARRY. Her first use anywhere.
+  mod.content.sprites:register("SPRITE_GR_RYME", {
+    id = "SPRITE_GR_RYME", image = mod.path .. "/assets/ryme_bani.png",
+    frames = 6, walker = true, spriteType = "WALKING_SPRITE",
+    palette = "PAL_OW_PINK", paletteId = 4, trueColor = true,
   })
   -- Sheet 21 4e, the bigger band: canonical sheets copied unchanged, each
   -- registered with its REGISTRY.json palette (one character, one palette).
@@ -644,6 +652,12 @@ return function(mod)
   local function placeRoxie()
     local world = mod.world and mod.world:overworld()
     if not world then return "no overworld" end
+    -- MOVED (sheet 21b): once you take the job she lives on ROUTE 36. Old
+    -- saves past the offer simply find her there.
+    if beat() >= 30 then
+      M.removeFrom(MAP, OBJ_NAME); M.removeFrom(MAP, M.RYME)
+      return nil
+    end
     if alreadyThere(world) then return nil end
     local badges = badgeCount(mod.world.game)
     if badges < BADGE_GATE then return ("gate %d/%d"):format(badges, BADGE_GATE) end
@@ -1054,6 +1068,8 @@ return function(mod)
       label = "PIERS" },
     { name = M.SHOW_KEYS, sprite = "SPRITE_GR_LARRY", x = 17, y = 44,
       label = "KEYS" },
+    { name = "GR_RYME", sprite = "SPRITE_GR_RYME", x = 8, y = 44,
+      label = "RYME" },
   }
 
   local function removeShowActor(name)
@@ -1091,6 +1107,7 @@ return function(mod)
     local wanted = {
       [SHOW_ROXIE] = true, [SHOW_WHITNEY] = true, [SHOW_CASEY] = true,
       [M.SHOW_KEYS] = M.keys() ~= nil,
+      ["GR_RYME"] = mod.save:get("ryme_on_stage", false) == true,
     }
     if b >= 100 then wanted[PIERS_NAME] = true end
     for _, actor in ipairs(SHOW_ACTORS) do
@@ -1212,6 +1229,9 @@ return function(mod)
     -- Keys and lights (4e) beside WHITNEY on the boards (stage y2-4).
     { name = M.SHOW_KEYS, sprite = "SPRITE_GR_LARRY", x = 14, y = 3,
       label = "KEYS", band = true, keys = true },
+    -- RYME (sheet 21b) joins at the encore, on the boards opposite the keys.
+    { name = "GR_RYME", sprite = "SPRITE_GR_RYME", x = 6, y = 3,
+      label = "RYME", band = true, ryme = true },
     { name = PIERS_NAME, sprite = PIERS_SPRITE, x = 11, y = 8,
       movement = V.UP, label = "PIERS", band = true },
     { name = "GR_VENUE_BARTENDER", sprite = "SPRITE_POKEFAN_M", palette = 11,
@@ -1305,6 +1325,7 @@ return function(mod)
     return V.placeSet(V.MAP, V.STAGE, function(a)
       if a.name == PIERS_NAME then return band and piers end
       if a.keys then return band and M.keys() ~= nil end
+      if a.ryme then return band and questFlag("ryme_on_stage") end
       return not a.band or band
     end)
   end
@@ -2070,6 +2091,10 @@ return function(mod)
       fact("hired", who)
       if played then fact("show", who) end
     end
+    -- RYME (sheet 21b, REQUESTS 797): meeting her lights her at zero only.
+    if questFlag("ryme_met") then
+      out[#out + 1] = { id = MOD_ID .. ":met:ryme", schema = 1, character = "ryme", kind = "met" }
+    end
     return out
   end
 
@@ -2120,6 +2145,132 @@ return function(mod)
       end
     end)
     return true
+  end
+
+  --------------------------------------------------------------------------
+  -- Sheet 21b (REQUESTS 796; developer-approved 2026-11-10, "Yes, send it"):
+  -- ROXIE plays, RYME walks in and watches, and after I'M IN the two walk
+  -- out of VIOLET together; their talk is never shown. From then on ROXIE
+  -- stands outside the hall on ROUTE 36 with RYME by its door, and at the
+  -- encore RYME walks on. All lines below are the sheet's, approved.
+  --------------------------------------------------------------------------
+  M.RYME, M.R36 = "GR_RYME", "ROUTE_36"
+  M.TURN1 = { "ROXIE: My turn.\nCover your ears." }
+  M.TURN2 = { "ROXIE: Hear that?\nRoof tiles!" }
+  M.RYME_WATCH = { "RYME: Hush, now.\nI'm hearing how." }
+  M.RYME_WORD = { "RYME: You shook a\ntown. I came down.", "A word. Not here.\nToo many ears.",
+    "ROXIE: Who's\nasking? You?", "RYME: The hall.\nOn ROUTE 36.", "We walk. We talk.\nThat's all, kid.",
+    "ROXIE: Manager.\nFind me out there." }
+  M.R36_ROXIE_FIRST = { "ROXIE: We talked.\nDon't ask. Later." }
+  M.R36_RYME_FIRST = { "RYME: What we said\nstays in my head." }
+  M.R36_RYME = { "RYME: Band first.\nThen the verse." }
+  M.ENCORE_RYME = { "RYME: Band's here.\nHere's the verse.", "ROXIE: THAT'S what\nwe talked about." }
+  -- ROUTE 36, outside the hall (door (43,3), Johto Expanded 0.3.11). The
+  -- cell in front of the door is left for the player and JQP's BRANNOCK
+  -- (REQUESTS 785); the walkable fallback settles each on a free cell.
+  M.R36_ROXIE_AT = { name = OBJ_NAME, sprite = ROXIE_SPRITE, x = 41, y = 5,
+    movement = MOVE_STANDING_DOWN, label = "ROXIE" }
+  M.R36_RYME_AT = { name = "GR_RYME", sprite = "SPRITE_GR_RYME", x = 45, y = 4,
+    movement = MOVE_STANDING_DOWN, label = "RYME" }
+  -- RYME's spot in VIOLET: four cells west of ROXIE, facing her.
+  M.VIOLET_RYME = { name = "GR_RYME", sprite = "SPRITE_GR_RYME", x = ROXIE_X - 4, y = ROXIE_Y,
+    movement = MOVE_STANDING_RIGHT, label = "RYME" }
+
+  function M.removeFrom(mapId, name)
+    local world = mod.world:overworld()
+    local obj = objectNamed(world, mapId, name)
+    if obj and obj.runtime and obj.index then
+      local id = mapId .. "_obj_" .. obj.index
+      pcall(function() mod.world:removeNpc(id) end)
+    end
+  end
+
+  function M.spawn(mapId, actor)
+    local world = mod.world and mod.world:overworld()
+    if not world or objectNamed(world, mapId, actor.name) then return nil end
+    local x, y = cellForActor(world, actor)
+    if not x then return "no cell for " .. actor.label end
+    local id, err = mod.world:spawnNpc(mapId, { name = actor.name, sprite = actor.sprite,
+      x = x, y = y, movement = actor.movement })
+    if not id then return "spawn " .. tostring(err) end
+    return ("%s %d,%d"):format(actor.label, x, y)
+  end
+
+  -- One cell at a time, stopping early if the way is blocked, so a walk
+  -- never stalls the scene (the engine runs one movement at a time).
+  function M.walk(mapId, name, dir, tiles, done)
+    done = done or function() end
+    local h = mod.world:npc(mapId, name)
+    if not h or tiles <= 0 then return done() end
+    local okc, can = pcall(h.canStep, h, dir)
+    if not (okc and can) then return done() end
+    local ok = h:scriptMove(dir, 1, function() M.walk(mapId, name, dir, tiles - 1, done) end)
+    if not ok then done() end
+  end
+
+  -- The screen shake through the Gen 2 VM (op "earthquake"), as Trainer
+  -- Association does (runtime.lua R.shake). No sound yet: TODO/CONFIRM.
+  M.vmDone = {}
+  mod.events:on("script.ended", function(ev)
+    local key = ev and ev.ctx and ev.ctx.scriptKey
+    local done = key and M.vmDone[key]
+    if done then M.vmDone[key] = nil; done() end
+  end)
+  function M.shake(done)
+    local world = mod.world:overworld()
+    if not (world and world.vm) then return done() end
+    local list = { { op = "earthquake", param = 80 }, { op = "end" } }
+    M.vmDone[list] = done
+    if not world.vm:start(list) then M.vmDone[list] = nil; done() end
+  end
+
+  -- Her turn: the first talk after you win, before the offer.
+  function M.roxieTurn(thenOffer)
+    say(M.TURN1, function()
+      M.shake(function()
+        setQuestFlag("ryme_met")
+        M.spawn(MAP, { name = M.RYME, sprite = "SPRITE_GR_RYME", x = M.VIOLET_RYME.x - 3,
+          y = M.VIOLET_RYME.y, movement = MOVE_STANDING_RIGHT, label = "RYME" })
+        M.walk(MAP, M.RYME, "right", 3, function()
+          setQuestFlag("roxie_turn_played")
+          say(M.TURN2, thenOffer)
+        end)
+      end)
+    end)
+  end
+
+  -- After I'M IN: RYME walks up, the word, and both walk west out of town.
+  function M.leaveTogether()
+    if not objectNamed(mod.world:overworld(), MAP, M.RYME) then M.spawn(MAP, M.VIOLET_RYME) end
+    M.walk(MAP, M.RYME, "right", 3, function()
+      say(M.RYME_WORD, function()
+        setBeat(30)
+        M.walk(MAP, M.RYME, "left", 8, function()
+          M.removeFrom(MAP, M.RYME)
+          M.walk(MAP, OBJ_NAME, "left", 8, function() M.removeFrom(MAP, OBJ_NAME) end)
+        end)
+      end)
+    end)
+  end
+
+  function M.placeRoute36()
+    if beat() < 30 then
+      M.removeFrom(M.R36, OBJ_NAME); M.removeFrom(M.R36, M.RYME)
+      return nil
+    end
+    setQuestFlag("ryme_met")
+    local a = M.spawn(M.R36, M.R36_ROXIE_AT)
+    local b = M.spawn(M.R36, M.R36_RYME_AT)
+    return (a or "") .. (b and (" " .. b) or "")
+  end
+
+  function M.talkRyme(mapId)
+    facePlayer(mapId, M.RYME)
+    if mapId == MAP then return say(M.RYME_WATCH) end
+    if not questFlag("ryme_r36_heard") then
+      return say(M.R36_RYME_FIRST, function() setQuestFlag("ryme_r36_heard") end)
+    end
+    say(M.R36_RYME)
   end
 
   -- Concert view of the line-up (concert.lua).
@@ -2339,7 +2490,11 @@ return function(mod)
   end
 
   local function talkRoxie()
-    facePlayer(MAP, OBJ_NAME)
+    facePlayer(beat() >= 30 and M.R36 or MAP, OBJ_NAME)
+    -- 21b: the first time on ROUTE 36, before her usual reminder.
+    if beat() >= 30 and not questFlag("roxie_r36_heard") then
+      return say(M.R36_ROXIE_FIRST, function() setQuestFlag("roxie_r36_heard"); talkRoxie() end)
+    end
     -- Once, the first time she hears WHITNEY is on the bill under her name.
     if beat() >= 50 and M.wigOff() and not questFlag("roxie_heard_name") then
       return say(M.ROXIE_HEARS, function() setQuestFlag("roxie_heard_name") end)
@@ -2369,13 +2524,19 @@ return function(mod)
       for i, p in ipairs(MANAGER) do
         if i <= 3 then ask[#ask + 1] = p else rest[#rest + 1] = p end
       end
-      say(ask, function()
-        M.menu("THE OFFER", { M.plain("in", "I'M IN", "I'm in."),
-          M.plain("later", "NOT YET", "Not yet.") }, function(row)
-          if row.id == "in" then return say(rest, function() setBeat(30) end) end
-          say(M.NOT_YET)
+      local function offer()
+        say(ask, function()
+          M.menu("THE OFFER", { M.plain("in", "I'M IN", "I'm in."),
+            M.plain("later", "NOT YET", "Not yet.") }, function(row)
+            -- 21b: after her approved pages, RYME's word and the walk out.
+            if row.id == "in" then return say(rest, M.leaveTogether) end
+            say(M.NOT_YET)
+          end)
         end)
-      end)
+      end
+      -- 21b: the first talk after you win, she plays first.
+      if not questFlag("roxie_turn_played") then return M.roxieTurn(offer) end
+      offer()
     elseif b < 50 then
       say(OBJECTIVE)
     elseif b == 50 then
@@ -2696,6 +2857,7 @@ return function(mod)
   function V.talkStage(actor)
     if actor.name == SHOW_ROXIE then return talkShowRoxie() end
     if actor.name == PIERS_NAME then return talkPiers() end
+    if actor.name == M.RYME then return M.talkRyme(V.MAP) end
     if actor.name == SHOW_WHITNEY or actor.name == SHOW_CASEY or actor.name == M.SHOW_KEYS then
       return talkShowMember(actor.name)
     end
@@ -2730,9 +2892,10 @@ return function(mod)
         end
         return obj.x == ev.x and obj.y == ev.y
       end
-      if ev.mapId == MAP then
-        local obj = objectNamed(world, MAP, OBJ_NAME)
-        if hit(obj) then talkRoxie() end
+      if ev.mapId == MAP or ev.mapId == M.R36 then
+        -- ROXIE and RYME: VIOLET until you take the job, ROUTE 36 after (21b).
+        if hit(objectNamed(world, ev.mapId, OBJ_NAME)) then talkRoxie()
+        elseif hit(objectNamed(world, ev.mapId, M.RYME)) then M.talkRyme(ev.mapId) end
       elseif ev.mapId == BASS_MAP then
         local feedback = objectNamed(world, BASS_MAP, FEEDBACK_NAME)
         local whitney = objectNamed(world, BASS_MAP, WHITNEY_NAME)
@@ -2790,12 +2953,13 @@ return function(mod)
         end
       elseif ev.mapId == SHOW_MAP then
         for _, name in ipairs({
-          SHOW_ROXIE, SHOW_WHITNEY, SHOW_CASEY, PIERS_NAME, M.SHOW_KEYS,
+          SHOW_ROXIE, SHOW_WHITNEY, SHOW_CASEY, PIERS_NAME, M.SHOW_KEYS, M.RYME,
         }) do
           local obj = objectNamed(world, SHOW_MAP, name)
           if hit(obj) then
             if name == SHOW_ROXIE then talkShowRoxie()
             elseif name == PIERS_NAME then talkPiers()
+            elseif name == M.RYME then M.talkRyme(SHOW_MAP)
             else talkShowMember(name) end
             return
           end
@@ -2835,13 +2999,17 @@ return function(mod)
           and mapId ~= RADIO_MAP and mapId ~= CAFE_MAP
           and mapId ~= ECRUTEAK_MAP and mapId ~= OLIVINE_MAP
           and mapId ~= SHOW_MAP and mapId ~= V.ENT
-          and mapId ~= V.MAP then return end
+          and mapId ~= V.MAP and mapId ~= M.R36 then return end
       local statuses = {}
       local function addStatus(value)
         if value and value ~= "" then statuses[#statuses + 1] = value end
       end
       if mapId == MAP then
         addStatus(placeRoxie())
+        -- RYME keeps watching from where she stopped until you say yes.
+        if beat() == 20 and questFlag("roxie_turn_played") then addStatus(M.spawn(MAP, M.VIOLET_RYME)) end
+      elseif mapId == M.R36 then
+        addStatus(M.placeRoute36())
       elseif mapId == BASS_MAP then
         addStatus(placeBassist())
         addStatus(placeVenue(mapId))
@@ -2913,6 +3081,12 @@ return function(mod)
     nativeOnly = function() return V.here() or M.wigOff() or not M.band().original end,
     band = M.band, soundcheck = M.soundcheck, roughLine = M.ROUGH_LINE,
     afterShow = M.larryGift,
+    encoreGuest = function()
+      setQuestFlag("ryme_on_stage")
+      local pages = {}
+      for _, p in ipairs(M.ENCORE_RYME) do pages[#pages + 1] = p end
+      return pages
+    end,
     -- Sheet 21 4f: the crowd's first word after the opening set, by the
     -- band's first backer (none for a park show or before any backer).
     openingCrowd = function()

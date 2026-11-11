@@ -12,6 +12,38 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.8.4
+
+**Updating from 0.4.3?** The band now gets a full story past the drummer, and
+you are a manager who decides things: who drums (CASEY, MAYLENE or INGO), who
+plays keys and lights (ELESA, LARRY or nobody), whether WHITNEY plays in her
+wig or under her own name, and who backs the band (the KIMONO GIRLS, the
+RADIO TOWER, the UNDERGROUND or PIERS after a busk). After you beat ROXIE she
+shakes VIOLET, a stranger called RYME takes her aside, and from then on ROXIE
+waits for you outside the hall on ROUTE 36. The first show follows, where
+PIERS challenges you for the encore and RYME finally takes the verse: at a
+packed music venue on ROUTE 36 with Johto Expanded, in NATIONAL PARK without
+it. Win LARRY over and he thanks you after the show. ROXIE and PIERS have their
+own commissioned sprites, the show has a Band Book, manager cues and a
+playable encore, and Trainer Journey players earn XP, bonds and the BAND
+MANAGER profession. Artists are credited in game. Every character answers on
+the current engine again.
+
+### Added: "A word. Not here."
+- After you beat ROXIE she takes her turn: the screen shakes, and a stranger,
+  RYME, walks in to listen. She waits while ROXIE makes her offer.
+- Say I'M IN and RYME asks ROXIE for a word, not here. The two walk out of
+  VIOLET together. You never hear what they said.
+- From then on ROXIE waits outside the hall on ROUTE 36, with RYME by the door.
+  Everything you used to report to her in VIOLET happens there now.
+- At the encore of the first show, RYME walks on and takes the verse, and she
+  stays on stage with the band.
+- With Trainer Journey, meeting RYME adds her to your bonds.
+
+### Changed
+- The debrief now sends you to ROUTE 36, not VIOLET, for your BAND BOOK.
+- Saves already past ROXIE's offer find her and RYME on ROUTE 36.
+
 ## 0.8.3
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer, and

@@ -376,7 +376,11 @@ return function(mod, C)
         C.say(after)
       elseif mode=="encore" and C.beat()>=110 and not latest.encore then
         latest.encore=true;latest.victory=true;write(latest)
-        C.say({"The last chord\nrings out.","Speak to ROXIE\nfor the debrief."})
+        -- Sheet 21b: RYME walks on at the encore and stays with the band.
+        local pages=C.encoreGuest and C.encoreGuest() or {}
+        pages[#pages+1]="The last chord\nrings out.";pages[#pages+1]="Speak to ROXIE\nfor the debrief."
+        C.say(pages)
+        if C.refresh then C.refresh() end
       end
     end
     -- Crystal Cutscene's livePerformance v1 stages national_park and
@@ -397,7 +401,7 @@ return function(mod, C)
       pages[#pages+1]="WHITNEY: FEEDBACK\non the poster!"
       pages[#pages+1]="One name that's\njust for music."
     end
-    for _,p in ipairs({drummer().debrief or "CASEY: My chant!\nOn a real stage!","PIERS: Your band.\nKeep that sound.","You keep the\nFIRST SHOW card.","We pack the amps.\nThe path is clear.","Visit VIOLET for\nyour BAND BOOK."}) do pages[#pages+1]=p end
+    for _,p in ipairs({drummer().debrief or "CASEY: My chant!\nOn a real stage!","PIERS: Your band.\nKeep that sound.","You keep the\nFIRST SHOW card.","We pack the amps.\nThe path is clear.","Visit ROUTE 36 for\nyour BAND BOOK."}) do pages[#pages+1]=p end
     C.say(pages,function()
       local r=record()
       if not r or not r.encore then return end

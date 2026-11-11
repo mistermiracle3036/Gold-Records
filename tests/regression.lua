@@ -70,7 +70,7 @@ local lastScript, currentMap = nil, "VIOLET_CITY"
 local installedMods = {}
 local partyPicker, pickerPops = nil, 0
 local mapObjects = {
-  VIOLET_CITY = {}, GOLDENROD_UNDERGROUND = {}, DANCE_THEATER = {},
+  VIOLET_CITY = {}, ROUTE_36 = {}, GOLDENROD_UNDERGROUND = {}, DANCE_THEATER = {},
   RADIO_TOWER_1F = {}, OLIVINE_CAFE = {}, ECRUTEAK_CITY = {},
   OLIVINE_CITY = {}, NATIONAL_PARK = {},
 }
@@ -82,6 +82,7 @@ local biker = { id = "KAZU1", name = "KAZU", party = {} }
 local world = {
   maps = {
     VIOLET_CITY = { objects = mapObjects.VIOLET_CITY },
+    ROUTE_36 = { objects = mapObjects.ROUTE_36 },
     GOLDENROD_UNDERGROUND = { objects = mapObjects.GOLDENROD_UNDERGROUND },
     DANCE_THEATER = { objects = mapObjects.DANCE_THEATER },
     RADIO_TOWER_1F = { objects = mapObjects.RADIO_TOWER_1F },
@@ -373,16 +374,19 @@ check("park debrief keeps its opener",lastScript.rows[1][2]:find("We made\nour o
 done();press("b")
 check("keepsake and departure",state.first_show.keepsake and not findObj("NATIONAL_PARK","GR_SHOW_ROXIE"))
 local original=state.first_show.first
-enter("VIOLET_CITY");sayTo("VIOLET_CITY","GR_ROXIE");select("SHORT REPRISE");finishSet(false,false)
+-- Sheet 21b: ROXIE lives on ROUTE 36 from beat 30; her first line there is
+-- tested in the 21b section, so this one skips it.
+state.roxie_r36_heard=true
+enter("ROUTE_36");sayTo("ROUTE_36","GR_ROXIE");select("SHORT REPRISE");finishSet(false,false)
 check("replay preserves first history",state.first_show.first==original)
-sayTo("VIOLET_CITY","GR_ROXIE");select("FIRST SHOW CARD");mod.game.stack:top():draw();press("b")
+sayTo("ROUTE_36","GR_ROXIE");select("FIRST SHOW CARD");mod.game.stack:top():draw();press("b")
 
 -- Old wins and unknown schema.
 state.first_show=nil;state.beat=110;enter("NATIONAL_PARK");sayTo("NATIONAL_PARK","GR_SHOW_ROXIE")
 check("legacy win keeps unknown history",state.first_show.legacy and state.first_show.first.preparation=="UNRECORDED")
 select("PLAY ENCORE");finishSet(false,false);done()
 check("legacy encore without fight",state.beat==110 and state.first_show.encore)
-state.first_show={schema=99,sentinel=true};enter("VIOLET_CITY");sayTo("VIOLET_CITY","GR_ROXIE")
+state.first_show={schema=99,sentinel=true};enter("ROUTE_36");sayTo("ROUTE_36","GR_ROXIE")
 check("future schema untouched",state.first_show.schema==99 and state.first_show.sentinel)
 -- Event deferral and no duplicated park cast.
 state.first_show=nil;state.beat=90;mod.game.save.bugContest={active=true};enter("NATIONAL_PARK")
@@ -456,7 +460,10 @@ party,battle=engage(actor(VM,"GR_PIERS"),"KAREN")
 check("PIERS armed at the venue",#party==5)
 emit("battle.ended",{result="win",battle=battle});world.battleActive=false
 check("venue win",state.beat==110)
-sayTo(VM,"GR_SHOW_ROXIE");select("PLAY ENCORE");finishSet(false,false);done()
+sayTo(VM,"GR_SHOW_ROXIE");select("PLAY ENCORE");finishSet(false,false)
+check("21b: RYME takes the verse",queued():find("Here's the verse",1,true)~=nil
+  and queued():find("we talked about",1,true)~=nil);done()
+check("21b: RYME on stage",findObj(VM,"GR_RYME")~=nil)
 sayTo(VM,"GR_SHOW_ROXIE");select("BAND DEBRIEF")
 check("venue debrief opener",queued():find("First real\nstage. Ours now.",1,true)~=nil);done()
 check("card names ROUTE 36",mod.game.stack:top() and state.first_show.keepsake);mod.game.stack:top():draw();press("b")
@@ -523,13 +530,33 @@ end
 mod.game.save.player.badges = { a = true }
 
 -- 4a, without Trainer Journey: Crystal's own menu asks.
+-- Sheet 21b: the first talk after the win, ROXIE plays and RYME walks in.
+for i = #mapObjects.VIOLET_CITY, 1, -1 do mapObjects.VIOLET_CITY[i] = nil end
+for _, k in ipairs({ "roxie_turn_played", "ryme_met", "roxie_r36_heard", "ryme_r36_heard" }) do state[k] = nil end
 state.beat = 20; enter("VIOLET_CITY"); sayTo("VIOLET_CITY", "GR_ROXIE")
+check("21b: her turn", queued():find("Cover your ears", 1, true) ~= nil); done()
+check("21b: RYME walked in", findObj("VIOLET_CITY", "GR_RYME") ~= nil and state.ryme_met)
+check("21b: roof tiles", queued():find("Roof tiles", 1, true) ~= nil); done()
 check("4a: the offer is asked", queued():find("How about managing", 1, true) ~= nil); done()
 pickWord("NOT YET")
 check("4a: NOT YET writes nothing", state.beat == 20 and queued():find("Think fast", 1, true) ~= nil); done()
-sayTo("VIOLET_CITY", "GR_ROXIE"); done(); pickWord("I'M IN")
+sayTo("VIOLET_CITY", "GR_RYME")
+check("21b: RYME watches", queued():find("I'm hearing how", 1, true) ~= nil); done()
+sayTo("VIOLET_CITY", "GR_ROXIE")
+check("21b: the turn plays once", queued():find("Cover your ears", 1, true) == nil); done(); pickWord("I'M IN")
 check("4a: I'M IN hears the rest", queued():find("You're hired", 1, true) ~= nil); done()
+check("21b: a word, not here", queued():find("Too many ears", 1, true) ~= nil
+  and queued():find("Find me out there", 1, true) ~= nil); done()
 check("4a: hired", state.beat == 30)
+enter("VIOLET_CITY"); check("21b: VIOLET is empty", not findObj("VIOLET_CITY", "GR_ROXIE")
+  and not findObj("VIOLET_CITY", "GR_RYME"))
+enter("ROUTE_36"); check("21b: both on ROUTE 36", findObj("ROUTE_36", "GR_ROXIE") and findObj("ROUTE_36", "GR_RYME"))
+sayTo("ROUTE_36", "GR_ROXIE")
+check("21b: we talked", queued():find("Don't ask. Later.", 1, true) ~= nil); done()
+check("21b: then her reminder", queued():find("FEEDBACK", 1, true) ~= nil); done()
+sayTo("ROUTE_36", "GR_RYME"); check("21b: RYME first", queued():find("stays in my head", 1, true) ~= nil); done()
+sayTo("ROUTE_36", "GR_RYME")
+check("21b: RYME after", queued():find("Then the verse", 1, true) ~= nil); done()
 
 installedMods.trainer_journey = { id = "trainer_journey", exports = { trainer_journey = {
   api_version = 2, progression_version = 1,
@@ -560,9 +587,9 @@ pick("name", true)
 check("4b: wig off", queued():find("name on the bill", 1, true) ~= nil); done()
 check("4b: billed as WHITNEY", state.whitney_billing == "WHITNEY" and state.beat == 60
   and state.feedback_way == "sit_in")
-enter("VIOLET_CITY"); sayTo("VIOLET_CITY", "GR_ROXIE")
+enter("ROUTE_36"); sayTo("ROUTE_36", "GR_ROXIE")
 check("4b: ROXIE hears it once", queued():find("GYM\nLEADER on bass", 1, true) ~= nil); done()
-sayTo("VIOLET_CITY", "GR_ROXIE")
+sayTo("ROUTE_36", "GR_ROXIE")
 check("4b: only once", queued():find("GYM\nLEADER", 1, true) == nil); done()
 
 -- 4d, backers: KIMONO GIRLS by [PERFORMANCE 35], RADIO by [PERSUASION 30],
@@ -669,11 +696,11 @@ bagFull = true; enter(VM); sayTo(VM, "GR_SHOW_ROXIE"); select("BAND DEBRIEF"); d
 check("gift: LARRY thanks you", queued():find("Nobody does that", 1, true) ~= nil); done()
 check("gift: full bag keeps it", not given.LEFTOVERS and state.larry_gift_pending and not state.larry_gift_given)
 done(); mod.game.stack.states = {}
-bagFull = false; enter("VIOLET_CITY"); sayTo("VIOLET_CITY", "GR_ROXIE")
+bagFull = false; enter("ROUTE_36"); sayTo("ROUTE_36", "GR_ROXIE")
 check("gift: ROXIE has it", queued():find("LARRY left", 1, true) ~= nil); done()
 check("gift: LEFTOVERS once", given.LEFTOVERS == 1 and state.larry_gift_given
   and lastGift.line:find("LEFTOVERS", 1, true) ~= nil)
-sayTo("VIOLET_CITY", "GR_ROXIE")
+sayTo("ROUTE_36", "GR_ROXIE")
 -- (No gift left: ROXIE opens her Band Book, which is a screen, not a line.)
 check("gift: never twice", queued():find("LARRY left", 1, true) == nil)
 lastScript = nil; mod.game.stack.states = {}
