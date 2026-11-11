@@ -557,6 +557,13 @@ check("21b: then her reminder", queued():find("FEEDBACK", 1, true) ~= nil); done
 sayTo("ROUTE_36", "GR_RYME"); check("21b: RYME first", queued():find("stays in my head", 1, true) ~= nil); done()
 sayTo("ROUTE_36", "GR_RYME")
 check("21b: RYME after", queued():find("Then the verse", 1, true) ~= nil); done()
+-- REQUESTS 804: once RYME is met, the hall's staff name her as its owner.
+enter("JOHTO_EXPANDED_VENUE_ENTRANCE"); sayTo("JOHTO_EXPANDED_VENUE_ENTRANCE", "GR_VENUE_TICKETS")
+check("804: TICKETS names RYME", queued():find("RYME's hall", 1, true) ~= nil); done()
+enter("JOHTO_EXPANDED_MUSIC_VENUE"); sayTo("JOHTO_EXPANDED_MUSIC_VENUE", "GR_VENUE_BARTENDER")
+check("804: BARTENDER names RYME", queued():find("Boss is RYME", 1, true) ~= nil); done()
+state.ryme_met = nil; sayTo("JOHTO_EXPANDED_VENUE_ENTRANCE", "GR_VENUE_TICKETS")
+check("804: not before she is met", queued():find("RYME", 1, true) == nil); done(); state.ryme_met = true
 
 installedMods.trainer_journey = { id = "trainer_journey", exports = { trainer_journey = {
   api_version = 2, progression_version = 1,

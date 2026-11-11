@@ -68,7 +68,7 @@ A loss preserves the opening and offers a direct retry. After winning and leavin
 the battle screen, talk to Roxie for PLAY ENCORE, then BAND DEBRIEF.
 
 The debrief packs up the park cast and saves a First Show card. Visit Roxie at
-her spot outside the hall on Route 36 to read NEXT OBJECTIVE or FIRST SHOW CARD, rehearse,
+her spot outside RYME's hall on Route 36 to read NEXT OBJECTIVE or FIRST SHOW CARD, rehearse,
 or play a short reprise. Reprises give no money, friendship or profession points
 and do not rewrite the first-show record. Old Piers wins need only the new encore.
 

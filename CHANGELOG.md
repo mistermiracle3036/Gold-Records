@@ -12,6 +12,27 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
+## 0.8.5
+
+**Updating from 0.4.3?** The band now gets a full story past the drummer, and
+you are a manager who decides things: who drums (CASEY, MAYLENE or INGO), who
+plays keys and lights (ELESA, LARRY or nobody), whether WHITNEY plays in her
+wig or under her own name, and who backs the band (the KIMONO GIRLS, the
+RADIO TOWER, the UNDERGROUND or PIERS after a busk). After you beat ROXIE she
+shakes VIOLET, a stranger called RYME takes her aside, and from then on ROXIE
+waits for you outside the hall on ROUTE 36. The hall turns out to be RYME's.
+The first show follows, where PIERS challenges you for the encore and RYME
+finally takes the verse: at a packed music venue on ROUTE 36 with Johto
+Expanded, in NATIONAL PARK without it. Win LARRY over and he thanks you after
+the show. ROXIE and PIERS have their own commissioned sprites, the show has a
+Band Book, manager cues and a playable encore, and Trainer Journey players
+earn XP, bonds and the BAND MANAGER profession. Artists are credited in game.
+Every character answers on the current engine again.
+
+### Changed: the hall is RYME's
+- Once you have met RYME, the ticket clerk and the bartender at the ROUTE 36
+  hall tell you the place is hers. Nothing she says has changed.
+
 ## 0.8.4
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer, and

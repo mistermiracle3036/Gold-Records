@@ -13,7 +13,7 @@ local BugContest = require("src.core.gen2.BugContest")
 local ScriptMenu = require("src.ui.gen2.ScriptMenu")
 
 return function(mod)
-  local VERSION = "0.8.4"
+  local VERSION = "0.8.5"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
   -- The manager's decisions (quest clean-up sheet 21), filled beside say();
@@ -1753,6 +1753,14 @@ return function(mod)
   V.TICKETS_LINE = { "TICKETS: Sold out\ntonight." } -- NEW
   V.LINE_TALK = { "Can't move!\fIt's packed!" } -- NEW
   V.BAR_TALK = { "BARTENDER: What'll\nit be?" } -- NEW
+  -- REQUESTS 804 (developer 2026-11-10: the ROUTE 36 hall is RYME's). Once
+  -- she is met, the hall's staff name her as the owner. 21b's lines are
+  -- untouched. CONFIRM on phone: wording and which staff say it.
+  M.TICKETS_RYME = { "TICKETS: Sold out\ntonight.", "RYME's hall. She\nbooks it herself." }
+  M.BAR_RYME = { "BARTENDER: What'll\nit be?", "Boss is RYME.\fHer hall, her\nrules." }
+  function M.staffLine(plain, owner)
+    return questFlag("ryme_met") and owner or plain
+  end
   -- No "FAN:" label: the NPC gate matches a NAME: prefix against names AND
   -- sprites, and "FAN" also hits SPRITE_POKEFAN_*, so the line was pinned on
   -- the bartender or a far table. Unlabelled, it is whoever you face.
@@ -2850,7 +2858,7 @@ return function(mod)
       if questFlag("venue_met") and M.gymLeaders() >= 3 then return say(M.TAG_GYM_DOOR) end
       return say(questFlag("venue_met") and V.DOOR_OPEN or V.DOOR_SHUT)
     end
-    if actor.label == "TICKETS" then return say(V.TICKETS_LINE) end
+    if actor.label == "TICKETS" then return say(M.staffLine(V.TICKETS_LINE, M.TICKETS_RYME)) end
     say(V.LINE_TALK)
   end
 
@@ -2867,7 +2875,7 @@ return function(mod)
         and questFlag("venue_dragged") then
       return say(M.TAG_GIRLS_CROWD)
     end
-    say(actor.label == "BAR" and V.BAR_TALK or V.FAN_TALK)
+    say(actor.label == "BAR" and M.staffLine(V.BAR_TALK, M.BAR_RYME) or V.FAN_TALK)
   end
 
   mod.events:on("world.interacted", function(ev)
