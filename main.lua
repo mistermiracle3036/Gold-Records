@@ -13,7 +13,7 @@ local BugContest = require("src.core.gen2.BugContest")
 local ScriptMenu = require("src.ui.gen2.ScriptMenu")
 
 return function(mod)
-  local VERSION = "0.8.5"
+  local VERSION = "0.8.6"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
   -- The manager's decisions (quest clean-up sheet 21), filled beside say();
@@ -2100,9 +2100,15 @@ return function(mod)
       if played then fact("show", who) end
     end
     -- RYME (sheet 21b, REQUESTS 797): meeting her lights her at zero only.
+    -- Trainer Journey's key is "ryme_bani" (affinity.lua; REQUESTS 902);
+    -- the fact id stays as shipped so saves keep it.
     if questFlag("ryme_met") then
-      out[#out + 1] = { id = MOD_ID .. ":met:ryme", schema = 1, character = "ryme", kind = "met" }
+      out[#out + 1] = { id = MOD_ID .. ":met:ryme", schema = 1, character = "ryme_bani", kind = "met" }
     end
+    -- LARRY's LEFTOVERS (sheet 21, REQUESTS 732/916): his bond rises again
+    -- once the gift reached the bag. Not while pending, and whether or not
+    -- he is still in the band; old saves get it on the next poll.
+    if questFlag("larry_gift_given") then fact("gift", "larry") end
     return out
   end
 

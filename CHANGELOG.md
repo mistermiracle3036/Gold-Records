@@ -12,7 +12,7 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
-## 0.8.5
+## 0.8.6
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer, and
 you are a manager who decides things: who drums (CASEY, MAYLENE or INGO), who
@@ -28,6 +28,13 @@ the show. ROXIE and PIERS have their own commissioned sprites, the show has a
 Band Book, manager cues and a playable encore, and Trainer Journey players
 earn XP, bonds and the BAND MANAGER profession. Artists are credited in game.
 Every character answers on the current engine again.
+
+### Fixed: bonds (Trainer Journey)
+- Meeting RYME now shows her on the Bonds page, as it was meant to.
+- LARRY's bond rises again when he gives you the LEFTOVERS. Saves that
+  already have the gift get it the next time you play.
+
+## 0.8.5
 
 ### Changed: the hall is RYME's
 - Once you have met RYME, the ticket clerk and the bartender at the ROUTE 36

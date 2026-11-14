@@ -710,6 +710,23 @@ check("gift: LEFTOVERS once", given.LEFTOVERS == 1 and state.larry_gift_given
 sayTo("ROUTE_36", "GR_ROXIE")
 -- (No gift left: ROXIE opens her Band Book, which is a screen, not a line.)
 check("gift: never twice", queued():find("LARRY left", 1, true) == nil)
+-- REQUESTS 916/902: the gift pays LARRY's bond; RYME uses TJ's ryme_bani key.
+state.ryme_met = true
+local after = {}
+for _, f in ipairs(mod.exports.getAffinityEvents()) do after[f.id] = f end
+check("916: gift fact for LARRY", after["gold_records:gift:larry"] ~= nil
+  and after["gold_records:gift:larry"].character == "larry" and after["gold_records:gift:larry"].kind == "chapter")
+check("902: RYME is ryme_bani", after["gold_records:met:ryme"] ~= nil
+  and after["gold_records:met:ryme"].character == "ryme_bani")
+state.keys = "elesa"
+local still = false
+for _, f in ipairs(mod.exports.getAffinityEvents()) do still = still or f.id == "gold_records:gift:larry" end
+check("916: gift fact outlives the line-up", still)
+state.larry_gift_given = nil
+local none = true
+for _, f in ipairs(mod.exports.getAffinityEvents()) do none = none and f.id ~= "gold_records:gift:larry" end
+check("916: no gift fact before the gift", none)
+state.larry_gift_given = true; state.keys = "larry"
 lastScript = nil; mod.game.stack.states = {}
 installedMods.trainer_journey = nil; emit("game.ready", {})
 
