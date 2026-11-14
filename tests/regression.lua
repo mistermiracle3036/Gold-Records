@@ -464,10 +464,16 @@ sayTo(VM,"GR_SHOW_ROXIE");select("PLAY ENCORE");finishSet(false,false)
 check("21b: RYME takes the verse",queued():find("Here's the verse",1,true)~=nil
   and queued():find("we talked about",1,true)~=nil);done()
 check("21b: RYME on stage",findObj(VM,"GR_RYME")~=nil)
+-- REQUESTS 943: on stage until the debrief, so not also outside.
+enter("ROUTE_36");check("943: RYME not outside while on stage",not findObj("ROUTE_36","GR_RYME")
+  and findObj("ROUTE_36","GR_ROXIE"))
+enter(VM);check("943: still on stage",findObj(VM,"GR_RYME")~=nil)
 sayTo(VM,"GR_SHOW_ROXIE");select("BAND DEBRIEF")
 check("venue debrief opener",queued():find("First real\nstage. Ours now.",1,true)~=nil);done()
 check("card names ROUTE 36",mod.game.stack:top() and state.first_show.keepsake);mod.game.stack:top():draw();press("b")
 check("band leaves, crowd stays",not findObj(VM,"GR_SHOW_ROXIE") and findObj(VM,"GR_VENUE_BARTENDER"))
+enter("ROUTE_36");check("943: RYME back outside after the debrief",findObj("ROUTE_36","GR_RYME")~=nil)
+enter(VM)
 
 -- A show that opened in the park stays there even with Johto Expanded.
 for _,k in ipairs({"first_show","show_stage","venue_dragged","venue_met"}) do state[k]=nil end
@@ -532,7 +538,7 @@ mod.game.save.player.badges = { a = true }
 -- 4a, without Trainer Journey: Crystal's own menu asks.
 -- Sheet 21b: the first talk after the win, ROXIE plays and RYME walks in.
 for i = #mapObjects.VIOLET_CITY, 1, -1 do mapObjects.VIOLET_CITY[i] = nil end
-for _, k in ipairs({ "roxie_turn_played", "ryme_met", "roxie_r36_heard", "ryme_r36_heard" }) do state[k] = nil end
+for _, k in ipairs({ "roxie_turn_played", "ryme_met", "roxie_r36_heard", "ryme_r36_heard", "ryme_on_stage" }) do state[k] = nil end
 state.beat = 20; enter("VIOLET_CITY"); sayTo("VIOLET_CITY", "GR_ROXIE")
 check("21b: her turn", queued():find("Cover your ears", 1, true) ~= nil); done()
 check("21b: RYME walked in", findObj("VIOLET_CITY", "GR_RYME") ~= nil and state.ryme_met)

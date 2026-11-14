@@ -13,7 +13,7 @@ local BugContest = require("src.core.gen2.BugContest")
 local ScriptMenu = require("src.ui.gen2.ScriptMenu")
 
 return function(mod)
-  local VERSION = "0.8.6"
+  local VERSION = "0.8.7"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
   -- The manager's decisions (quest clean-up sheet 21), filled beside say();
@@ -2274,6 +2274,12 @@ return function(mod)
     end
     setQuestFlag("ryme_met")
     local a = M.spawn(M.R36, M.R36_ROXIE_AT)
+    -- REQUESTS 943: from her encore verse until the band debrief she is on
+    -- stage with the band, so she is not also waiting outside.
+    if questFlag("ryme_on_stage") and not (concert and concert.departed()) then
+      M.removeFrom(M.R36, M.RYME)
+      return a
+    end
     local b = M.spawn(M.R36, M.R36_RYME_AT)
     return (a or "") .. (b and (" " .. b) or "")
   end
