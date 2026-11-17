@@ -12,7 +12,7 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
-## 0.8.9
+## 0.8.10
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer, and
 you are a manager who decides things: who drums (CASEY, MAYLENE or INGO), who
@@ -28,6 +28,13 @@ the show. ROXIE and PIERS have their own commissioned sprites, the show has a
 Band Book, manager cues and a playable encore, and Trainer Journey players
 earn XP, bonds and the BAND MANAGER profession. Artists are credited in game.
 Every character answers on the current engine again.
+
+### Fixed: credits
+- The CREDITS description in the START menu fits its box again.
+- Credit pictures take their colours from the game itself, so they look
+  right whatever other mods you run.
+
+## 0.8.9
 
 ### Fixed
 - The download no longer includes the designer's notes file, which 0.8.8
