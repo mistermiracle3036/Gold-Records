@@ -12,7 +12,7 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
-## 0.8.7
+## 0.8.8
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer, and
 you are a manager who decides things: who drums (CASEY, MAYLENE or INGO), who
@@ -28,6 +28,14 @@ the show. ROXIE and PIERS have their own commissioned sprites, the show has a
 Band Book, manager cues and a playable encore, and Trainer Journey players
 earn XP, bonds and the BAND MANAGER profession. Artists are credited in game.
 Every character answers on the current engine again.
+
+### Changed: credits
+- The in-game credits now show each artist's pictures, including the
+  Polished Crystal art and added Pokemon. anima-nel is credited for the
+  JIGGLYPUFF and WOOPER walkers, and RYME and MAYLENE have their credit
+  entries.
+
+## 0.8.7
 
 ### Fixed: RYME in one place
 - After RYME takes the verse at the encore, she stays on stage with the band

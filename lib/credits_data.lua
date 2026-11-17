@@ -8,6 +8,16 @@
 -- An artist whose art is only in unreleased mods appears here the day
 -- that mod is released -- re-run the generator after any release.
 return {
+  { artist = "anima-nel",
+    works = { "Jigglypuff", "Wooper" },
+    sections = { "pokemon" },
+    mods = { "Gold Records" },
+    used = { "ROCKS" },
+    characters = {
+      { credit = "Jigglypuff", files = { gold_records = { walk = "assets/jigglypuff_anima.png", walkColour = true } }, name = "Jigglypuff", used = { "ROCKS" }, walk = "jigglypuff_anima.png", walkBy = "anima-nel" },
+      { credit = "Wooper", files = { gold_records = { walk = "assets/wooper_anima.png", walkColour = true } }, name = "Wooper", used = { "ROCKS" }, walk = "wooper_anima.png", walkBy = "anima-nel" },
+    },
+    source = "sprites/REGISTRY.json" },
   { artist = "Azure Keys",
     works = { "Elesa" },
     sections = { "people" },
@@ -19,11 +29,13 @@ return {
     source = "sprites/REGISTRY.json" },
   { artist = "Bani",
     works = { "Larry" },
+    commissions = { "Ryme" },
     sections = { "people" },
     mods = { "Gold Records" },
     used = { "ROCKS" },
     characters = {
       { battleBy = "Bani", credit = "Larry", files = { gold_records = { walk = "assets/larry.png", walkColour = true } }, front = "larry_front.png", name = "Larry", pal = 3, used = { "ROCKS" }, walk = "larry.png", walkBy = "Bani" },
+      { battleBy = "Bani", credit = "Ryme", files = { gold_records = { walk = "assets/ryme_bani.png", walkColour = true } }, front = "ryme_bani_front.png", name = "Ryme", used = { "ROCKS" }, walk = "ryme_bani.png", walkBy = "Bani" },
     },
     source = "sprites/REGISTRY.json" },
   { artist = "Blaklyte",
@@ -40,6 +52,9 @@ return {
     sections = { "people" },
     mods = { "Gold Records" },
     used = { "ROCKS" },
+    characters = {
+      { battleBy = "bloodless", credit = "Maylene", files = { gold_records = { walk = "assets/maylene.png" } }, front = "maylene_front.png", name = "Maylene", pal = 0, used = { "ROCKS" }, walk = "maylene.png", walkBy = "bloodless" },
+    },
     source = "sprites/REGISTRY.json" },
   { artist = "SirWhibbles",
     works = { "Elesa" },
