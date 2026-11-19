@@ -12,7 +12,7 @@ following [Semantic Versioning](https://semver.org/).
      COMPLETELY EMPTY body. Nothing fails; the notes are just gone. -->
 
 
-## 0.8.10
+## 0.8.11
 
 **Updating from 0.4.3?** The band now gets a full story past the drummer, and
 you are a manager who decides things: who drums (CASEY, MAYLENE or INGO), who
@@ -28,6 +28,13 @@ the show. ROXIE and PIERS have their own commissioned sprites, the show has a
 Band Book, manager cues and a playable encore, and Trainer Journey players
 earn XP, bonds and the BAND MANAGER profession. Artists are credited in game.
 Every character answers on the current engine again.
+
+### Fixed: meeting RYME
+- RYME only counts as met (and appears on the Trainer Journey Bonds page)
+  once she has actually walked on screen. In rare cases she could be
+  counted as met without appearing.
+
+## 0.8.10
 
 ### Fixed: credits
 - The CREDITS description in the START menu fits its box again.

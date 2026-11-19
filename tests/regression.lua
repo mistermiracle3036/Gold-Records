@@ -536,6 +536,23 @@ end
 mod.game.save.player.badges = { a = true }
 
 -- 4a, without Trainer Journey: Crystal's own menu asks.
+-- REQUESTS 1009: if RYME's spawn fails, the turn still plays but she is not met.
+do
+  local real = mod.world.spawnNpc
+  mod.world.spawnNpc = function(self, mapId, def)
+    if def.name == "GR_RYME" then return nil, "mock refused" end
+    return real(self, mapId, def)
+  end
+  for i = #mapObjects.VIOLET_CITY, 1, -1 do mapObjects.VIOLET_CITY[i] = nil end
+  for _, k in ipairs({ "roxie_turn_played", "ryme_met", "roxie_r36_heard", "ryme_r36_heard", "ryme_on_stage" }) do state[k] = nil end
+  state.beat = 20; enter("VIOLET_CITY"); sayTo("VIOLET_CITY", "GR_ROXIE")
+  check("1009: turn plays", queued():find("Cover your ears", 1, true) ~= nil); done()
+  check("1009: absent RYME is not met", findObj("VIOLET_CITY", "GR_RYME") == nil and not state.ryme_met)
+  enter("ROUTE_36"); state.beat = 30; enter("ROUTE_36")
+  check("1009: not met on ROUTE 36 either", findObj("ROUTE_36", "GR_RYME") == nil and not state.ryme_met)
+  mod.world.spawnNpc = real
+  lastScript = nil; mod.game.stack.states = {}
+end
 -- Sheet 21b: the first talk after the win, ROXIE plays and RYME walks in.
 for i = #mapObjects.VIOLET_CITY, 1, -1 do mapObjects.VIOLET_CITY[i] = nil end
 for _, k in ipairs({ "roxie_turn_played", "ryme_met", "roxie_r36_heard", "ryme_r36_heard", "ryme_on_stage" }) do state[k] = nil end

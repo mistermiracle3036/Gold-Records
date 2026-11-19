@@ -13,7 +13,7 @@ local BugContest = require("src.core.gen2.BugContest")
 local ScriptMenu = require("src.ui.gen2.ScriptMenu")
 
 return function(mod)
-  local VERSION = "0.8.10"
+  local VERSION = "0.8.11"
   local MOD_ID = "gold_records"
   mod.exports.version = VERSION
   -- The manager's decisions (quest clean-up sheet 21), filled beside say();
@@ -2238,14 +2238,21 @@ return function(mod)
     if not world.vm:start(list) then M.vmDone[list] = nil; done() end
   end
 
+  -- REQUESTS 1009: RYME counts as met (her Bond reveal) only once she is
+  -- actually standing on the map, never from a spawn that did not happen.
+  function M.metIfHere(mapId)
+    local world = mod.world and mod.world:overworld()
+    if world and objectNamed(world, mapId, M.RYME) then setQuestFlag("ryme_met") end
+  end
+
   -- Her turn: the first talk after you win, before the offer.
   function M.roxieTurn(thenOffer)
     say(M.TURN1, function()
       M.shake(function()
-        setQuestFlag("ryme_met")
         M.spawn(MAP, { name = M.RYME, sprite = "SPRITE_GR_RYME", x = M.VIOLET_RYME.x - 3,
           y = M.VIOLET_RYME.y, movement = MOVE_STANDING_RIGHT, label = "RYME" })
         M.walk(MAP, M.RYME, "right", 3, function()
+          M.metIfHere(MAP)
           setQuestFlag("roxie_turn_played")
           say(M.TURN2, thenOffer)
         end)
@@ -2272,7 +2279,6 @@ return function(mod)
       M.removeFrom(M.R36, OBJ_NAME); M.removeFrom(M.R36, M.RYME)
       return nil
     end
-    setQuestFlag("ryme_met")
     local a = M.spawn(M.R36, M.R36_ROXIE_AT)
     -- REQUESTS 943: from her encore verse until the band debrief she is on
     -- stage with the band, so she is not also waiting outside.
@@ -2281,6 +2287,7 @@ return function(mod)
       return a
     end
     local b = M.spawn(M.R36, M.R36_RYME_AT)
+    M.metIfHere(M.R36)
     return (a or "") .. (b and (" " .. b) or "")
   end
 
